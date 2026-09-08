@@ -1,26 +1,198 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #F8F4E9;
+  --foreground: #180D1D;
+  --violet-deep: #502D55;
+  --violet-night: #180D1D;
+  --violet-mid: #2b1435;
+  --rose-muted: #935073;
+  --rose-light: #b86890;
+  --peach-warm: #F6DBC0;
+  --ivory-warm: #F8F4E9;
+  --ivory-muted: #d8cfc4;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+html {
+  scroll-behavior: smooth;
+  background-color: var(--background);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Liquid Glass System (Clean Light Aesthetic) */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(80, 45, 85, 0.08);
+  box-shadow: 0 10px 30px -5px rgba(80, 45, 85, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+}
+
+.glass-panel-elevated {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(80, 45, 85, 0.12);
+  box-shadow: 0 20px 45px -10px rgba(80, 45, 85, 0.07), inset 0 1px 0 0 rgba(255, 255, 255, 1);
+}
+
+.glass-panel-interactive {
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-panel-interactive:hover {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(147, 80, 115, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 0 20px 45px -10px rgba(80, 45, 85, 0.09), 0 0 30px -5px rgba(246, 219, 192, 0.4), inset 0 1px 0 0 #ffffff;
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(80, 45, 85, 0.1);
+  box-shadow: 0 4px 15px -2px rgba(80, 45, 85, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+/* Violet Dusk Typography Gradients (High-Contrast for Light Theme) */
+.text-gradient-dusk {
+  background: linear-gradient(135deg, #180D1D 0%, #502D55 45%, #935073 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-peach {
+  background: linear-gradient(135deg, #180D1D 0%, #935073 70%, #d1829e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-rose {
+  background: linear-gradient(135deg, #502D55 0%, #935073 55%, #b86890 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Glow effects */
+.glow-peach {
+  box-shadow: 0 0 45px -5px rgba(246, 219, 192, 0.45);
+}
+
+.glow-rose {
+  box-shadow: 0 0 50px -5px rgba(147, 80, 115, 0.25);
+}
+
+.glow-violet {
+  box-shadow: 0 0 60px -5px rgba(80, 45, 85, 0.2);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F8F4E9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #dcd0d9;
+  border-radius: 9999px;
+  border: 2px solid #F8F4E9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #935073;
+}
+
+/* Focus Ring */
+.focus-ring {
+  outline: none;
+}
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #935073;
+}
+
+/* Animation Keyframes (Preserved) */
+@keyframes float-slow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(0.5deg);
+  }
+}
+
+@keyframes float-reverse {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(8px) rotate(-0.5deg);
+  }
+}
+
+@keyframes liquid-pulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes ribbon-drift {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(15px, 20px) rotate(1deg);
+  }
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: float-reverse 8s ease-in-out infinite;
+}
+
+.animate-liquid-pulse {
+  animation: liquid-pulse 9s ease-in-out infinite;
+}
+
+.animate-ribbon-drift {
+  animation: ribbon-drift 14s ease-in-out infinite;
 }
