@@ -10,22 +10,22 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen pt-24 pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+    <div className="min-h-screen pt-16 sm:pt-24 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
       <Link
         href="/"
-        className="inline-flex items-center gap-2 text-xs font-mono text-[#7A6880] hover:text-[#180D1D] transition-colors mb-8"
+        className="inline-flex items-center gap-2 min-h-[44px] text-xs font-mono text-[#7A6880] hover:text-[#180D1D] transition-colors mb-6"
       >
         <ArrowLeft className="w-3.5 h-3.5" />
         <span>Back to Home</span>
       </Link>
 
-      <div className="bg-white/80 border border-[#502D55]/10 rounded-3xl p-6 sm:p-12 backdrop-blur-xl shadow-sm">
+      <div className="bg-white/80 border border-[#502D55]/10 rounded-3xl p-5 sm:p-12 backdrop-blur-xl shadow-sm">
         <div className="flex items-center gap-3 mb-6">
           <div className="w-10 h-10 rounded-xl bg-[#FAF2EA] border border-[#F6DBC0] flex items-center justify-center text-[#7A3F26]">
             <FileText className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#180D1D]">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-[#180D1D]">
               Terms &amp; Conditions
             </h1>
             <p className="text-xs font-mono text-[#7A6880] mt-1">

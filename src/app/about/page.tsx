@@ -33,7 +33,7 @@ export default function AboutPage() {
             <div className="relative w-full max-w-sm">
               <div className="absolute -inset-4 bg-gradient-to-tr from-[#F6DBC0]/20 via-[#935073]/10 to-transparent rounded-3xl blur-2xl opacity-70 pointer-events-none" />
 
-              <div className="relative rounded-3xl bg-white/80 border border-[#502D55]/12 p-8 backdrop-blur-2xl text-center space-y-6 shadow-sm">
+              <div className="relative rounded-3xl bg-white/80 border border-[#502D55]/12 p-6 sm:p-8 backdrop-blur-2xl text-center space-y-6 shadow-sm">
                 {/* Studio Brand Mark */}
                 <div className="w-28 h-28 mx-auto rounded-2xl bg-[#FAF2EA] border border-[#F6DBC0] flex items-center justify-center p-3.5 shadow-sm">
                   <Image
@@ -60,7 +60,7 @@ export default function AboutPage() {
                     href={siteConfig.links.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[#502D55]/15 text-xs text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/40 transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-full bg-white border border-[#502D55]/15 text-xs text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/40 transition-colors shadow-2xs"
                   >
                     <Instagram className="w-3.5 h-3.5 text-[#935073]" />
                     <span>@imdad.builds</span>
@@ -145,12 +145,12 @@ export default function AboutPage() {
             </div>
 
             {/* CTAs */}
-            <div className="pt-4 flex flex-wrap items-center gap-4">
-              <Button href="/services" variant="primary" size="md">
+            <div className="pt-4 flex flex-wrap items-center gap-3 sm:gap-4">
+              <Button href="/services" variant="primary" size="md" className="w-full sm:w-auto">
                 Explore Services
                 <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button href="/contact" variant="secondary" size="md">
+              <Button href="/contact" variant="secondary" size="md" className="w-full sm:w-auto">
                 Start a Conversation
               </Button>
             </div>

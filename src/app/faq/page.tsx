@@ -90,27 +90,27 @@ export default function FAQPage() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+    <div className="min-h-screen pt-16 sm:pt-24 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="text-center max-w-3xl mx-auto mb-16">
+      <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#FAF2EA] border border-[#F6DBC0] text-[#7A3F26] text-xs uppercase tracking-widest font-mono mb-4 font-semibold shadow-2xs">
           <HelpCircle className="w-3.5 h-3.5 text-[#d97746]" />
           <span>Clarity &amp; Process</span>
         </div>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#180D1D] tracking-tight mb-4">
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#180D1D] tracking-tight mb-4">
           Frequently Asked <br />
           <span className="text-gradient-dusk">
             Questions.
           </span>
         </h1>
-        <p className="text-[#56475C] text-base sm:text-lg lg:text-xl font-normal leading-relaxed">
+        <p className="text-[#56475C] text-sm sm:text-lg lg:text-xl font-normal leading-relaxed">
           Everything you need to know about working together, pricing models,
           timelines, and our collaborative delivery process.
         </p>
       </div>
 
       {/* Accordion List */}
-      <div className="space-y-4 mb-16">
+      <div className="space-y-4 mb-12 sm:mb-16">
         {faqs.map((faq, index) => {
           const isOpen = openId === faq.id;
           return (
@@ -124,13 +124,13 @@ export default function FAQPage() {
             >
               <button
                 onClick={() => toggleFAQ(faq.id)}
-                className="w-full text-left p-5 sm:p-6 flex items-center justify-between gap-4 cursor-pointer focus:outline-none"
+                className="w-full text-left p-4 sm:p-6 min-h-[44px] flex items-center justify-between gap-3 sm:gap-4 cursor-pointer focus:outline-none"
               >
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-[#FAF2EA] border border-[#F6DBC0] text-[#7A3F26] font-semibold">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <span className="text-xs font-mono px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-[#FAF2EA] border border-[#F6DBC0] text-[#7A3F26] font-semibold shrink-0">
                     0{index + 1}
                   </span>
-                  <span className="text-base sm:text-lg font-bold text-[#180D1D]">
+                  <span className="text-sm sm:text-lg font-bold text-[#180D1D]">
                     {faq.question}
                   </span>
                 </div>
@@ -153,8 +153,8 @@ export default function FAQPage() {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.25 }}
                   >
-                    <div className="px-5 sm:px-6 pb-6 pt-1 border-t border-[#502D55]/08">
-                      <div className="text-sm sm:text-base text-[#56475C] leading-relaxed">
+                    <div className="px-4 sm:px-6 pb-6 pt-1 border-t border-[#502D55]/08">
+                      <div className="text-xs sm:text-base text-[#56475C] leading-relaxed">
                         {faq.answer}
                       </div>
                     </div>
@@ -167,25 +167,25 @@ export default function FAQPage() {
       </div>
 
       {/* Bottom Conversion Box */}
-      <div className="p-8 sm:p-12 rounded-3xl bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center shadow-sm">
-        <h3 className="text-2xl font-bold text-[#180D1D] mb-3">
+      <div className="p-6 sm:p-12 rounded-3xl bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center shadow-sm">
+        <h3 className="text-xl sm:text-2xl font-bold text-[#180D1D] mb-3">
           Still Have Questions About Your Specific Project?
         </h3>
-        <p className="text-[#56475C] max-w-xl mx-auto text-sm sm:text-base mb-6 leading-relaxed">
+        <p className="text-[#56475C] max-w-xl mx-auto text-xs sm:text-base mb-6 leading-relaxed">
           Every business has unique parameters. Send me a quick overview of what
           you’re looking to accomplish and I’ll provide tailored answers.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
           <Link
             href="/contact"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm inline-flex items-center justify-center gap-2 transition-all bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-sm"
+            className="w-full sm:w-auto px-8 py-3.5 min-h-[44px] rounded-xl font-bold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-sm"
           >
             <span>Start a Project Inquiry</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
             href="/pricing"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-xl font-semibold text-sm inline-flex items-center justify-center gap-2 transition-all bg-white text-[#180D1D] border border-[#502D55]/15 hover:border-[#935073]/40 shadow-2xs"
+            className="w-full sm:w-auto px-8 py-3.5 min-h-[44px] rounded-xl font-semibold text-xs sm:text-sm inline-flex items-center justify-center gap-2 transition-all bg-white text-[#180D1D] border border-[#502D55]/15 hover:border-[#935073]/40 shadow-2xs"
           >
             <span>View All Pricing</span>
           </Link>

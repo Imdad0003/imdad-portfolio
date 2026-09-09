@@ -173,7 +173,7 @@ export default function WorkPage() {
         />
 
         {/* Category Filters */}
-        <div className="mt-8 flex justify-center overflow-x-auto pb-4 gap-2 no-scrollbar">
+        <div className="mt-8 flex justify-start sm:justify-center overflow-x-auto pb-4 gap-2 no-scrollbar px-2 sm:px-0">
           <div className="inline-flex items-center p-1.5 rounded-full bg-white/80 border border-[#502D55]/10 backdrop-blur-xl shadow-xs min-w-max">
             {workCategories.map((cat) => {
               const isActive = activeCategory === cat.id;
@@ -182,7 +182,7 @@ export default function WorkPage() {
                   key={cat.id}
                   type="button"
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  className={`px-4 py-2 min-h-[36px] rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
                     isActive
                       ? "bg-[#180D1D] text-[#F8F4E9] font-bold shadow-xs"
                       : "text-[#56475C] hover:text-[#180D1D] hover:bg-white"
@@ -202,7 +202,7 @@ export default function WorkPage() {
             return (
               <div
                 key={project.id}
-                className="rounded-3xl p-6 sm:p-8 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
+                className="rounded-3xl p-5 sm:p-8 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
               >
                 <div>
                   {/* Top Bar: Icon, Category & Honest Badge */}
@@ -251,7 +251,7 @@ export default function WorkPage() {
                   <button
                     type="button"
                     onClick={() => handleInquireProject(project)}
-                    className="inline-flex items-center gap-1.5 font-bold text-[#935073] hover:text-[#180D1D] transition-colors cursor-pointer"
+                    className="inline-flex items-center min-h-[44px] gap-1.5 font-bold text-[#935073] hover:text-[#180D1D] transition-colors cursor-pointer"
                   >
                     <span>Inquire Similar Project</span>
                     <ArrowRight className="w-3.5 h-3.5" />
@@ -263,7 +263,7 @@ export default function WorkPage() {
         </div>
 
         {/* Ethical Transparency Statement */}
-        <div className="mt-20 p-6 sm:p-8 rounded-2xl bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center max-w-2xl mx-auto text-xs text-[#56475C] space-y-2 shadow-xs">
+        <div className="mt-16 sm:mt-20 p-5 sm:p-8 rounded-2xl bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center max-w-2xl mx-auto text-xs text-[#56475C] space-y-2 shadow-xs">
           <div className="flex items-center justify-center gap-1.5 text-[#180D1D] font-bold">
             <ShieldCheck className="w-4 h-4 text-[#935073]" />
             <span>Honest Portfolio Standard</span>

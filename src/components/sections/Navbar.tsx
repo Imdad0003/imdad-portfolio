@@ -32,10 +32,10 @@ export function Navbar() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 py-3 sm:py-4 transition-all duration-300 pointer-events-none">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="fixed top-0 left-0 right-0 z-50 py-2.5 sm:py-4 transition-all duration-300 pointer-events-none">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div
-          className={`mx-auto w-full pointer-events-auto rounded-2xl sm:rounded-full transition-all duration-500 flex items-center justify-between px-4 sm:px-6 py-2.5 sm:py-3 ${
+          className={`mx-auto w-full pointer-events-auto rounded-2xl sm:rounded-full transition-all duration-500 flex items-center justify-between px-3.5 sm:px-6 py-2 sm:py-3 ${
             isScrolled
               ? "bg-white/85 backdrop-blur-2xl border border-[#502D55]/12 shadow-[0_12px_30px_-5px_rgba(80,45,85,0.06),inset_0_1px_0_0_rgba(255,255,255,0.95)]"
               : "bg-white/65 backdrop-blur-xl border border-[#502D55]/08 shadow-[0_6px_20px_-5px_rgba(80,45,85,0.04)]"
@@ -44,7 +44,7 @@ export function Navbar() {
           {/* Brand Logo */}
           <Link
             href="/"
-            className="flex items-center gap-2.5 group focus-ring rounded-lg py-1"
+            className="flex items-center gap-2 group focus-ring rounded-lg py-1 shrink-0"
             aria-label="Imdad Digital Studio - Home"
           >
             <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center">
@@ -58,10 +58,10 @@ export function Navbar() {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-base tracking-tight text-[#180D1D] group-hover:text-[#935073] transition-colors leading-tight">
+              <span className="font-extrabold text-sm sm:text-base tracking-tight text-[#180D1D] group-hover:text-[#935073] transition-colors leading-tight">
                 IMDAD
               </span>
-              <span className="text-[8px] font-mono tracking-[0.2em] text-[#7A6880] uppercase">
+              <span className="text-[7.5px] sm:text-[8px] font-mono tracking-[0.2em] text-[#7A6880] uppercase">
                 Digital Studio
               </span>
             </div>
@@ -95,12 +95,12 @@ export function Navbar() {
           </nav>
 
           {/* Right Actions: Instagram & "Get Started" Button */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <a
               href={siteConfig.links.instagram}
               target="_blank"
               rel="noopener noreferrer"
-              className="p-2 rounded-xl text-[#56475C] hover:text-[#180D1D] bg-white/75 hover:bg-white border border-[#502D55]/12 hover:border-[#935073]/35 transition-all focus-ring flex items-center gap-1.5 text-xs shadow-xs"
+              className="w-10 h-10 sm:w-auto p-2 sm:px-3 rounded-xl text-[#56475C] hover:text-[#180D1D] bg-white/75 hover:bg-white border border-[#502D55]/12 hover:border-[#935073]/35 transition-all focus-ring flex items-center justify-center gap-1.5 text-xs shadow-xs shrink-0"
               aria-label="Instagram @imdad.builds"
               title="Instagram @imdad.builds"
             >
@@ -118,11 +118,11 @@ export function Navbar() {
               <ArrowRight className="w-3.5 h-3.5" />
             </Button>
 
-            {/* Mobile Menu Trigger */}
+            {/* Mobile Menu Trigger (44px touch target) */}
             <button
               type="button"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl text-[#180D1D] bg-white/80 border border-[#502D55]/12 hover:border-[#935073]/35 focus-ring cursor-pointer transition-colors shadow-xs"
+              className="lg:hidden w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl text-[#180D1D] bg-white/80 border border-[#502D55]/12 hover:border-[#935073]/35 focus-ring cursor-pointer transition-colors shadow-xs flex items-center justify-center shrink-0"
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
             >
@@ -138,8 +138,8 @@ export function Navbar() {
 
       {/* Mobile Glass Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden max-w-7xl mx-auto px-4 sm:px-6 mt-2 pointer-events-auto">
-          <div className="rounded-2xl bg-white/95 border border-[#502D55]/12 backdrop-blur-3xl p-5 shadow-[0_20px_50px_rgba(80,45,85,0.12)] animate-in fade-in slide-in-from-top-3 duration-200">
+        <div className="lg:hidden max-w-7xl mx-auto px-3 sm:px-6 mt-2 pointer-events-auto">
+          <div className="rounded-2xl bg-white/95 border border-[#502D55]/12 backdrop-blur-3xl p-4 sm:p-5 shadow-[0_20px_50px_rgba(80,45,85,0.12)] max-h-[calc(100dvh-5rem)] overflow-y-auto animate-in fade-in slide-in-from-top-3 duration-200">
             <nav className="flex flex-col gap-1.5" aria-label="Mobile Navigation">
               {navItems.map((item) => {
                 const isActive =
@@ -152,7 +152,7 @@ export function Navbar() {
                     key={item.label}
                     href={item.href}
                     onClick={() => setMobileMenuOpen(false)}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-medium transition-colors focus-ring ${
+                    className={`px-4 py-3 min-h-[44px] flex items-center rounded-xl text-sm font-medium transition-colors focus-ring ${
                       isActive
                         ? "text-[#180D1D] font-bold bg-[#FAF2EA] border border-[#F6DBC0]/60"
                         : "text-[#56475C] hover:text-[#180D1D] hover:bg-[#F5EFF6]"
@@ -169,7 +169,7 @@ export function Navbar() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium text-[#180D1D] bg-white border border-[#502D55]/15 hover:border-[#935073]/40 transition-colors focus-ring shadow-xs"
+                  className="flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-xs font-semibold text-[#180D1D] bg-white border border-[#502D55]/15 hover:border-[#935073]/40 transition-colors focus-ring shadow-xs"
                 >
                   <Instagram className="w-4 h-4 text-[#935073]" />
                   <span>Instagram: @imdad.builds</span>
@@ -180,7 +180,7 @@ export function Navbar() {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium text-[#180D1D] bg-white border border-[#502D55]/15 hover:border-[#935073]/40 transition-colors focus-ring shadow-xs"
+                  className="flex items-center justify-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-xs font-semibold text-[#180D1D] bg-white border border-[#502D55]/15 hover:border-[#935073]/40 transition-colors focus-ring shadow-xs"
                 >
                   <MessageSquare className="w-4 h-4 text-[#935073]" />
                   <span>WhatsApp: +91 7352608269</span>
@@ -190,7 +190,7 @@ export function Navbar() {
                   href="/contact"
                   variant="primary"
                   size="md"
-                  className="w-full justify-center text-xs"
+                  className="w-full justify-center text-xs min-h-[44px]"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Get Started

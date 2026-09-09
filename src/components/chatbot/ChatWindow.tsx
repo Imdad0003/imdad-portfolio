@@ -74,27 +74,27 @@ export function ChatWindow({
             <button
               type="button"
               onClick={onClearChat}
-              className="p-1.5 rounded-lg text-[#bba89d] hover:text-[#F8F4E9] hover:bg-[rgba(80,45,85,0.4)] transition-colors focus-ring"
+              className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-[#bba89d] hover:text-[#F8F4E9] hover:bg-[rgba(80,45,85,0.4)] transition-colors focus-ring cursor-pointer"
               title="Reset conversation"
               aria-label="Reset conversation"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-4 h-4" />
             </button>
           )}
 
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#bba89d] hover:text-[#F8F4E9] hover:bg-[rgba(80,45,85,0.4)] transition-colors focus-ring"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[#bba89d] hover:text-[#F8F4E9] hover:bg-[rgba(80,45,85,0.4)] transition-colors focus-ring cursor-pointer"
             aria-label="Close chat window"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin overscroll-contain">
         {messages.map((message) => (
           <React.Fragment key={message.id}>
             <ChatMessage message={message} />

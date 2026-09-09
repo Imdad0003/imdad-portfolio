@@ -31,7 +31,7 @@ export function Pricing() {
   };
 
   return (
-    <section id="pricing" className="py-24 relative overflow-hidden">
+    <section id="pricing" className="py-14 sm:py-24 relative overflow-hidden">
       {/* Ambient background glow accents */}
       <div className="absolute top-1/3 left-0 w-96 h-96 bg-[#F6DBC0]/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-[#935073]/10 rounded-full blur-3xl pointer-events-none" />
@@ -46,7 +46,7 @@ export function Pricing() {
         />
 
         {/* Horizontally Scrollable Category Filter Tabs */}
-        <div className="mt-10 sm:mt-12 flex justify-start lg:justify-center overflow-x-auto pb-4 pt-1 scrollbar-none gap-2 no-scrollbar">
+        <div className="mt-8 sm:mt-12 flex justify-start sm:justify-center overflow-x-auto pb-4 pt-1 scrollbar-none gap-2 no-scrollbar">
           <div className="inline-flex items-center p-1.5 rounded-full bg-white/80 border border-[#502D55]/10 backdrop-blur-xl shadow-xs min-w-max">
             {pricingCategories.map((category) => {
               const isActive = activeCategory === category.id;
@@ -76,12 +76,12 @@ export function Pricing() {
         </div>
 
         {/* Interactive "Build Your Package" Calculator */}
-        <div className="mt-16 sm:mt-24">
+        <div className="mt-14 sm:mt-24">
           <PricingCalculator />
         </div>
 
         {/* Final Pricing Note & Dual Conversion Actions */}
-        <div className="mt-16 sm:mt-20 rounded-3xl bg-white/80 border border-[#502D55]/10 p-8 sm:p-12 text-center backdrop-blur-2xl shadow-sm max-w-4xl mx-auto">
+        <div className="mt-14 sm:mt-20 rounded-3xl bg-white/80 border border-[#502D55]/10 p-5 sm:p-12 text-center backdrop-blur-2xl shadow-sm max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#FAF2EA] border border-[#F6DBC0] text-xs text-[#7A3F26] mb-4 font-semibold">
             <Sparkles className="w-3.5 h-3.5 text-[#d97746]" />
             <span>Honest &amp; Scope-Based</span>

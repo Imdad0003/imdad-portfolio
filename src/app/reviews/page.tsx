@@ -68,7 +68,7 @@ export default function ReviewsPage() {
           <button
             type="button"
             onClick={() => setModalOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs sm:text-sm bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-[0_4px_20px_-2px_rgba(24,13,29,0.25)] hover:shadow-[0_8px_30px_-4px_rgba(80,45,85,0.35)] transition-all cursor-pointer self-start sm:self-auto shrink-0"
+            className="w-full sm:w-auto justify-center min-h-[44px] inline-flex items-center gap-2 px-6 py-3 rounded-full font-bold text-xs sm:text-sm bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-[0_4px_20px_-2px_rgba(24,13,29,0.25)] hover:shadow-[0_8px_30px_-4px_rgba(80,45,85,0.35)] transition-all cursor-pointer self-stretch sm:self-auto shrink-0"
           >
             <Plus className="w-4 h-4 text-[#F6DBC0]" />
             <span>Leave a Review</span>
@@ -85,7 +85,7 @@ export default function ReviewsPage() {
             {reviews.map((review) => (
               <div
                 key={review.id}
-                className="rounded-2xl p-6 sm:p-7 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
+                className="rounded-2xl p-5 sm:p-7 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
               >
                 <div>
                   {/* Rating Stars */}
@@ -136,7 +136,7 @@ export default function ReviewsPage() {
           </div>
         ) : (
           /* Empty State when no reviews have been approved yet */
-          <div className="rounded-3xl p-10 sm:p-14 bg-white/80 border border-[#502D55]/10 backdrop-blur-2xl text-center max-w-2xl mx-auto space-y-4 shadow-sm">
+          <div className="rounded-3xl p-6 sm:p-14 bg-white/80 border border-[#502D55]/10 backdrop-blur-2xl text-center max-w-2xl mx-auto space-y-4 shadow-sm">
             <div className="w-14 h-14 rounded-2xl bg-[#FAF2EA] border border-[#F6DBC0] flex items-center justify-center text-[#7A3F26] mx-auto shadow-sm">
               <MessageSquareHeart className="w-7 h-7" />
             </div>
@@ -153,7 +153,7 @@ export default function ReviewsPage() {
               <button
                 type="button"
                 onClick={() => setModalOpen(true)}
-                className="px-6 py-3 rounded-full font-bold text-xs bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-sm transition-all cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 min-h-[44px] inline-flex items-center justify-center rounded-full font-bold text-xs bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-sm transition-all cursor-pointer"
               >
                 Be The First To Review
               </button>
@@ -162,7 +162,7 @@ export default function ReviewsPage() {
         )}
 
         {/* Verification Policy Disclaimer */}
-        <div className="mt-20 p-6 rounded-2xl bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center max-w-xl mx-auto text-xs text-[#56475C] space-y-1.5 shadow-2xs">
+        <div className="mt-16 sm:mt-20 p-5 sm:p-6 rounded-2xl bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center max-w-xl mx-auto text-xs text-[#56475C] space-y-1.5 shadow-2xs">
           <div className="flex items-center justify-center gap-1.5 text-[#180D1D] font-bold">
             <ShieldCheck className="w-4 h-4 text-[#935073]" />
             <span>Authenticity Guarantee</span>

@@ -92,6 +92,24 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (!phone || typeof phone !== "string" || !phone.trim()) {
+      return NextResponse.json(
+        { success: false, error: "Please enter your WhatsApp number so I can contact you." },
+        { status: 400 }
+      );
+    }
+
+    const phoneDigits = phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Please enter a valid WhatsApp / phone number (at least 10 digits).",
+        },
+        { status: 400 }
+      );
+    }
+
     const rawMessage =
       (typeof message === "string" && message.trim()) ||
       (typeof projectDetails === "string" && projectDetails.trim()) ||
@@ -179,7 +197,7 @@ export async function POST(req: NextRequest) {
                       </tr>
                       <tr>
                         <td style="color:#7A3F26;font-weight:bold;vertical-align:top;">WhatsApp / Phone:</td>
-                        <td style="color:#180D1D;">${cleanPhone ? `<a href="https://wa.me/${cleanPhone.replace(/[^0-9]/g, "")}" style="color:#180D1D;text-decoration:none;">${cleanPhone}</a>` : "Not provided"}</td>
+                        <td style="color:#180D1D;font-weight:bold;"><a href="https://wa.me/${cleanPhone.replace(/[^0-9]/g, "")}" style="color:#180D1D;text-decoration:none;">${cleanPhone}</a></td>
                       </tr>
                       <tr>
                         <td style="color:#7A3F26;font-weight:bold;vertical-align:top;">Service Needed:</td>
@@ -230,7 +248,7 @@ export async function POST(req: NextRequest) {
 ==========================================
 Client Name: ${cleanName}
 ${cleanBusiness ? `Brand / Company: ${cleanBusiness}\n` : ""}Client Email: ${cleanEmail}
-WhatsApp / Phone: ${cleanPhone || "Not provided"}
+WhatsApp / Phone: ${cleanPhone}
 Service Needed: ${cleanService}
 Estimated Budget: ${cleanBudget}
 Submitted At: ${istTime} (IST)

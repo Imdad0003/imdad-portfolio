@@ -34,7 +34,7 @@ export function Portfolio() {
       : portfolioProjects.filter((p) => p.category === activeCategory);
 
   return (
-    <section id="work" className="py-24 sm:py-32 border-b border-[#F6DBC0]/12 relative overflow-hidden">
+    <section id="work" className="py-14 sm:py-32 border-b border-[#F6DBC0]/12 relative overflow-hidden">
       <Container>
         <SectionHeading
           badgeText="Featured Work"
@@ -43,13 +43,13 @@ export function Portfolio() {
         />
 
         {/* Category Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-12 scrollbar-none">
+        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 sm:mb-12 scrollbar-none px-1 sm:px-0">
           {categories.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer focus-ring ${
+              className={`px-4 py-2 min-h-[40px] rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap cursor-pointer focus-ring ${
                 activeCategory === cat
                   ? "bg-gradient-to-r from-[#F8F4E9] to-[#F6DBC0] text-[#220d29] shadow-[0_0_20px_rgba(246,219,192,0.4)]"
                   : "bg-[rgba(43,20,53,0.45)] text-[#d8cfc4] hover:text-[#F8F4E9] hover:bg-[rgba(80,45,85,0.45)] border border-[#F6DBC0]/15"
@@ -99,7 +99,7 @@ export function Portfolio() {
                 </div>
 
                 {/* Content Area */}
-                <div className="p-6 sm:p-7">
+                <div className="p-5 sm:p-7">
                   <h3 className="text-lg font-bold text-[#F8F4E9] tracking-tight group-hover:text-[#F6DBC0] transition-colors">
                     {project.title}
                   </h3>
@@ -126,7 +126,7 @@ export function Portfolio() {
               </div>
 
               {/* Card Footer with Tools & Modal Trigger */}
-              <div className="p-6 sm:p-7 pt-0">
+              <div className="p-5 sm:p-7 pt-0">
                 <div className="flex flex-wrap gap-1.5 mb-4">
                   {project.tools.map((tool, idx) => (
                     <span
@@ -141,7 +141,7 @@ export function Portfolio() {
                 <button
                   type="button"
                   onClick={() => setSelectedProject(project)}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[rgba(56,24,66,0.6)] hover:bg-[rgba(80,45,85,0.7)] border border-[#F6DBC0]/20 hover:border-[#F6DBC0]/40 text-xs font-bold text-[#F8F4E9] hover:text-[#F6DBC0] flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-ring shadow-sm"
+                  className="w-full py-3 px-4 min-h-[44px] rounded-xl bg-[rgba(56,24,66,0.6)] hover:bg-[rgba(80,45,85,0.7)] border border-[#F6DBC0]/20 hover:border-[#F6DBC0]/40 text-xs font-bold text-[#F8F4E9] hover:text-[#F6DBC0] flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-ring shadow-sm"
                 >
                   View Case Details
                   <ArrowUpRight className="w-4 h-4" />
@@ -157,19 +157,19 @@ export function Portfolio() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200"
           >
-            <div className="relative w-full max-w-2xl bg-[rgba(32,13,40,0.95)] border border-[#F6DBC0]/30 rounded-3xl p-6 sm:p-8 shadow-[0_25px_60px_rgba(10,3,14,0.95)] max-h-[90vh] overflow-y-auto">
+            <div className="relative w-full max-w-2xl bg-[rgba(32,13,40,0.95)] border border-[#F6DBC0]/30 rounded-3xl p-5 sm:p-8 shadow-[0_25px_60px_rgba(10,3,14,0.95)] max-h-[85dvh] overflow-y-auto">
               <button
                 type="button"
                 onClick={() => setSelectedProject(null)}
-                className="absolute top-5 right-5 p-2 rounded-xl text-[#d8cfc4] hover:text-[#F8F4E9] bg-[rgba(56,24,66,0.6)] hover:bg-[rgba(80,45,85,0.8)] border border-[#F6DBC0]/20 cursor-pointer focus-ring"
+                className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[#d8cfc4] hover:text-[#F8F4E9] bg-[rgba(56,24,66,0.6)] hover:bg-[rgba(80,45,85,0.8)] border border-[#F6DBC0]/20 cursor-pointer focus-ring"
                 aria-label="Close dialog"
               >
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="flex items-center gap-2 mb-2">
+              <div className="flex items-center gap-2 mb-2 pr-12">
                 <Badge variant="peach" size="sm">
                   {selectedProject.category}
                 </Badge>
@@ -182,7 +182,7 @@ export function Portfolio() {
 
               <h3
                 id="modal-title"
-                className="text-xl sm:text-2xl font-black text-[#F8F4E9] tracking-tight"
+                className="text-xl sm:text-2xl font-black text-[#F8F4E9] tracking-tight pr-10"
               >
                 {selectedProject.title}
               </h3>
@@ -227,7 +227,7 @@ export function Portfolio() {
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-[#F6DBC0]/15 flex flex-wrap items-center justify-between gap-4">
+              <div className="mt-8 pt-6 border-t border-[#F6DBC0]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <span className="text-xs text-[#bba89d]">
                   Want similar execution for your brand?
                 </span>
@@ -235,6 +235,7 @@ export function Portfolio() {
                   href="#contact"
                   variant="primary"
                   size="sm"
+                  className="w-full sm:w-auto min-h-[44px]"
                   onClick={() => setSelectedProject(null)}
                 >
                   Inquire About This Service

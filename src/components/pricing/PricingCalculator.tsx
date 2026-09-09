@@ -67,7 +67,7 @@ export function PricingCalculator() {
   );
 
   return (
-    <div className="relative rounded-3xl bg-white/80 border-2 border-[#502D55]/10 p-6 sm:p-10 backdrop-blur-3xl shadow-[0_20px_50px_-10px_rgba(80,45,85,0.07)] overflow-hidden">
+    <div className="relative rounded-3xl bg-white/80 border-2 border-[#502D55]/10 p-5 sm:p-10 backdrop-blur-3xl shadow-[0_20px_50px_-10px_rgba(80,45,85,0.07)] overflow-hidden">
       {/* Subtle Background Glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-[#F6DBC0]/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -106,7 +106,7 @@ export function PricingCalculator() {
               <select
                 value={selectedServiceId}
                 onChange={(e) => setSelectedServiceId(e.target.value)}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white border border-[#502D55]/15 text-[#180D1D] text-xs sm:text-sm font-medium focus:border-[#935073] focus:ring-1 focus:ring-[#935073] focus:outline-none transition-colors cursor-pointer appearance-none shadow-xs"
+                className="w-full py-3.5 px-4 rounded-2xl bg-white border border-[#502D55]/15 text-[#180D1D] text-base sm:text-sm font-medium focus:border-[#935073] focus:ring-1 focus:ring-[#935073] focus:outline-none transition-colors cursor-pointer appearance-none shadow-xs"
               >
                 {primaryOptions.map((service) => (
                   <option
@@ -168,7 +168,7 @@ export function PricingCalculator() {
               <select
                 value={selectedAddonId}
                 onChange={(e) => setSelectedAddonId(e.target.value)}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white border border-[#502D55]/15 text-[#180D1D] text-xs sm:text-sm font-medium focus:border-[#935073] focus:ring-1 focus:ring-[#935073] focus:outline-none transition-colors cursor-pointer appearance-none shadow-xs"
+                className="w-full py-3.5 px-4 rounded-2xl bg-white border border-[#502D55]/15 text-[#180D1D] text-base sm:text-sm font-medium focus:border-[#935073] focus:ring-1 focus:ring-[#935073] focus:outline-none transition-colors cursor-pointer appearance-none shadow-xs"
               >
                 <option value="none" className="bg-white text-[#7A6880]">
                   (No Add-on Selected)
@@ -228,7 +228,7 @@ export function PricingCalculator() {
         </div>
 
         {/* Right Side: Live Calculated Investment Card (5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col justify-between rounded-2xl bg-white/90 border border-[#502D55]/12 p-6 sm:p-7 backdrop-blur-2xl shadow-sm">
+        <div className="lg:col-span-5 flex flex-col justify-between rounded-2xl bg-white/90 border border-[#502D55]/12 p-5 sm:p-7 backdrop-blur-2xl shadow-sm">
           <div>
             <div className="text-xs font-mono uppercase tracking-wider text-[#7A6880] font-bold pb-3 border-b border-[#502D55]/08">
               Live Package Breakdown
@@ -297,7 +297,7 @@ export function PricingCalculator() {
             <button
               type="button"
               onClick={handleGetPackage}
-              className="w-full py-3.5 px-4 rounded-xl font-extrabold text-xs sm:text-sm bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-[0_4px_20px_-2px_rgba(24,13,29,0.25)] hover:shadow-[0_8px_30px_-4px_rgba(80,45,85,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer focus-ring active:scale-[0.98]"
+              className="w-full py-3.5 px-4 min-h-[48px] rounded-xl font-extrabold text-xs sm:text-sm bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-[0_4px_20px_-2px_rgba(24,13,29,0.25)] hover:shadow-[0_8px_30px_-4px_rgba(80,45,85,0.35)] transition-all flex items-center justify-center gap-2 cursor-pointer focus-ring active:scale-[0.98]"
             >
               <span>Get This Package</span>
               <ArrowRight className="w-4 h-4" />

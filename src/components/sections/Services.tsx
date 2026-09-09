@@ -7,7 +7,7 @@ import { Check, ArrowRight } from "lucide-react";
 
 export function Services() {
   return (
-    <section id="services" className="py-24 sm:py-32 border-b border-[#F6DBC0]/12 relative overflow-hidden">
+    <section id="services" className="py-14 sm:py-32 border-b border-[#F6DBC0]/12 relative overflow-hidden">
       {/* Background Glow */}
       <div className="absolute top-1/3 right-[-10%] w-[600px] h-[600px] rounded-full bg-[#935073]/20 blur-[170px] pointer-events-none -z-10" />
 
@@ -28,7 +28,7 @@ export function Services() {
             return (
               <div
                 key={category.id}
-                className={`${colSpanClass} group rounded-3xl p-7 sm:p-9 transition-all duration-300 flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[rgba(56,24,66,0.65)] via-[rgba(43,20,53,0.55)] to-[rgba(30,12,38,0.7)] border border-[#F6DBC0]/18 hover:border-[#F6DBC0]/40 backdrop-blur-2xl shadow-[0_15px_35px_-5px_rgba(10,3,14,0.6),inset_0_1px_0_0_rgba(248,244,233,0.12)] hover:shadow-[0_20px_50px_-5px_rgba(80,45,85,0.4),0_0_25px_-5px_rgba(246,219,192,0.15)] hover:-translate-y-1`}
+                className={`${colSpanClass} group rounded-3xl p-5 sm:p-9 transition-all duration-300 flex flex-col justify-between relative overflow-hidden bg-gradient-to-br from-[rgba(56,24,66,0.65)] via-[rgba(43,20,53,0.55)] to-[rgba(30,12,38,0.7)] border border-[#F6DBC0]/18 hover:border-[#F6DBC0]/40 backdrop-blur-2xl shadow-[0_15px_35px_-5px_rgba(10,3,14,0.6),inset_0_1px_0_0_rgba(248,244,233,0.12)] hover:shadow-[0_20px_50px_-5px_rgba(80,45,85,0.4),0_0_25px_-5px_rgba(246,219,192,0.15)] hover:-translate-y-1`}
               >
                 {/* Subtle Radial Backlight inside Card on Hover */}
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#F6DBC0]/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500 pointer-events-none" />
@@ -102,7 +102,7 @@ export function Services() {
                   </span>
                   <a
                     href="#contact"
-                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#F6DBC0] hover:text-[#F8F4E9] transition-colors group-hover:translate-x-1 duration-200"
+                    className="inline-flex items-center gap-1.5 min-h-[44px] text-xs sm:text-sm font-bold text-[#F6DBC0] hover:text-[#F8F4E9] transition-colors group-hover:translate-x-1 duration-200"
                   >
                     Inquire For This Service
                     <ArrowRight className="w-3.5 h-3.5" />

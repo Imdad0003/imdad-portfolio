@@ -38,7 +38,7 @@ const points: Differentiator[] = [
 
 export function WhyWorkWithMeHome() {
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-14 sm:py-20 relative overflow-hidden">
       <Container>
         <SectionHeading
           badgeText="The Operator Advantage"
@@ -47,13 +47,13 @@ export function WhyWorkWithMeHome() {
           align="center"
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mt-8 sm:mt-12">
           {points.map((point) => {
             const Icon = point.icon;
             return (
               <div
                 key={point.title}
-                className="rounded-2xl p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-start group shadow-sm hover:shadow-md hover:-translate-y-1"
+                className="rounded-2xl p-5 sm:p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-start group shadow-sm hover:shadow-md hover:-translate-y-1"
               >
                 <div className="w-10 h-10 rounded-xl bg-[#FAF2EA] border border-[#F6DBC0] flex items-center justify-center text-[#7A3F26] mb-4 group-hover:scale-105 transition-transform">
                   <Icon className="w-5 h-5" />

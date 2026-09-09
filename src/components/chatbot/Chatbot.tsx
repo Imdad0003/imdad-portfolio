@@ -128,7 +128,7 @@ export function Chatbot() {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-[100]">
+    <div className="fixed bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] right-4 sm:right-6 z-[100]">
       {/* Floating Trigger Button with Tooltip */}
       <AnimatePresence>
         {!isOpen && (
@@ -175,7 +175,7 @@ export function Chatbot() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", stiffness: 300, damping: 28 }}
-            className="fixed inset-x-3 bottom-3 top-16 sm:inset-auto sm:right-6 sm:bottom-6 sm:w-[410px] sm:h-[620px] z-[100] flex flex-col"
+            className="fixed inset-x-2 sm:inset-auto sm:right-6 sm:bottom-6 sm:w-[410px] sm:h-[620px] top-14 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[100] flex flex-col"
           >
             <ChatWindow
               messages={messages}

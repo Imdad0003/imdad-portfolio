@@ -30,7 +30,7 @@ export function PricingCard({ service }: PricingCardProps) {
 
   return (
     <div
-      className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 group ${
+      className={`relative rounded-3xl p-5 sm:p-7 flex flex-col justify-between transition-all duration-300 group ${
         isHighlighted
           ? "bg-gradient-to-b from-white via-[#FDF9F5] to-[#FAF0F4] border-2 border-[#935073]/40 shadow-[0_20px_45px_-10px_rgba(147,80,115,0.1)] hover:border-[#935073]/60 hover:shadow-[0_25px_50px_-10px_rgba(147,80,115,0.16)] hover:-translate-y-1"
           : "bg-white/75 border border-[#502D55]/08 shadow-[0_10px_30px_-5px_rgba(80,45,85,0.04)] hover:border-[#935073]/30 hover:bg-white/95 hover:shadow-md hover:-translate-y-1"
@@ -62,7 +62,7 @@ export function PricingCard({ service }: PricingCardProps) {
         <h3 className="text-xl font-bold text-[#180D1D] group-hover:text-[#935073] transition-colors tracking-tight">
           {service.name}
         </h3>
-        <p className="mt-2 text-xs sm:text-sm text-[#56475C] leading-relaxed min-h-[2.5rem]">
+        <p className="mt-2 text-xs sm:text-sm text-[#56475C] leading-relaxed min-h-0 sm:min-h-[2.5rem]">
           {service.description}
         </p>
 
@@ -118,7 +118,7 @@ export function PricingCard({ service }: PricingCardProps) {
         <button
           type="button"
           onClick={handleGetStarted}
-          className={`w-full py-3 px-4 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-ring shadow-xs ${
+          className={`w-full py-3 px-4 min-h-[44px] rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-ring shadow-xs ${
             isHighlighted
               ? "bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] font-bold active:scale-[0.98] shadow-sm"
               : "bg-white text-[#180D1D] border border-[#502D55]/15 hover:border-[#180D1D] hover:bg-[#180D1D] hover:text-[#F8F4E9] active:scale-[0.98]"

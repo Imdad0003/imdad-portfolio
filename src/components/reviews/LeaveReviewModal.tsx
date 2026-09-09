@@ -80,13 +80,13 @@ export function LeaveReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-3xl bg-white/95 border border-[#502D55]/15 p-6 sm:p-8 backdrop-blur-2xl shadow-[0_25px_60px_rgba(80,45,85,0.15)] max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg rounded-3xl bg-white/95 border border-[#502D55]/15 p-5 sm:p-8 backdrop-blur-2xl shadow-[0_25px_60px_rgba(80,45,85,0.15)] max-h-[85dvh] overflow-y-auto">
         {/* Close Button */}
         <button
           type="button"
           onClick={handleReset}
-          className="absolute top-5 right-5 p-2 rounded-xl text-[#7A6880] hover:text-[#180D1D] bg-white border border-[#502D55]/15 hover:border-[#935073]/40 transition-colors cursor-pointer shadow-2xs"
+          className="absolute top-4 right-4 sm:top-5 sm:right-5 p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[#7A6880] hover:text-[#180D1D] bg-white border border-[#502D55]/15 hover:border-[#935073]/40 transition-colors cursor-pointer shadow-2xs"
           aria-label="Close modal"
         >
           <X className="w-4 h-4" />
@@ -112,7 +112,7 @@ export function LeaveReviewModal({
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-6 py-2.5 rounded-full font-bold text-xs bg-[#180D1D] text-[#F8F4E9] hover:bg-[#2B1435] transition-all cursor-pointer shadow-sm"
+                className="px-6 py-2.5 min-h-[44px] rounded-full font-bold text-xs bg-[#180D1D] text-[#F8F4E9] hover:bg-[#2B1435] transition-all cursor-pointer shadow-sm"
               >
                 Close Window
               </button>
@@ -121,7 +121,7 @@ export function LeaveReviewModal({
         ) : (
           /* Review Submission Form */
           <div>
-            <div className="mb-6 pr-8">
+            <div className="mb-6 pr-10">
               <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FAF0F4] border border-[#d69fb5]/40 text-[#78284C] font-semibold">
                 Client Experience
               </span>
@@ -145,7 +145,7 @@ export function LeaveReviewModal({
                 <label className="block text-xs font-mono uppercase text-[#7A6880] font-bold mb-2">
                   Rating: {rating} of 5 Stars
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -153,7 +153,7 @@ export function LeaveReviewModal({
                       onClick={() => setRating(star)}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
-                      className="p-1 hover:scale-110 transition-transform cursor-pointer focus-ring rounded"
+                      className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center hover:scale-110 transition-transform cursor-pointer focus-ring rounded-xl"
                       aria-label={`Rate ${star} stars`}
                     >
                       <Star
@@ -176,10 +176,11 @@ export function LeaveReviewModal({
                 <input
                   type="text"
                   required
+                  autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Rahul Sharma or Brand Studio"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-xs sm:text-sm shadow-2xs"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-base sm:text-sm shadow-2xs"
                 />
               </div>
 
@@ -191,10 +192,12 @@ export function LeaveReviewModal({
                 <input
                   type="email"
                   required
+                  autoComplete="email"
+                  inputMode="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@example.com"
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-xs sm:text-sm shadow-2xs"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-base sm:text-sm shadow-2xs"
                 />
                 <div className="flex items-center gap-1.5 text-[11px] text-[#7A6880] mt-1">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#935073]" />
@@ -213,7 +216,7 @@ export function LeaveReviewModal({
                   value={service}
                   onChange={(e) => setService(e.target.value)}
                   placeholder="e.g. Amazon Listing Pro, 7-Image Deck, Shopify Store..."
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-xs sm:text-sm shadow-2xs"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-base sm:text-sm shadow-2xs"
                 />
               </div>
 
@@ -228,7 +231,7 @@ export function LeaveReviewModal({
                   value={review}
                   onChange={(e) => setReview(e.target.value)}
                   placeholder="Share details about the quality of deliverables, turnaround speed, and communication..."
-                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-xs sm:text-sm resize-none shadow-2xs"
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] placeholder-[#7A6880]/50 focus:border-[#935073] focus:outline-none text-base sm:text-sm resize-none shadow-2xs"
                 />
               </div>
 
@@ -252,7 +255,7 @@ export function LeaveReviewModal({
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="px-4 py-2.5 rounded-xl text-xs font-medium text-[#56475C] hover:text-[#180D1D] transition-colors"
+                  className="px-4 py-2.5 min-h-[44px] rounded-xl text-xs font-medium text-[#56475C] hover:text-[#180D1D] transition-colors"
                 >
                   Cancel
                 </button>
@@ -260,7 +263,7 @@ export function LeaveReviewModal({
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="px-6 py-2.5 rounded-xl font-bold text-xs bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] transition-all disabled:opacity-50 cursor-pointer shadow-sm"
+                  className="px-6 py-2.5 min-h-[44px] rounded-xl font-bold text-xs bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] transition-all disabled:opacity-50 cursor-pointer shadow-sm"
                 >
                   {submitting ? "Submitting..." : "Submit Review"}
                 </button>

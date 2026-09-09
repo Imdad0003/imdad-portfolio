@@ -74,7 +74,7 @@ const selectedServices: ServicePreview[] = [
 
 export function SelectedServices() {
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-14 sm:py-20 relative overflow-hidden">
       <Container>
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
           <SectionHeading
@@ -101,7 +101,7 @@ export function SelectedServices() {
               <Link
                 key={service.title}
                 href={service.href}
-                className="rounded-2xl p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
+                className="rounded-2xl p-5 sm:p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-300 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-4">
@@ -138,7 +138,7 @@ export function SelectedServices() {
         <div className="mt-10 text-center sm:hidden">
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-[#502D55]/15 text-xs font-semibold text-[#180D1D] shadow-xs"
+            className="inline-flex items-center justify-center w-full min-h-[44px] gap-2 px-6 py-3 rounded-full bg-white border border-[#502D55]/15 text-xs font-semibold text-[#180D1D] shadow-xs"
           >
             <span>View All Services</span>
             <ArrowRight className="w-4 h-4" />

@@ -72,13 +72,13 @@ export default function ServicesPage() {
         />
 
         {/* Category Jump Anchor Bar */}
-        <div className="mt-8 flex justify-center overflow-x-auto pb-4 gap-2 no-scrollbar">
+        <div className="mt-8 flex justify-start sm:justify-center overflow-x-auto pb-4 gap-2 no-scrollbar px-2 sm:px-0">
           <div className="inline-flex items-center p-1.5 rounded-full bg-white/80 border border-[#502D55]/10 backdrop-blur-xl shadow-xs min-w-max">
             {categories.map((cat) => (
               <a
                 key={cat.id}
                 href={`#${cat.id}`}
-                className="px-3.5 py-1.5 rounded-full text-xs font-medium text-[#56475C] hover:text-[#180D1D] hover:bg-white transition-all whitespace-nowrap"
+                className="px-3.5 py-1.5 min-h-[36px] inline-flex items-center rounded-full text-xs font-medium text-[#56475C] hover:text-[#180D1D] hover:bg-white transition-all whitespace-nowrap"
               >
                 {cat.label}
               </a>
@@ -123,7 +123,7 @@ export default function ServicesPage() {
                   {services.map((service) => (
                     <div
                       key={service.id}
-                      className="rounded-2xl p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-200 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
+                      className="rounded-2xl p-5 sm:p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all duration-200 flex flex-col justify-between group shadow-sm hover:shadow-md hover:-translate-y-1"
                     >
                       <div>
                         {/* Top: Name & Badge */}
@@ -184,7 +184,7 @@ export default function ServicesPage() {
                         <button
                           type="button"
                           onClick={() => handleGetStarted(service)}
-                          className="w-full py-2.5 px-4 rounded-xl text-xs font-bold bg-white hover:bg-[#180D1D] hover:text-[#F8F4E9] text-[#180D1D] border border-[#502D55]/15 hover:border-[#180D1D] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
+                          className="w-full py-3 px-4 min-h-[44px] rounded-xl text-xs font-bold bg-white hover:bg-[#180D1D] hover:text-[#F8F4E9] text-[#180D1D] border border-[#502D55]/15 hover:border-[#180D1D] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
                         >
                           <span>Get Started</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -199,23 +199,23 @@ export default function ServicesPage() {
         </div>
 
         {/* Bottom Callout */}
-        <div className="mt-24 rounded-3xl bg-white/80 border border-[#502D55]/10 p-8 sm:p-10 text-center backdrop-blur-xl max-w-3xl mx-auto shadow-sm">
+        <div className="mt-16 sm:mt-24 rounded-3xl bg-white/80 border border-[#502D55]/10 p-6 sm:p-10 text-center backdrop-blur-xl max-w-3xl mx-auto shadow-sm">
           <h3 className="text-xl sm:text-2xl font-black text-[#180D1D]">
             Looking for a custom package or specific scope?
           </h3>
           <p className="mt-3 text-xs sm:text-sm text-[#56475C] leading-relaxed">
             Every business has different SKU volumes and creative requirements. Use our interactive pricing calculator or chat directly with the AI assistant.
           </p>
-          <div className="mt-6 flex flex-wrap justify-center items-center gap-4">
+          <div className="mt-6 flex flex-wrap justify-center items-center gap-3 sm:gap-4">
             <Link
               href="/pricing"
-              className="px-6 py-3 rounded-full text-xs font-bold bg-[#180D1D] text-[#F8F4E9] hover:bg-[#2B1435] transition-all shadow-sm"
+              className="w-full sm:w-auto px-6 py-3 min-h-[44px] inline-flex items-center justify-center rounded-full text-xs font-bold bg-[#180D1D] text-[#F8F4E9] hover:bg-[#2B1435] transition-all shadow-sm"
             >
               View Pricing Calculator
             </Link>
             <Link
               href="/contact"
-              className="px-6 py-3 rounded-full text-xs font-semibold text-[#180D1D] hover:bg-white bg-white/70 border border-[#502D55]/15 transition-all"
+              className="w-full sm:w-auto px-6 py-3 min-h-[44px] inline-flex items-center justify-center rounded-full text-xs font-semibold text-[#180D1D] hover:bg-white bg-white/70 border border-[#502D55]/15 transition-all"
             >
               Contact Direct
             </Link>

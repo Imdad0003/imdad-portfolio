@@ -107,8 +107,23 @@ export function Contact() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true);
     setErrorMessage(null);
+
+    // Client-side phone number validation
+    if (!formData.phone || !formData.phone.trim()) {
+      setErrorMessage("Please enter your WhatsApp number so I can contact you.");
+      return;
+    }
+
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      setErrorMessage(
+        "Please enter a valid WhatsApp / phone number (at least 10 digits)."
+      );
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       const res = await fetch("/api/contact", {
@@ -146,12 +161,12 @@ export function Contact() {
   const whatsappUrl = getWhatsAppUrl();
 
   return (
-    <section id="contact" className="py-24 sm:py-32 border-b border-[#F6DBC0]/15 relative overflow-hidden bg-gradient-to-b from-[#130917] via-[#220d29] to-[#130917]">
+    <section id="contact" className="py-14 sm:py-32 border-b border-[#F6DBC0]/15 relative overflow-hidden bg-gradient-to-b from-[#130917] via-[#220d29] to-[#130917]">
       {/* Background Soft Glow */}
       <div className="absolute top-1/2 right-[-10%] w-[600px] h-[600px] bg-[#935073]/25 blur-[170px] rounded-full pointer-events-none -z-10" />
 
       <Container>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           {/* Left Column: Direct Info & Social Channels (5 Cols) */}
           <div className="lg:col-span-5 flex flex-col justify-between">
             <div>
@@ -258,7 +273,7 @@ export function Contact() {
 
           {/* Right Column: Large Glass Contact Panel (7 Cols) */}
           <div className="lg:col-span-7">
-            <div className="rounded-3xl bg-gradient-to-br from-[rgba(56,24,66,0.75)] via-[rgba(43,20,53,0.7)] to-[rgba(30,12,38,0.85)] border border-[#F6DBC0]/25 p-7 sm:p-10 backdrop-blur-3xl shadow-[0_25px_60px_rgba(10,3,14,0.9),inset_0_1px_0_0_rgba(248,244,233,0.2)]">
+            <div className="rounded-3xl bg-gradient-to-br from-[rgba(56,24,66,0.75)] via-[rgba(43,20,53,0.7)] to-[rgba(30,12,38,0.85)] border border-[#F6DBC0]/25 p-5 sm:p-10 backdrop-blur-3xl shadow-[0_25px_60px_rgba(10,3,14,0.9),inset_0_1px_0_0_rgba(248,244,233,0.2)]">
               {submitted ? (
                 <div className="py-14 text-center flex flex-col items-center">
                   <div className="w-16 h-16 rounded-full bg-[#F6DBC0]/20 border border-[#F6DBC0]/40 flex items-center justify-center text-[#F6DBC0] mb-5 animate-pulse shadow-[0_0_30px_rgba(246,219,192,0.4)]">
@@ -331,12 +346,13 @@ export function Contact() {
                         type="text"
                         id="name"
                         required
+                        autoComplete="name"
                         value={formData.name}
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
                         placeholder="e.g. Rahul Sharma"
-                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
+                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-base sm:text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
                       />
                     </div>
 
@@ -351,12 +367,14 @@ export function Contact() {
                         type="email"
                         id="email"
                         required
+                        autoComplete="email"
+                        inputMode="email"
                         value={formData.email}
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
                         }
                         placeholder="you@example.com"
-                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
+                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-base sm:text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
                       />
                     </div>
                   </div>
@@ -368,17 +386,20 @@ export function Contact() {
                         htmlFor="phone"
                         className="block text-xs font-mono uppercase tracking-wider text-[#d8cfc4] mb-2 font-bold"
                       >
-                        Phone / WhatsApp
+                        WhatsApp / Phone *
                       </label>
                       <input
                         type="tel"
                         id="phone"
+                        required
+                        autoComplete="tel"
+                        inputMode="tel"
                         value={formData.phone}
                         onChange={(e) =>
                           setFormData({ ...formData, phone: e.target.value })
                         }
                         placeholder="+91 98765 43210"
-                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
+                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-base sm:text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
                       />
                     </div>
 
@@ -392,6 +413,7 @@ export function Contact() {
                       <input
                         type="text"
                         id="businessName"
+                        autoComplete="organization"
                         value={formData.businessName}
                         onChange={(e) =>
                           setFormData({
@@ -400,7 +422,7 @@ export function Contact() {
                           })
                         }
                         placeholder="e.g. Acme Naturals"
-                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
+                        className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-base sm:text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring"
                       />
                     </div>
                   </div>
@@ -419,7 +441,7 @@ export function Contact() {
                             key={service}
                             type="button"
                             onClick={() => toggleService(service)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer focus-ring ${
+                            className={`px-3 py-2 min-h-[38px] rounded-lg text-xs font-medium transition-all cursor-pointer focus-ring flex items-center justify-center ${
                               isSelected
                                 ? "bg-gradient-to-r from-[#F8F4E9] to-[#F6DBC0] text-[#220d29] font-bold shadow-sm"
                                 : "bg-[rgba(24,10,30,0.8)] border border-[#F6DBC0]/15 text-[#d8cfc4] hover:border-[#F6DBC0]/35 hover:text-[#F8F4E9]"
@@ -452,7 +474,7 @@ export function Contact() {
                         })
                       }
                       placeholder="Briefly describe your product, current marketplace/selling stage, what you need built, and target timeline..."
-                      className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring resize-none"
+                      className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-base sm:text-sm text-[#F8F4E9] placeholder-[#bba89d]/60 focus-ring resize-none"
                     />
                   </div>
 
@@ -470,7 +492,7 @@ export function Contact() {
                       onChange={(e) =>
                         setFormData({ ...formData, budget: e.target.value })
                       }
-                      className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-sm text-[#F8F4E9] focus-ring cursor-pointer"
+                      className="w-full px-4 py-3 rounded-xl bg-[rgba(24,10,30,0.85)] border border-[#F6DBC0]/18 text-base sm:text-sm text-[#F8F4E9] focus-ring cursor-pointer"
                     >
                       <option value="">Select a range...</option>
                       {budgetRanges.map((range) => (
@@ -508,7 +530,7 @@ export function Contact() {
                     type="submit"
                     variant="primary"
                     size="lg"
-                    className="w-full justify-center text-sm sm:text-base py-4"
+                    className="w-full justify-center text-sm sm:text-base py-4 min-h-[48px]"
                     disabled={submitting}
                   >
                     {submitting ? (

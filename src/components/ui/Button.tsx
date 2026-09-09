@@ -31,8 +31,8 @@ export function Button({
 
   const sizeStyles = {
     sm: "text-xs px-3.5 py-1.5 gap-1.5 font-medium",
-    md: "text-sm px-5 py-2.5 gap-2 font-semibold",
-    lg: "text-base px-7 py-3.5 gap-2.5 font-bold tracking-tight",
+    md: "text-sm px-5 py-2.5 min-h-[44px] gap-2 font-semibold",
+    lg: "text-base px-7 py-3.5 min-h-[48px] gap-2.5 font-bold tracking-tight",
   };
 
   const variantStyles = {

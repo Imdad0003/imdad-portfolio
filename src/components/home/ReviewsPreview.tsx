@@ -10,9 +10,9 @@ export async function ReviewsPreview() {
   const topReviews: PublicReview[] = allApproved.slice(0, 3);
 
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-14 sm:py-20 relative overflow-hidden">
       <Container>
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <SectionHeading
             badgeText="Verified Feedback"
             title="What Clients Say"
@@ -22,7 +22,7 @@ export async function ReviewsPreview() {
 
           <Link
             href="/reviews"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#935073] hover:text-[#180D1D] transition-colors self-start sm:self-auto shrink-0 pb-1"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#935073] hover:text-[#180D1D] transition-colors self-start sm:self-auto shrink-0 pb-1 min-h-[44px]"
           >
             <span>View All Reviews</span>
             <ArrowRight className="w-4 h-4" />
@@ -34,7 +34,7 @@ export async function ReviewsPreview() {
             {topReviews.map((review) => (
               <div
                 key={review.id}
-                className="rounded-2xl p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1"
+                className="rounded-2xl p-5 sm:p-6 bg-white/75 border border-[#502D55]/08 hover:border-[#935073]/30 hover:bg-white/95 backdrop-blur-xl transition-all flex flex-col justify-between shadow-sm hover:shadow-md hover:-translate-y-1"
               >
                 <div>
                   {/* Rating Stars */}
@@ -74,7 +74,7 @@ export async function ReviewsPreview() {
           </div>
         ) : (
           /* Honest Empty State when no reviews have been submitted or approved yet */
-          <div className="rounded-2xl p-8 sm:p-10 bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center max-w-2xl mx-auto shadow-sm">
+          <div className="rounded-2xl p-6 sm:p-10 bg-white/80 border border-[#502D55]/10 backdrop-blur-xl text-center max-w-2xl mx-auto shadow-sm">
             <div className="w-12 h-12 rounded-2xl bg-[#FAF2EA] border border-[#F6DBC0] flex items-center justify-center text-[#7A3F26] mx-auto mb-4">
               <MessageSquareHeart className="w-6 h-6" />
             </div>
@@ -84,16 +84,16 @@ export async function ReviewsPreview() {
             <p className="mt-2 text-xs sm:text-sm text-[#56475C] leading-relaxed max-w-lg mx-auto">
               We never fabricate testimonials or invent placeholder customer reviews. Client feedback is collected and verified following project milestones.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center items-center gap-3">
+            <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-3">
               <Link
                 href="/reviews"
-                className="px-5 py-2.5 rounded-full text-xs font-bold bg-[#180D1D] text-[#F8F4E9] hover:bg-[#2B1435] transition-all shadow-sm"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-bold bg-[#180D1D] text-[#F8F4E9] hover:bg-[#2B1435] transition-all shadow-sm"
               >
                 Leave a Review
               </Link>
               <Link
                 href="/reviews"
-                className="px-5 py-2.5 rounded-full text-xs font-semibold text-[#180D1D] hover:bg-white bg-white/70 border border-[#502D55]/15 transition-all shadow-2xs"
+                className="w-full sm:w-auto min-h-[44px] inline-flex items-center justify-center px-5 py-2.5 rounded-full text-xs font-semibold text-[#180D1D] hover:bg-white bg-white/70 border border-[#502D55]/15 transition-all shadow-2xs"
               >
                 View Reviews Hub
               </Link>

@@ -61,11 +61,11 @@ export function ParticleField() {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    // Determine particle count based on screen width
+    // Determine particle count based on screen width (optimized for mobile performance)
     const getParticleCount = (w: number) => {
-      if (w < 640) return 80;
-      if (w < 1024) return 140;
-      return 230;
+      if (w < 640) return 35; // Lightweight on mobile CPU/GPU
+      if (w < 1024) return 90;
+      return 200;
     };
 
     let particles: Particle[] = [];
@@ -75,9 +75,8 @@ export function ParticleField() {
       particles = [];
 
       // Hero center area exclusion
-      // Headline is centered, typically ~260-380px wide on mobile, ~550-700px on desktop
       const isMobile = width < 768;
-      const minRadius = isMobile ? 120 : 200;
+      const minRadius = isMobile ? 90 : 200;
       const maxRadius = Math.max(width, height) * 0.75;
 
       for (let i = 0; i < count; i++) {
@@ -101,12 +100,9 @@ export function ParticleField() {
           baseAlpha = 0.2 + Math.random() * 0.3;
         }
 
-        // Distance from center: higher density in the mid-orbital ring around hero
-        // with a soft power curve so particles spread gracefully outward
         const distanceFactor = Math.pow(Math.random(), 0.75);
         const baseRadius = minRadius + distanceFactor * (maxRadius - minRadius);
 
-        // Angular velocity: Layer 1 slower, Layer 2 medium, Layer 3 slow float
         const speedDir = Math.random() > 0.45 ? 1 : -1;
         const baseSpeed =
           layer === 1
@@ -131,17 +127,23 @@ export function ParticleField() {
           baseAlpha,
           alphaSpeed: 0.001 + Math.random() * 0.002,
           alphaPhase: Math.random() * Math.PI * 2,
-          aspectSkew: 0.85 + Math.random() * 0.3, // slight ellipse (horizontal spread)
+          aspectSkew: 0.85 + Math.random() * 0.3,
           offsetX: 0,
           offsetY: 0,
         });
       }
     };
 
+    const isTouchDevice =
+      typeof window !== "undefined" &&
+      ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
     const handleResize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const isMobileScreen = width < 768;
+      // Clamp DPR to 1.5 on mobile to avoid high-DPI GPU fill-rate strain
+      dpr = Math.min(window.devicePixelRatio || 1, isMobileScreen ? 1.5 : 2);
 
       canvas.width = width * dpr;
       canvas.height = height * dpr;
@@ -171,8 +173,10 @@ export function ParticleField() {
     };
 
     window.addEventListener("resize", handleResize);
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    document.addEventListener("mouseleave", handleMouseLeave);
+    if (!isTouchDevice) {
+      window.addEventListener("mousemove", handleMouseMove, { passive: true });
+      document.addEventListener("mouseleave", handleMouseLeave);
+    }
     window.addEventListener("scroll", handleScroll, { passive: true });
 
     handleResize();

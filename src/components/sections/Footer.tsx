@@ -9,7 +9,7 @@ import { Instagram } from "@/components/ui/InstagramIcon";
 
 export function Footer() {
   return (
-    <footer className="bg-white/70 border-t border-[#502D55]/10 pt-16 pb-12 text-[#56475C] text-xs sm:text-sm backdrop-blur-xl relative overflow-hidden">
+    <footer className="bg-white/70 border-t border-[#502D55]/10 pt-12 sm:pt-16 pb-[max(3rem,calc(env(safe-area-inset-bottom)+2rem))] text-[#56475C] text-xs sm:text-sm backdrop-blur-xl relative overflow-hidden">
       {/* Subtle Bottom Warm Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-2/3 h-24 bg-gradient-to-t from-[#F6DBC0]/20 to-transparent blur-3xl pointer-events-none" />
 
@@ -49,7 +49,7 @@ export function Footer() {
                 href={getWhatsAppUrl()}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-white border border-[#502D55]/15 flex items-center justify-center text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/50 transition-all focus-ring shadow-2xs"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-white border border-[#502D55]/15 flex items-center justify-center text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/50 transition-all focus-ring shadow-2xs"
                 aria-label="WhatsApp (+91 7352608269)"
                 title="Chat on WhatsApp (+91 7352608269)"
               >
@@ -59,7 +59,7 @@ export function Footer() {
                 href={siteConfig.links.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-9 h-9 rounded-xl bg-white border border-[#502D55]/15 flex items-center justify-center text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/50 transition-all focus-ring shadow-2xs"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-white border border-[#502D55]/15 flex items-center justify-center text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/50 transition-all focus-ring shadow-2xs"
                 aria-label="Instagram @imdad.builds"
                 title="Instagram @imdad.builds"
               >
@@ -67,7 +67,7 @@ export function Footer() {
               </a>
               <a
                 href={siteConfig.links.email}
-                className="w-9 h-9 rounded-xl bg-white border border-[#502D55]/15 flex items-center justify-center text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/50 transition-all focus-ring shadow-2xs"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl bg-white border border-[#502D55]/15 flex items-center justify-center text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/50 transition-all focus-ring shadow-2xs"
                 aria-label="Email"
                 title="Email Imdad"
               >

@@ -55,8 +55,23 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
     setErrorMessage(null);
+
+    // Client-side phone number validation
+    if (!formData.phone || !formData.phone.trim()) {
+      setErrorMessage("Please enter your WhatsApp number so I can contact you.");
+      return;
+    }
+
+    const phoneDigits = formData.phone.replace(/\D/g, "");
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+      setErrorMessage(
+        "Please enter a valid WhatsApp / phone number (at least 10 digits)."
+      );
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
       const res = await fetch("/api/contact", {
@@ -112,7 +127,7 @@ export default function ContactPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
         {/* Contact Form */}
-        <div className="lg:col-span-7 bg-white/80 border border-[#502D55]/10 rounded-3xl p-6 sm:p-10 backdrop-blur-xl shadow-sm relative overflow-hidden">
+        <div className="lg:col-span-7 bg-white/80 border border-[#502D55]/10 rounded-3xl p-5 sm:p-10 backdrop-blur-xl shadow-sm relative overflow-hidden">
           <div className="absolute top-0 right-0 w-64 h-64 bg-[#F6DBC0]/15 rounded-full blur-3xl pointer-events-none" />
 
           <AnimatePresence mode="wait">
@@ -148,7 +163,7 @@ export default function ContactPage() {
                       message: "",
                     });
                   }}
-                  className="px-6 py-2.5 rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] text-sm hover:bg-[#FAF2EA] transition-colors font-medium shadow-2xs cursor-pointer"
+                  className="px-6 py-2.5 min-h-[44px] rounded-xl bg-white border border-[#502D55]/15 text-[#180D1D] text-sm hover:bg-[#FAF2EA] transition-colors font-medium shadow-2xs cursor-pointer"
                 >
                   Send Another Inquiry
                 </button>
@@ -192,12 +207,13 @@ export default function ContactPage() {
                     <input
                       type="text"
                       required
+                      autoComplete="name"
                       value={formData.name}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
                       }
                       placeholder="e.g. John Doe"
-                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs"
+                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-base sm:text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs"
                     />
                   </div>
                   <div>
@@ -207,12 +223,14 @@ export default function ContactPage() {
                     <input
                       type="email"
                       required
+                      autoComplete="email"
+                      inputMode="email"
                       value={formData.email}
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
                       placeholder="you@company.com"
-                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs"
+                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-base sm:text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs"
                     />
                   </div>
                 </div>
@@ -220,19 +238,19 @@ export default function ContactPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs uppercase tracking-wider font-mono text-[#180D1D] font-bold mb-2">
-                      WhatsApp / Phone{" "}
-                      <span className="text-[#7A6880] font-normal font-sans">
-                        (Optional)
-                      </span>
+                      WhatsApp / Phone *
                     </label>
                     <input
                       type="tel"
+                      required
+                      autoComplete="tel"
+                      inputMode="tel"
                       value={formData.phone}
                       onChange={(e) =>
                         setFormData({ ...formData, phone: e.target.value })
                       }
                       placeholder="+91 98765 43210"
-                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs"
+                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-base sm:text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs"
                     />
                   </div>
                   <div>
@@ -244,7 +262,7 @@ export default function ContactPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, service: e.target.value })
                       }
-                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs cursor-pointer"
+                      className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] text-base sm:text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs cursor-pointer"
                     >
                       <option value="E-Commerce & Marketplaces">
                         E-Commerce & Marketplaces
@@ -286,7 +304,7 @@ export default function ContactPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, budget: e.target.value })
                     }
-                    className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs cursor-pointer"
+                    className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] text-base sm:text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors shadow-2xs cursor-pointer"
                   >
                     <option value="Under ₹10,000">Under ₹10,000</option>
                     <option value="₹10,000 – ₹25,000">₹10,000 – ₹25,000</option>
@@ -311,7 +329,7 @@ export default function ContactPage() {
                       setFormData({ ...formData, message: e.target.value })
                     }
                     placeholder="Tell me about your product, your target audience, current bottlenecks, or specific timeline constraints..."
-                    className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors resize-none shadow-2xs"
+                    className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-base sm:text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors resize-none shadow-2xs"
                   />
                 </div>
 
@@ -339,7 +357,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-[0_4px_20px_-2px_rgba(24,13,29,0.25)] hover:shadow-[0_8px_30px_-4px_rgba(80,45,85,0.35)] disabled:opacity-50 cursor-pointer"
+                  className="w-full py-4 min-h-[48px] rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all duration-300 bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] shadow-[0_4px_20px_-2px_rgba(24,13,29,0.25)] hover:shadow-[0_8px_30px_-4px_rgba(80,45,85,0.35)] disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
@@ -361,7 +379,7 @@ export default function ContactPage() {
         {/* Sidebar Info & Direct Channels */}
         <div className="lg:col-span-5 space-y-6">
           {/* Quick Contact Options */}
-          <div className="bg-white/80 border border-[#502D55]/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-sm">
+          <div className="bg-white/80 border border-[#502D55]/10 rounded-3xl p-5 sm:p-8 backdrop-blur-xl shadow-sm">
             <h3 className="text-xl font-bold text-[#180D1D] mb-4">
               Direct Channels
             </h3>
