@@ -162,14 +162,25 @@ export default function ContactPage() {
                 className="space-y-6 relative z-10"
               >
                 {/* Anti-spam honeypot */}
-                <div className="hidden" aria-hidden="true">
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    left: "-9999px",
+                    top: "-9999px",
+                    opacity: 0,
+                    pointerEvents: "none",
+                    height: 0,
+                    width: 0,
+                  }}
+                >
                   <input
                     type="text"
                     name="_hp"
                     value={honeypot}
                     onChange={(e) => setHoneypot(e.target.value)}
                     tabIndex={-1}
-                    autoComplete="off"
+                    autoComplete="new-password"
                   />
                 </div>
 

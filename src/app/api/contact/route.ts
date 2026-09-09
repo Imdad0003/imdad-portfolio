@@ -68,8 +68,9 @@ export async function POST(req: NextRequest) {
       _hp,
     } = body;
 
-    // Honeypot anti-spam check: if bot filled this hidden field, silently exit
+    // Honeypot anti-spam check: if bot filled this hidden field, safely exit
     if (_hp && typeof _hp === "string" && _hp.trim().length > 0) {
+      console.warn("[Contact API] Honeypot triggered with value:", _hp);
       return NextResponse.json(
         { success: true, message: "Inquiry received successfully." },
         { status: 200 }
@@ -246,6 +247,8 @@ Reply directly to this email to respond to ${cleanName} (${cleanEmail}).`;
     const resendFrom = process.env.RESEND_FROM_EMAIL || "Imdad Studio Inquiries <onboarding@resend.dev>";
 
     if (resendApiKey) {
+      console.log(`[Contact API] Attempting email dispatch via Resend to ${TARGET_EMAIL}...`);
+
       const resendRes = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -262,20 +265,36 @@ Reply directly to this email to respond to ${cleanName} (${cleanEmail}).`;
         }),
       });
 
+      const resendData = await resendRes.json().catch(() => ({}));
+
       if (!resendRes.ok) {
-        const errorData = await resendRes.json().catch(() => ({}));
-        console.error("[Contact API] Resend sending error:", errorData);
+        console.error("[Contact API] Resend dispatch error:", {
+          status: resendRes.status,
+          response: resendData,
+        });
+
+        const providerMessage =
+          (typeof resendData?.message === "string" && resendData.message) ||
+          "Unable to deliver inquiry via email provider at this moment.";
+
         return NextResponse.json(
           {
             success: false,
-            error: "Unable to deliver inquiry via email provider at this moment. Please reach out via WhatsApp.",
+            error: providerMessage,
+            code: resendData?.name || "PROVIDER_DELIVERY_ERROR",
           },
-          { status: 502 }
+          { status: resendRes.status >= 400 && resendRes.status < 600 ? resendRes.status : 502 }
         );
       }
 
+      console.log(`[Contact API] Resend accepted email. Resend ID: ${resendData?.id}`);
+
       return NextResponse.json(
-        { success: true, message: "Inquiry sent successfully." },
+        {
+          success: true,
+          message: "Inquiry sent successfully.",
+          emailId: resendData?.id,
+        },
         { status: 200 }
       );
     }
