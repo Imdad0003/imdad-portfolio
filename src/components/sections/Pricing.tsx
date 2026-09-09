@@ -43,6 +43,7 @@ export function Pricing() {
           title="Simple Pricing. Clear Deliverables."
           description="Choose the service you need. Every project is quoted transparently, with no unnecessary surprises."
           align="center"
+          as="h1"
         />
 
         {/* Horizontally Scrollable Category Filter Tabs */}

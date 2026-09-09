@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { siteConfig } from "@/data/config";
 import { Navbar } from "@/components/sections/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { Chatbot } from "@/components/chatbot/Chatbot";
@@ -8,32 +9,41 @@ import { CursorGlow } from "@/components/ui/CursorGlow";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://imdad.dev"),
-  title: "Imdad — E-commerce Entrepreneur & Digital Business Specialist",
+  metadataBase: new URL(siteConfig.siteUrl),
+  title: {
+    default: "Imdad Digital Studio | E-commerce, Websites & Digital Solutions",
+    template: "%s | Imdad Digital Studio",
+  },
   description:
-    "Imdad builds and grows e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing. Founder of EasyXo.",
+    "Imdad Digital Studio helps businesses build and grow online with e-commerce solutions, marketplace listings, product creatives, websites, social media, AI services and more.",
   keywords: [
+    "Imdad Digital Studio",
     "Imdad",
     "EasyXo",
-    "E-commerce Entrepreneur",
-    "Amazon Seller Specialist",
-    "Flipkart Listing Expert",
-    "Meesho Listing",
-    "Product Creative Designer",
-    "Digital Marketing",
-    "UGC Ads",
-    "E-commerce Consultant India",
+    "E-commerce Specialist India",
+    "Amazon Listing Optimization",
+    "Flipkart Product Listing",
+    "Meesho Cataloging",
+    "Product Creative Design",
+    "Shopify Store Development",
+    "Next.js E-commerce",
+    "Meta Ads Creatives",
+    "UGC Reel Ads",
   ],
-  authors: [{ name: "Imdad" }],
+  authors: [{ name: "Imdad Digital Studio", url: siteConfig.siteUrl }],
   creator: "Imdad",
+  publisher: "Imdad Digital Studio",
+  alternates: {
+    canonical: siteConfig.siteUrl,
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://imdad.dev",
-    siteName: "Imdad Portfolio",
-    title: "Imdad — E-commerce Entrepreneur & Digital Business Specialist",
+    url: siteConfig.siteUrl,
+    siteName: "Imdad Digital Studio",
+    title: "Imdad Digital Studio | E-commerce, Websites & Digital Solutions",
     description:
-      "I build and grow e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
+      "Imdad Digital Studio helps businesses build and grow online with e-commerce solutions, marketplace listings, product creatives, websites, social media, AI services and more.",
     images: [
       {
         url: "/imdad-logo.png",
@@ -45,14 +55,21 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Imdad — E-commerce Entrepreneur & Digital Business Specialist",
+    title: "Imdad Digital Studio | E-commerce, Websites & Digital Solutions",
     description:
-      "I build and grow e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
+      "Imdad Digital Studio helps businesses build and grow online with e-commerce solutions, marketplace listings, product creatives, websites, social media, AI services and more.",
     images: ["/imdad-logo.png"],
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
   icons: {
     icon: [
@@ -67,6 +84,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon.ico",
   },
   manifest: "/manifest.webmanifest",
+  verification: {
+    google: "e1fmxKRzHnpgDmx5fh3Oylk7izJZUSPwzdcCkES3w10",
+  },
 };
 
 const jsonLd = {
@@ -74,19 +94,19 @@ const jsonLd = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://imdad.dev/#organization",
+      "@id": `${siteConfig.siteUrl}/#organization`,
       "name": "Imdad Digital Studio",
-      "url": "https://imdad.dev",
+      "url": siteConfig.siteUrl,
       "logo": {
         "@type": "ImageObject",
-        "@id": "https://imdad.dev/#logo",
-        "url": "https://imdad.dev/imdad-logo.png",
-        "contentUrl": "https://imdad.dev/imdad-logo.png",
+        "@id": `${siteConfig.siteUrl}/#logo`,
+        "url": `${siteConfig.siteUrl}/imdad-logo.png`,
+        "contentUrl": `${siteConfig.siteUrl}/imdad-logo.png`,
         "caption": "Imdad Digital Studio Logo",
         "width": 1024,
         "height": 1024,
       },
-      "image": "https://imdad.dev/imdad-logo.png",
+      "image": `${siteConfig.siteUrl}/imdad-logo.png`,
       "sameAs": [
         "https://www.instagram.com/imdad.builds",
         "https://easyxo.in",
@@ -95,18 +115,36 @@ const jsonLd = {
         "@type": "ContactPoint",
         "email": "imdad.builds@gmail.com",
         "telephone": "+91 7352608269",
-        "contactType": "customer support",
+        "contactType": "customer service",
       },
     },
     {
       "@type": "WebSite",
-      "@id": "https://imdad.dev/#website",
-      "url": "https://imdad.dev",
+      "@id": `${siteConfig.siteUrl}/#website`,
+      "url": siteConfig.siteUrl,
       "name": "Imdad Digital Studio",
       "description":
-        "Imdad builds and grows e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
+        "Imdad Digital Studio helps businesses build and grow online with e-commerce solutions, marketplace listings, product creatives, websites, social media, AI services and more.",
       "publisher": {
-        "@id": "https://imdad.dev/#organization",
+        "@id": `${siteConfig.siteUrl}/#organization`,
+      },
+    },
+    {
+      "@type": "ProfessionalService",
+      "@id": `${siteConfig.siteUrl}/#service`,
+      "name": "Imdad Digital Studio",
+      "url": siteConfig.siteUrl,
+      "image": `${siteConfig.siteUrl}/imdad-logo.png`,
+      "email": "imdad.builds@gmail.com",
+      "telephone": "+91 7352608269",
+      "priceRange": "$$",
+      "description":
+        "Digital studio specializing in e-commerce listings, product creatives, high-converting websites, and growth marketing.",
+      "founder": {
+        "@type": "Person",
+        "name": "Imdad",
+        "jobTitle": "Founder & Digital Specialist",
+        "sameAs": "https://www.instagram.com/imdad.builds",
       },
     },
   ],

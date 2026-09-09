@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import { siteConfig } from "@/data/config";
 import { Hero } from "@/components/sections/Hero";
 import { SelectedServices } from "@/components/home/SelectedServices";
 import { SelectedWork } from "@/components/home/SelectedWork";
@@ -5,6 +7,15 @@ import { WhyWorkWithMeHome } from "@/components/home/WhyWorkWithMeHome";
 import { ReviewsPreview } from "@/components/home/ReviewsPreview";
 import { AiAssistantCta } from "@/components/home/AiAssistantCta";
 import { FinalCta } from "@/components/home/FinalCta";
+
+export const metadata: Metadata = {
+  title: "Imdad Digital Studio | E-commerce, Websites & Digital Solutions",
+  description:
+    "Imdad Digital Studio helps businesses build and grow online with e-commerce solutions, marketplace listings, product creatives, websites, social media, AI services and more.",
+  alternates: {
+    canonical: siteConfig.siteUrl,
+  },
+};
 
 export default function Home() {
   return (

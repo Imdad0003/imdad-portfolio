@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
@@ -14,6 +15,21 @@ import {
 } from "lucide-react";
 import { Instagram } from "@/components/ui/InstagramIcon";
 
+export const metadata: Metadata = {
+  title: "About Imdad",
+  description:
+    "Learn about Imdad, founder of EasyXo and digital specialist helping brands scale with conversion-first design and operator experience.",
+  alternates: {
+    canonical: `${siteConfig.siteUrl}/about`,
+  },
+  openGraph: {
+    title: "About Imdad | Imdad Digital Studio",
+    description:
+      "Learn about Imdad, founder of EasyXo and digital specialist helping brands scale with conversion-first design and operator experience.",
+    url: `${siteConfig.siteUrl}/about`,
+  },
+};
+
 export default function AboutPage() {
   return (
     <div className="py-16 sm:py-24">
@@ -24,6 +40,7 @@ export default function AboutPage() {
           title="Imdad — E-commerce Entrepreneur &amp; Digital Specialist"
           description="Building digital businesses that look better, convert higher, and operate smoothly."
           align="center"
+          as="h1"
         />
 
         {/* Founder Bio & Abstract Avatar Grid */}

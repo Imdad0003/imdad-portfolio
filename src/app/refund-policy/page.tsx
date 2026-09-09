@@ -2,10 +2,20 @@ import React from "react";
 import Link from "next/link";
 import { RefreshCw, ArrowLeft } from "lucide-react";
 
-export const metadata = {
-  title: "Refund & Cancellation Policy | Imdad Builds",
+import type { Metadata } from "next";
+import { siteConfig } from "@/data/config";
+
+export const metadata: Metadata = {
+  title: "Refund & Cancellation Policy",
   description:
-    "Refund and Cancellation Policy for digital services, custom development, and design engagements with Imdad Builds.",
+    "Clear guidelines on project milestones, cancellations, deposits, and refunds for custom digital services with Imdad Digital Studio.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+  alternates: {
+    canonical: `${siteConfig.siteUrl}/refund-policy`,
+  },
 };
 
 export default function RefundPolicyPage() {

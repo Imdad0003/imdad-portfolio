@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Imdad Digital Studio",
     short_name: "Imdad",
     description:
-      "Imdad builds and grows e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
+      "Imdad Digital Studio helps businesses build and grow online with e-commerce solutions, marketplace listings, product creatives, websites, social media, AI services and more.",
     start_url: "/",
     display: "standalone",
     background_color: "#F8F4E9",

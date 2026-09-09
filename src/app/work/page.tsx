@@ -170,6 +170,7 @@ export default function WorkPage() {
           title="Actual Work. Transparent Execution."
           description="A curated look into marketplace setups, visual decks, digital stores, and creative testing."
           align="center"
+          as="h1"
         />
 
         {/* Category Filters */}

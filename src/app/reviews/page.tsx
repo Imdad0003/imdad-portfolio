@@ -63,6 +63,7 @@ export default function ReviewsPage() {
             title="Real Reviews From Real Projects"
             description="All reviews shown below are submitted by verified clients upon completed milestones. Zero placeholder reviews."
             className="mb-0"
+            as="h1"
           />
 
           <button

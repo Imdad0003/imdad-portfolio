@@ -69,6 +69,7 @@ export default function ServicesPage() {
           title="Digital Services Engineered For E-Commerce &amp; Growth"
           description="Every service is quoted transparently with clear deliverables and an active operator mindset."
           align="center"
+          as="h1"
         />
 
         {/* Category Jump Anchor Bar */}

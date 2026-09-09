@@ -2,10 +2,20 @@ import React from "react";
 import Link from "next/link";
 import { FileText, ArrowLeft } from "lucide-react";
 
-export const metadata = {
-  title: "Terms & Conditions | Imdad Builds",
+import type { Metadata } from "next";
+import { siteConfig } from "@/data/config";
+
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
   description:
-    "Terms and Conditions governing digital services, project engagements, and client deliverables with Imdad Builds.",
+    "Terms and conditions governing digital services, deliverables, ownership, and client engagements with Imdad Digital Studio.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+  alternates: {
+    canonical: `${siteConfig.siteUrl}/terms`,
+  },
 };
 
 export default function TermsPage() {

@@ -2,10 +2,20 @@ import React from "react";
 import Link from "next/link";
 import { ShieldCheck, ArrowLeft } from "lucide-react";
 
-export const metadata = {
-  title: "Privacy Policy | Imdad Builds",
+import type { Metadata } from "next";
+import { siteConfig } from "@/data/config";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
   description:
-    "Privacy Policy for Imdad Builds digital services studio. Learn how personal data and project confidentiality are handled.",
+    "Privacy Policy for Imdad Digital Studio explaining how client data, project confidentiality, and contact information are protected.",
+  robots: {
+    index: false,
+    follow: true,
+  },
+  alternates: {
+    canonical: `${siteConfig.siteUrl}/privacy-policy`,
+  },
 };
 
 export default function PrivacyPolicyPage() {
