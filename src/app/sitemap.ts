@@ -2,12 +2,12 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/data/config";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = siteConfig.siteUrl;
+  const baseUrl = siteConfig.siteUrl.replace(/\/+$/, "");
   const now = new Date();
 
   return [
     {
-      url: `${baseUrl}`,
+      url: baseUrl,
       lastModified: now,
       changeFrequency: "weekly",
       priority: 1.0,
@@ -53,6 +53,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.7,
+    },
+    {
+      url: `${baseUrl}/privacy-policy`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/refund-policy`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
     },
   ];
 }

@@ -1,11 +1,10 @@
+const rawSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://imdad-portfolio-three.vercel.app";
+
 export const siteConfig = {
   name: "Imdad Digital Studio",
   shortName: "Imdad",
-  siteUrl:
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "https://imdad-portfolio-imdad0003.vercel.app"),
+  siteUrl: rawSiteUrl.replace(/\/+$/, ""),
   role: "E-commerce Entrepreneur & Digital Business Specialist",
   tagline: "I build and grow e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
   shortTagline: "BUILD • CREATE • SCALE",
