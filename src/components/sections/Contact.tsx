@@ -12,6 +12,7 @@ import {
   CheckCircle2,
   Send,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react";
 import { Instagram } from "@/components/ui/InstagramIcon";
 
@@ -52,8 +53,10 @@ export function Contact() {
     budget: "",
   });
 
+  const [honeypot, setHoneypot] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Listen for prefill events dispatched by AI Chatbot
   useEffect(() => {
@@ -102,13 +105,42 @@ export function Contact() {
     });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    setTimeout(() => {
-      setSubmitting(false);
+    setErrorMessage(null);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          businessName: formData.businessName,
+          services: formData.selectedServices,
+          budget: formData.budget,
+          projectDetails: formData.projectDetails,
+          _hp: honeypot,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.error || "Failed to deliver inquiry. Please try again or reach out on WhatsApp."
+        );
+      }
+
       setSubmitted(true);
-    }, 600);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+      setErrorMessage(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const whatsappUrl = getWhatsAppUrl();
@@ -244,6 +276,8 @@ export function Contact() {
                     type="button"
                     onClick={() => {
                       setSubmitted(false);
+                      setErrorMessage(null);
+                      setHoneypot("");
                       setFormData({
                         name: "",
                         email: "",
@@ -261,6 +295,18 @@ export function Contact() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Anti-spam honeypot */}
+                  <div className="hidden" aria-hidden="true">
+                    <input
+                      type="text"
+                      name="_hp"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
+
                   {/* Name & Email */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -423,6 +469,28 @@ export function Contact() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Error Alert Banner */}
+                  {errorMessage && (
+                    <div className="p-4 rounded-xl bg-red-950/40 border border-red-500/40 text-red-200 text-xs sm:text-sm flex items-start gap-3 shadow-md">
+                      <AlertCircle className="w-5 h-5 shrink-0 text-red-400 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-semibold text-red-200">{errorMessage}</p>
+                        <p className="text-[11px] sm:text-xs mt-1 text-red-300/80">
+                          Need an immediate response? Chat directly on{" "}
+                          <a
+                            href={whatsappUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline font-bold text-[#F6DBC0] hover:text-white"
+                          >
+                            WhatsApp (+91 7352608269)
+                          </a>
+                          .
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Submit Button */}
                   <Button

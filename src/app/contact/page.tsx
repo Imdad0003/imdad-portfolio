@@ -12,6 +12,7 @@ import {
   MessageSquare,
   ShieldCheck,
   PhoneCall,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { siteConfig, getWhatsAppUrl } from "@/data/config";
@@ -25,8 +26,10 @@ export default function ContactPage() {
     budget: "₹10,000 – ₹25,000",
     message: "",
   });
+  const [honeypot, setHoneypot] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Listen for prefill events dispatched by AI Chatbot
   useEffect(() => {
@@ -50,15 +53,41 @@ export default function ContactPage() {
     return () => window.removeEventListener("imdad:prefill-inquiry", handlePrefill);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage(null);
 
-    // Simulate clean submission
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          service: formData.service,
+          budget: formData.budget,
+          message: formData.message,
+          _hp: honeypot,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.error || "Failed to deliver inquiry. Please try again or reach out on WhatsApp."
+        );
+      }
+
       setIsSuccess(true);
-    }, 1000);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+      setErrorMessage(msg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -108,6 +137,8 @@ export default function ContactPage() {
                 <button
                   onClick={() => {
                     setIsSuccess(false);
+                    setErrorMessage(null);
+                    setHoneypot("");
                     setFormData({
                       name: "",
                       email: "",
@@ -130,6 +161,18 @@ export default function ContactPage() {
                 onSubmit={handleSubmit}
                 className="space-y-6 relative z-10"
               >
+                {/* Anti-spam honeypot */}
+                <div className="hidden" aria-hidden="true">
+                  <input
+                    type="text"
+                    name="_hp"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-xs uppercase tracking-wider font-mono text-[#180D1D] font-bold mb-2">
@@ -260,6 +303,27 @@ export default function ContactPage() {
                     className="w-full bg-white border border-[#502D55]/15 rounded-xl px-4 py-3 text-[#180D1D] placeholder-[#7A6880]/50 text-sm focus:outline-none focus:border-[#935073] focus:ring-1 focus:ring-[#935073] transition-colors resize-none shadow-2xs"
                   />
                 </div>
+
+                {errorMessage && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 text-xs sm:text-sm flex items-start gap-3 shadow-2xs">
+                    <AlertCircle className="w-5 h-5 shrink-0 text-red-600 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="font-semibold">{errorMessage}</p>
+                      <p className="text-[11px] sm:text-xs mt-1 text-red-700/80">
+                        Prefer instant response? Chat directly on{" "}
+                        <a
+                          href={getWhatsAppUrl()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline font-bold text-red-900 hover:text-black"
+                        >
+                          WhatsApp (+91 7352608269)
+                        </a>
+                        .
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <button
                   type="submit"
