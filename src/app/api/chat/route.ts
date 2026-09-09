@@ -399,6 +399,7 @@ WEBSITE DESTINATIONS:
 - Portfolio / Case studies: Check out the Work page (/work)
 - E-commerce proof of work: EasyXo (https://easyxo.in)
 - Social & Direct Message: Instagram @imdad.builds (${siteConfig.contact.instagramUrl})
+- Direct Email: ${siteConfig.contact.email} (${siteConfig.links.email})
 - Project Start: Contact form (/contact) or WhatsApp
 - Do NOT dump all links into a single response; share only the destination that fits the user's inquiry.`;
 

@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
@@ -33,9 +34,15 @@ export default function AboutPage() {
               <div className="absolute -inset-4 bg-gradient-to-tr from-[#F6DBC0]/20 via-[#935073]/10 to-transparent rounded-3xl blur-2xl opacity-70 pointer-events-none" />
 
               <div className="relative rounded-3xl bg-white/80 border border-[#502D55]/12 p-8 backdrop-blur-2xl text-center space-y-6 shadow-sm">
-                {/* Abstract Avatar Placeholder */}
-                <div className="w-28 h-28 mx-auto rounded-2xl bg-gradient-to-br from-[#2B1435] to-[#180D1D] border-2 border-[#935073]/30 flex items-center justify-center text-[#F6DBC0] font-black text-4xl shadow-sm">
-                  IM
+                {/* Studio Brand Mark */}
+                <div className="w-28 h-28 mx-auto rounded-2xl bg-[#FAF2EA] border border-[#F6DBC0] flex items-center justify-center p-3.5 shadow-sm">
+                  <Image
+                    src="/imdad-logo.png"
+                    alt="Imdad Digital Studio Emblem"
+                    width={96}
+                    height={96}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
 
                 <div>
@@ -61,7 +68,7 @@ export default function AboutPage() {
                 </div>
 
                 <div className="text-[10px] text-[#7A6880] italic">
-                  * Dedicated personal studio avatar — zero stock photos or fake portraits.
+                  * Official Imdad Digital Studio brand mark — zero stock photos or fake portraits.
                 </div>
               </div>
             </div>

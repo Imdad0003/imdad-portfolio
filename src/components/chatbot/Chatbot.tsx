@@ -77,7 +77,7 @@ export function Chatbot() {
         id: `err-${Date.now()}`,
         role: "assistant",
         content:
-          "Looks like the assistant is temporarily unavailable. You can still contact Imdad directly via WhatsApp, Instagram (@imdad.builds), or the inquiry form below.",
+          "Looks like the assistant is temporarily unavailable. You can still contact Imdad directly via WhatsApp, Instagram (@imdad.builds), email (imdad.builds@gmail.com), or the inquiry form below.",
         timestamp: "Just now",
       };
       setMessages((prev) => [...prev, errorMsg]);

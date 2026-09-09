@@ -36,10 +36,10 @@ export const metadata: Metadata = {
       "I build and grow e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
     images: [
       {
-        url: "/images/og/og-cover.png",
-        width: 1200,
-        height: 630,
-        alt: "Imdad — E-commerce Entrepreneur & Digital Business Specialist",
+        url: "/imdad-logo.png",
+        width: 1024,
+        height: 1024,
+        alt: "Imdad Digital Studio Logo",
       },
     ],
   },
@@ -48,12 +48,67 @@ export const metadata: Metadata = {
     title: "Imdad — E-commerce Entrepreneur & Digital Business Specialist",
     description:
       "I build and grow e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
-    images: ["/images/og/og-cover.png"],
+    images: ["/imdad-logo.png"],
   },
   robots: {
     index: true,
     follow: true,
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
+      { url: "/favicon-48x48.png", type: "image/png", sizes: "48x48" },
+      { url: "/imdad-logo.png", type: "image/png", sizes: "1024x1024" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+  },
+  manifest: "/manifest.webmanifest",
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://imdad.dev/#organization",
+      "name": "Imdad Digital Studio",
+      "url": "https://imdad.dev",
+      "logo": {
+        "@type": "ImageObject",
+        "@id": "https://imdad.dev/#logo",
+        "url": "https://imdad.dev/imdad-logo.png",
+        "contentUrl": "https://imdad.dev/imdad-logo.png",
+        "caption": "Imdad Digital Studio Logo",
+        "width": 1024,
+        "height": 1024,
+      },
+      "image": "https://imdad.dev/imdad-logo.png",
+      "sameAs": [
+        "https://www.instagram.com/imdad.builds",
+        "https://easyxo.in",
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "email": "imdad.builds@gmail.com",
+        "contactType": "customer support",
+      },
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://imdad.dev/#website",
+      "url": "https://imdad.dev",
+      "name": "Imdad Digital Studio",
+      "description":
+        "Imdad builds and grows e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
+      "publisher": {
+        "@id": "https://imdad.dev/#organization",
+      },
+    },
+  ],
 };
 
 export const viewport: Viewport = {
@@ -70,6 +125,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth h-full antialiased">
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-[#F8F4E9] text-[#180D1D] selection:bg-[#935073]/20 selection:text-[#502D55]">
         <ScrollProgress />
         <LiquidBackground />

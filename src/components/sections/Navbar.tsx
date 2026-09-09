@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { navItems } from "@/data/navigation";
 import { siteConfig } from "@/data/config";
@@ -44,10 +45,17 @@ export function Navbar() {
           <Link
             href="/"
             className="flex items-center gap-2.5 group focus-ring rounded-lg py-1"
-            aria-label="Imdad - Home"
+            aria-label="Imdad Digital Studio - Home"
           >
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#2B1435] to-[#180D1D] border border-[#935073]/30 flex items-center justify-center font-black text-sm tracking-wider text-[#F6DBC0] shadow-[0_2px_10px_rgba(80,45,85,0.15)] group-hover:scale-105 transition-all">
-              I
+            <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center">
+              <Image
+                src="/imdad-logo.png"
+                alt="Imdad Digital Studio Logo"
+                width={36}
+                height={36}
+                priority
+                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+              />
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold text-base tracking-tight text-[#180D1D] group-hover:text-[#935073] transition-colors leading-tight">

@@ -120,7 +120,13 @@ export default function TermsPage() {
               For legal inquiries or clarifications regarding these terms:
             </p>
             <p className="font-mono text-xs text-[#180D1D] bg-[#FAF2EA] p-4 rounded-xl border border-[#F6DBC0]">
-              Email: contact@imdad.builds
+              Email:{" "}
+              <a
+                href="mailto:imdad.builds@gmail.com"
+                className="underline hover:text-[#935073] transition-colors"
+              >
+                imdad.builds@gmail.com
+              </a>
             </p>
           </section>
         </div>

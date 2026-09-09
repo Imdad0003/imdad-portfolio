@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/ui/Container";
 import { navItems, legalNavItems } from "@/data/navigation";
 import { siteConfig, getWhatsAppUrl } from "@/data/config";
@@ -17,8 +18,14 @@ export function Footer() {
           {/* Column 1: Studio Identity (5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2B1435] to-[#180D1D] border border-[#935073]/30 flex items-center justify-center font-black text-sm text-[#F6DBC0] shadow-sm">
-                I
+              <div className="relative w-9 h-9 shrink-0 flex items-center justify-center">
+                <Image
+                  src="/imdad-logo.png"
+                  alt="Imdad Digital Studio Logo"
+                  width={36}
+                  height={36}
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="font-extrabold text-lg tracking-tight text-[#180D1D]">

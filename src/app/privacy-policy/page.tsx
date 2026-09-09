@@ -110,7 +110,14 @@ export default function PrivacyPolicyPage() {
               information removed from our records, please reach out directly:
             </p>
             <p className="font-mono text-xs text-[#180D1D] bg-[#FAF2EA] p-4 rounded-xl border border-[#F6DBC0]">
-              Email: contact@imdad.builds <br />
+              Email:{" "}
+              <a
+                href="mailto:imdad.builds@gmail.com"
+                className="underline hover:text-[#935073] transition-colors"
+              >
+                imdad.builds@gmail.com
+              </a>{" "}
+              <br />
               Instagram: @imdad.builds
             </p>
           </section>

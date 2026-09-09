@@ -12,7 +12,7 @@ export const siteConfig = {
     description: "An e-commerce brand built and operated by Imdad.",
   },
   contact: {
-    email: "imdad.ecommerce@gmail.com",
+    email: "imdad.builds@gmail.com",
     whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "",
     whatsappDisplay: "+91 (WhatsApp Inquiry)",
     whatsappMessage: "Hi Imdad, I came across your website and would like to discuss a project for my business.",
@@ -21,7 +21,7 @@ export const siteConfig = {
   },
   links: {
     instagram: "https://www.instagram.com/imdad.builds",
-    email: "mailto:imdad.ecommerce@gmail.com",
+    email: "mailto:imdad.builds@gmail.com",
     easyxo: "https://easyxo.in",
     easyxoInstagram: "https://www.instagram.com/easyxo_official",
   },
