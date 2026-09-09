@@ -185,22 +185,23 @@ Encourage direct contact when the project gets specific:
 - Instagram: ${siteConfig.contact.instagramHandle} (${siteConfig.contact.instagramUrl})
 - WhatsApp & Contact Form`;
 
-        // Format Gemini contents
-        const contents = [
-          { role: "user", parts: [{ text: systemPrompt }] },
-          { role: "model", parts: [{ text: "Understood. I will represent Imdad accurately as his AI sales and project assistant." }] },
-          ...messages.slice(-6).map((m: { role: string; content: string }) => ({
-            role: m.role === "user" ? "user" : "model",
-            parts: [{ text: m.content }],
-          })),
-        ];
+        // Format Gemini contents (Gemini 3.8 turn-validation compliant)
+        const contents = messages.slice(-6).map((m: { role: string; content: string }) => ({
+          role: m.role === "user" ? "user" : "model",
+          parts: [{ text: m.content }],
+        }));
 
         const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents }),
+            body: JSON.stringify({
+              system_instruction: {
+                parts: [{ text: systemPrompt }],
+              },
+              contents,
+            }),
           }
         );
 
