@@ -5,9 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { navItems } from "@/data/navigation";
-import { siteConfig } from "@/data/config";
+import { siteConfig, getWhatsAppUrl } from "@/data/config";
 import { Button } from "@/components/ui/Button";
-import { Menu, X, ArrowRight } from "lucide-react";
+import { Menu, X, ArrowRight, MessageSquare } from "lucide-react";
 import { Instagram } from "@/components/ui/InstagramIcon";
 
 export function Navbar() {
@@ -173,6 +173,17 @@ export function Navbar() {
                 >
                   <Instagram className="w-4 h-4 text-[#935073]" />
                   <span>Instagram: @imdad.builds</span>
+                </a>
+
+                <a
+                  href={getWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium text-[#180D1D] bg-white border border-[#502D55]/15 hover:border-[#935073]/40 transition-colors focus-ring shadow-xs"
+                >
+                  <MessageSquare className="w-4 h-4 text-[#935073]" />
+                  <span>WhatsApp: +91 7352608269</span>
                 </a>
 
                 <Button

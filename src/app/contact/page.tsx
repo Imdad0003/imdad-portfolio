@@ -332,10 +332,10 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <div className="text-xs font-mono text-[#7A6880] uppercase">
-                      WhatsApp Chat
+                      WhatsApp Business
                     </div>
                     <div className="text-sm font-semibold text-[#180D1D] group-hover:text-[#935073] transition-colors">
-                      Start Direct Conversation
+                      +91 7352608269
                     </div>
                   </div>
                 </div>

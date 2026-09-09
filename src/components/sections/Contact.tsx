@@ -185,7 +185,7 @@ export function Contact() {
                         Chat on WhatsApp
                       </div>
                       <div className="text-[11px] text-[#bba89d]">
-                        Instant project scoping &amp; quick estimates
+                        +91 7352608269 • Instant project scoping &amp; quick estimates
                       </div>
                     </div>
                   </div>

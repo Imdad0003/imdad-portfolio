@@ -94,6 +94,7 @@ const jsonLd = {
       "contactPoint": {
         "@type": "ContactPoint",
         "email": "imdad.builds@gmail.com",
+        "telephone": "+91 7352608269",
         "contactType": "customer support",
       },
     },

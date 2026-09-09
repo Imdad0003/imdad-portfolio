@@ -13,8 +13,8 @@ export const siteConfig = {
   },
   contact: {
     email: "imdad.builds@gmail.com",
-    whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "",
-    whatsappDisplay: "+91 (WhatsApp Inquiry)",
+    whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+91 7352608269",
+    whatsappDisplay: "+91 7352608269",
     whatsappMessage: "Hi Imdad, I came across your website and would like to discuss a project for my business.",
     instagramHandle: "@imdad.builds",
     instagramUrl: "https://www.instagram.com/imdad.builds",
@@ -22,16 +22,17 @@ export const siteConfig = {
   links: {
     instagram: "https://www.instagram.com/imdad.builds",
     email: "mailto:imdad.builds@gmail.com",
+    whatsapp: "https://wa.me/917352608269",
     easyxo: "https://easyxo.in",
     easyxoInstagram: "https://www.instagram.com/easyxo_official",
   },
 };
 
 export function getWhatsAppUrl(customMessage?: string) {
-  const phone = siteConfig.contact.whatsappNumber;
-  const msg = encodeURIComponent(customMessage || siteConfig.contact.whatsappMessage);
-  if (phone) {
-    return `https://wa.me/${phone.replace(/[^0-9]/g, "")}?text=${msg}`;
+  const phone = (siteConfig.contact.whatsappNumber || "+91 7352608269").replace(/[^0-9]/g, "");
+  const message = customMessage !== undefined ? customMessage : siteConfig.contact.whatsappMessage;
+  if (message) {
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
   }
-  return `https://wa.me/?text=${msg}`;
+  return `https://wa.me/${phone}`;
 }

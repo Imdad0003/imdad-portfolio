@@ -400,7 +400,8 @@ WEBSITE DESTINATIONS:
 - E-commerce proof of work: EasyXo (https://easyxo.in)
 - Social & Direct Message: Instagram @imdad.builds (${siteConfig.contact.instagramUrl})
 - Direct Email: ${siteConfig.contact.email} (${siteConfig.links.email})
-- Project Start: Contact form (/contact) or WhatsApp
+- WhatsApp Business: +91 7352608269 (https://wa.me/917352608269)
+- Project Start: Contact form (/contact) or WhatsApp (+91 7352608269, https://wa.me/917352608269)
 - Do NOT dump all links into a single response; share only the destination that fits the user's inquiry.`;
 
         // Format Gemini contents (Gemini 3.8 turn-validation compliant)
@@ -461,7 +462,7 @@ WEBSITE DESTINATIONS:
     return NextResponse.json(
       {
         reply:
-          "Looks like the assistant is temporarily unavailable. You can still contact Imdad directly via WhatsApp, Instagram, or the inquiry form below.",
+          "Looks like the assistant is temporarily unavailable. You can still contact Imdad directly via WhatsApp (+91 7352608269), Instagram, or the inquiry form below.",
         isError: true,
       },
       { status: 500 }

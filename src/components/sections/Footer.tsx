@@ -50,8 +50,8 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 rounded-xl bg-white border border-[#502D55]/15 flex items-center justify-center text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/50 transition-all focus-ring shadow-2xs"
-                aria-label="WhatsApp"
-                title="Chat on WhatsApp"
+                aria-label="WhatsApp (+91 7352608269)"
+                title="Chat on WhatsApp (+91 7352608269)"
               >
                 <MessageSquare className="w-4 h-4" />
               </a>
