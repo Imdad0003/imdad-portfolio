@@ -22,8 +22,8 @@ function isRateLimited(ip: string): boolean {
   return false;
 }
 
-// Fallback intelligent sales assistant engine when GEMINI_API_KEY is not configured
-function generateSmartFallback(lastUserMessage: string, historyLength: number): {
+// Fallback intelligent sales assistant engine when GEMINI_API_KEY is not configured or API is unreachable
+function generateSmartFallback(messages: Array<{ role: string; content: string }>): {
   reply: string;
   projectSummary?: {
     service: string;
@@ -32,97 +32,266 @@ function generateSmartFallback(lastUserMessage: string, historyLength: number): 
     pricingNote: string;
   } | null;
 } {
+  const lastUserMessage = messages[messages.length - 1]?.content || "";
   const lower = lastUserMessage.toLowerCase();
+  const conversationText = messages.map((m) => m.content).join(" ").toLowerCase();
 
-  // Package Calculator inquiry
-  if (lower.includes("calculator") || lower.includes("built a package") || lower.includes("estimated total")) {
+  // 1. EasyXo explicit question
+  if (lower.includes("easyxo")) {
     return {
-      reply: `Thank you for building a custom package! I've noted your configuration details.\n\nAll rates shown on the website are transparent starting estimates. Final quote may vary slightly depending on your exact product requirements and creative assets provided.\n\nWould you like to send this inquiry directly to Imdad or discuss it on WhatsApp / Instagram?`,
+      reply: `EasyXo is an e-commerce brand I built and actively operate. It serves as a real-world demonstration of my end-to-end e-commerce work—from product listing optimization and high-converting creatives to brand strategy and marketing.\n\nYou can explore EasyXo as an example of my e-commerce work → https://easyxo.in (or on Instagram @easyxo_official).\n\nAre you looking to build or scale an e-commerce brand of your own?`,
+    };
+  }
+
+  // 2. E-commerce / Marketplace Experience & Proof of Work
+  if (
+    lower.includes("experience") ||
+    lower.includes("proof") ||
+    lower.includes("credibility") ||
+    lower.includes("sold on") ||
+    lower.includes("real experience")
+  ) {
+    return {
+      reply: `I am an active e-commerce operator and builder myself. EasyXo is an e-commerce brand I built and run, where I personally handle everything from marketplace listings and high-converting product creatives to store operations and advertising.\n\nWant to see a real e-commerce project I've built? Visit EasyXo → https://easyxo.in\n\nWhat kind of e-commerce store or marketplace listings are you looking to launch?`,
+    };
+  }
+
+  // 3. Package Calculator inquiry
+  if (
+    lower.includes("calculator") ||
+    lower.includes("built a package") ||
+    lower.includes("estimated total")
+  ) {
+    return {
+      reply: `Thank you for configuring a custom package! I've noted your selections.\n\nAll rates shown on the website are transparent starting estimates. Final pricing depends on project scope, complexity, and assets provided.\n\nWould you like me to help you review the deliverables, or discuss it directly on WhatsApp or Instagram?`,
       projectSummary: {
         service: "Custom Package Configuration",
         requirement: "Custom project bundle configured via website calculator",
         scope: "Tailored multi-deliverable scope",
-        pricingNote: "Calculated based on selected units and deliverables. Final quote confirmed on review.",
+        pricingNote: "Calculated based on selected units. Final quote confirmed on review.",
       },
     };
   }
 
-  // E-commerce / Marketplace
-  if (lower.includes("amazon") || lower.includes("flipkart") || lower.includes("meesho") || lower.includes("listing") || lower.includes("e-commerce") || lower.includes("ecommerce")) {
-    if (lower.includes("sku") || lower.includes("product") || lower.includes("5") || lower.includes("10") || lower.includes("new") || historyLength > 3) {
+  // 4. Complex multi-service launch project
+  if (
+    lower.includes("launch") &&
+    (lower.includes("brand") || lower.includes("store") || lower.includes("website") || lower.includes("amazon"))
+  ) {
+    return {
+      reply: `That sounds like an exciting launch! 🚀 We can bundle your product creative deck, marketplace listing optimization, and custom storefront into a cohesive launch package.\n\nTo give you an accurate starting estimate, what kind of product are you launching?`,
+    };
+  }
+
+  // 5. Social Media Strategy & Planning
+  if (
+    lower.includes("social") ||
+    lower.includes("content planning") ||
+    lower.includes("creative strategy") ||
+    lower.includes("instagram") ||
+    lower.includes("reels")
+  ) {
+    const hasNiche =
+      conversationText.includes("brand") ||
+      conversationText.includes("clothing") ||
+      conversationText.includes("fashion") ||
+      conversationText.includes("food") ||
+      conversationText.includes("fitness") ||
+      conversationText.includes("beauty") ||
+      conversationText.includes("tech") ||
+      conversationText.includes("store");
+
+    const hasPlatform =
+      conversationText.includes("instagram") ||
+      conversationText.includes("youtube") ||
+      conversationText.includes("linkedin") ||
+      conversationText.includes("facebook") ||
+      conversationText.includes("meta");
+
+    if (lower.includes("strategy") || lower.includes("planning") || (!hasNiche && messages.length <= 1)) {
       return {
-        reply: `Got it. For your marketplace listing project, here is a structured summary based on your details:\n\nAmazon listings start at ₹799/product, Flipkart at ₹699, Meesho at ₹499, and the 3-in-1 multi-marketplace bundle is ₹1,999/product. If you need 7-image listing infographic sets included, we can bundle them together.\n\nWould you like to send this project inquiry directly to Imdad or discuss it on WhatsApp / Instagram?`,
-        projectSummary: {
-          service: "Marketplace Listing & Cataloging",
-          requirement: "Listing setup, keyword indexing & product positioning",
-          scope: "Custom SKU volume",
-          pricingNote: "Amazon starts at ₹799/product, Flipkart at ₹699, Meesho at ₹499. Final quote depends on SKU volume and creative assets.",
-        },
+        reply: `Got it! A solid content plan and creative direction make a huge difference.\n\nAre you looking for a one-off strategy roadmap you can execute yourself, or ongoing monthly content creation and management?`,
+      };
+    }
+
+    if (!hasPlatform && messages.length <= 3) {
+      return {
+        reply: `Got it. Which platform matters most right now — Instagram, YouTube, LinkedIn, or multiple platforms?`,
       };
     }
 
     return {
-      reply: `Sure! I can help with Amazon (Starting at ₹799/product), Flipkart (Starting at ₹699/product), and Meesho (Starting at ₹499/product) listing setup and optimization.\n\nRecommended package: Amazon Listing Pro (₹1,999/product) includes title, bullets, description, search keywords, competitor research, and optimization.\n\nWhat is your product category and how many SKUs are you planning to list?`,
+      reply: `Perfect. Based on what you need, I'd recommend starting with Social Media Starter — starting from ₹4,999/month (includes 12 curated creatives, captions, and strategy calendar).\n\nIf you'd also like ongoing posting, reels, and full account management, our Social Media Growth package (starting from ₹9,999/month) may be a better fit.\n\nWant me to break down what's included?`,
+      projectSummary: {
+        service: "Social Media Strategy & Planning",
+        requirement: "Content planning & creative calendar",
+        scope: "Monthly campaign retainer",
+        pricingNote: "Starter from ₹4,999/mo | Growth from ₹9,999/mo",
+      },
     };
   }
 
-  // Product Images / Creatives
-  if (lower.includes("image") || lower.includes("photo") || lower.includes("creative") || lower.includes("infographic")) {
-    if (lower.includes("deck") || lower.includes("ready") || lower.includes("sample") || historyLength > 2) {
+  // 6. Product Images / Creatives (Checked before general marketplace listing)
+  if (
+    lower.includes("image") ||
+    lower.includes("photo") ||
+    lower.includes("creative") ||
+    lower.includes("infographic")
+  ) {
+    if (lower.includes("7") || lower.includes("deck") || lower.includes("popular")) {
       return {
-        reply: `Understood. Product creatives are designed specifically for marketplace conversions—main hero shots, dimension diagrams, and lifestyle graphics.\n\nRecommended: The Popular 7-Image Deck is ₹799, and the Best Value 10-Image Deck is ₹999.\n\nHere is your project summary:`,
+        reply: `For a 7-image Amazon listing creative deck (including hero shot, infographic callouts, and dimension graphics), our Popular 7-Image Deck starts at ₹799 (or ₹1,499 for the Premium Deck with 3D/lifestyle rendering).\n\nDo you already have raw photos of your product, or are you starting from scratch?`,
         projectSummary: {
           service: "Product Listing Creatives",
-          requirement: "Marketplace listing infographic deck (7–10 images)",
-          scope: "Conversion-engineered visual deck",
-          pricingNote: "7-Image deck: ₹799 | 10-Image deck: ₹999. Final quote depends on product count and raw photos provided.",
+          requirement: "7-image marketplace infographic deck",
+          scope: "1 Product / 7 Creatives",
+          pricingNote: "Popular 7-Image Deck: ₹799 | Premium: ₹1,499",
+        },
+      };
+    }
+
+    if (lower.includes("10")) {
+      return {
+        reply: `For a comprehensive 10-image deck, the estimated starting price is ₹999 for the Best Value 10-Image Deck (or ₹1,999 for Premium 10 Images).\n\nDo you already have raw photos of your product, or are you starting from scratch?`,
+        projectSummary: {
+          service: "Product Listing Creatives",
+          requirement: "10-image marketplace infographic deck",
+          scope: "1 Product / 10 Creatives",
+          pricingNote: "Best Value 10-Image Deck: ₹999 | Premium: ₹1,999",
         },
       };
     }
 
     return {
-      reply: `I can help design conversion-engineered product creatives.\n\nTransparent Rates:\n• 1 Image: ₹149\n• 5 Images: ₹599\n• 7 Images (Popular): ₹799\n• 10 Images (Best Value): ₹999\n• Premium 7 Images: ₹1,499\n• Premium 10 Images: ₹1,999\n\nHow many products/decks are you looking to create, and do you already have raw product photos?`,
+      reply: `I design conversion-engineered product creatives built to increase marketplace conversions. Rates start from ₹149 for single images, ₹799 for the Popular 7-Image Deck, and ₹999 for the Best Value 10-Image Deck.\n\nHow many products do you need creatives for?`,
     };
   }
 
-  // Website & Digital
-  if (lower.includes("website") || lower.includes("store") || lower.includes("shopify") || lower.includes("wordpress") || lower.includes("smartbiz")) {
+  // 7. Marketplace Listing Setup (Amazon / Flipkart / Meesho)
+  if (
+    lower.includes("amazon") ||
+    lower.includes("flipkart") ||
+    lower.includes("meesho") ||
+    lower.includes("listing") ||
+    lower.includes("catalog")
+  ) {
+    const match =
+      lower.match(/(\d+)\s*(?:[a-z]+\s+)*(?:product|item|listing|sku)/i) ||
+      lower.match(/(\d+)\s*(?:product|item|listing|sku)/i) ||
+      lower.match(/(\d+)/);
+    const count = match ? parseInt(match[1], 10) : null;
+
+    if (count && count > 0) {
+      const startEst = (count * 799).toLocaleString("en-IN");
+      const proEst = (count * 1999).toLocaleString("en-IN");
+      return {
+        reply: `For ${count} Amazon products, listing setup and optimization starts from ₹799/product (estimated starting total ₹${startEst}).\n\nIf you want full competitor research, keyword indexing, and high-conversion SEO bullet points, our recommended Amazon Listing Pro package is ₹1,999/product (starting total ₹${proEst}). Final pricing depends on scope and complexity.\n\nWhat category are your products in?`,
+        projectSummary: {
+          service: "Marketplace Listing Optimization",
+          requirement: `${count} product listing setup & SEO`,
+          scope: `${count} SKUs`,
+          pricingNote: `Starting from ₹${startEst} (Pro: ₹${proEst})`,
+        },
+      };
+    }
+
     return {
-      reply: `I build fast, responsive business and e-commerce websites with smooth Razorpay payment integration.\n\nPricing:\n• Landing Page: Starting at ₹4,999\n• Business Website: Starting at ₹9,999\n• E-commerce Website: Starting at ₹15,999\n• Shopify Store: Starting at ₹12,999\n• WordPress Website: Starting at ₹9,999\n• Payment Gateway Integration: Starting at ₹1,999\n\nIs this an online store with direct checkout or an informational brand website?`,
+      reply: `I handle complete marketplace listing setup and optimization across Amazon (starting from ₹799/product), Flipkart (starting from ₹699/product), and Meesho (starting from ₹499/product).\n\nOur recommended package is Amazon Listing Pro (₹1,999/product), which includes SEO title, bullet points, search keywords, and competitor research.\n\nHow many products are you planning to list?`,
     };
   }
 
-  // Video / UGC Ads
-  if (lower.includes("video") || lower.includes("ugc") || lower.includes("reel") || lower.includes("short")) {
+  // 8. Website & Storefront Development
+  if (
+    lower.includes("website") ||
+    lower.includes("store") ||
+    lower.includes("shopify") ||
+    lower.includes("wordpress") ||
+    lower.includes("landing page")
+  ) {
+    if (lower.includes("shopify") || lower.includes("ecommerce") || lower.includes("e-commerce")) {
+      return {
+        reply: `For an online store with direct checkout, Shopify store setups start from ₹12,999 and custom full-stack e-commerce stores start from ₹15,999 (including payment gateway integration).\n\nHow many products are you planning to sell initially?`,
+        projectSummary: {
+          service: "E-Commerce Website Development",
+          requirement: "Online store setup with payment integration",
+          scope: "Storefront & Catalog",
+          pricingNote: "Shopify from ₹12,999 | Custom from ₹15,999",
+        },
+      };
+    }
+
+    if (lower.includes("landing") || lower.includes("single page")) {
+      return {
+        reply: `For a high-converting standalone landing page, the estimated starting price is ₹4,999.\n\nDo you already have your copy and brand assets ready, or will you need design from scratch?`,
+        projectSummary: {
+          service: "Landing Page Development",
+          requirement: "High-conversion standalone landing page",
+          scope: "Single page responsive design",
+          pricingNote: "Starting from ₹4,999",
+        },
+      };
+    }
+
     return {
-      reply: `Short-form video and UGC-style ads are built specifically to hook viewers in the first 3 seconds on Meta and Instagram.\n\nPricing:\n• Basic Product Video: Starting at ₹799\n• Product Reel: Starting at ₹999\n• UGC-Style Ad: Starting at ₹1,499\n• AI UGC Ad: Starting at ₹1,499\n• Premium Ad Creative: Starting at ₹2,499\n• 3 Ad Package: ₹3,999\n• 5 Ad Package: ₹5,999\n\nHow many video creatives would you like to test?`,
+      reply: `Awesome — I can definitely help with that. Is this an online store with direct checkout (like Shopify/e-commerce), or an informational business website?`,
     };
   }
 
-  // Business Setup / GST / Trademark
-  if (lower.includes("gst") || lower.includes("trademark") || lower.includes("udyam") || lower.includes("registration") || lower.includes("setup")) {
+  // 9. Video & UGC Ads
+  if (
+    lower.includes("video") ||
+    lower.includes("ugc") ||
+    lower.includes("reel") ||
+    lower.includes("short")
+  ) {
     return {
-      reply: `I provide step-by-step documentation guidance and portal walkthroughs for:\n• GST Registration Assistance: Starting at ₹499\n• Udyam Registration Assistance: Starting at ₹299\n• Trademark Application Assistance: Starting at ₹999\n\n*Important note:* This is process guidance and documentation support, not legal or chartered accountant tax representation. Government fees and third-party charges, if applicable, are separate.\n\nWhich stage of business setup are you currently at?`,
+      reply: `Short-form video and UGC-style ads are built specifically to hook viewers in the first 3 seconds on Meta and Instagram.\n\nRates start from ₹799 for basic product videos, ₹999 for product reels, and ₹1,499 for UGC-style video ads (3-ad packages start from ₹3,999).\n\nHow many video creatives would you like to test?`,
     };
   }
 
-  // Social Media & Ads
-  if (lower.includes("social") || lower.includes("instagram") || lower.includes("meta") || lower.includes("ad") || lower.includes("marketing")) {
+  // 10. Pricing & Rates General Inquiry
+  if (
+    lower.includes("price") ||
+    lower.includes("cost") ||
+    lower.includes("rate") ||
+    lower.includes("kitna") ||
+    lower.includes("pricing") ||
+    lower.includes("how much")
+  ) {
     return {
-      reply: `I help brands with social media growth and Meta ad campaigns:\n\nSocial Media:\n• Starter: ₹4,999 / month (12 creatives, captions, ideas)\n• Growth (Popular): ₹9,999 / month (16–20 creatives, strategy, reels)\n• Full Management: Starting at ₹14,999 / month\n\nDigital Marketing:\n• Meta Ads Setup: Starting at ₹2,999\n• Meta Ads Management: Starting at ₹5,999 / month\n• Meta Ads + Creative: Starting at ₹9,999 / month\n*(Note: Ad spend is paid directly to Meta and is separate.)*\n\nWhich service are you interested in?`,
+      reply: `All services are quoted transparently with scope-based starting rates:\n• Amazon Listings: Starting from ₹799 / product (Pro package: ₹1,999)\n• Product Listing Creatives: Starting from ₹799 (7-image deck)\n• Video & UGC Ads: Starting from ₹799\n• Websites & Shopify: Starting from ₹4,999\n• Social Media Plans: Starting from ₹4,999 / month\n• Meta Ads Setup: Starting from ₹2,999 (Ad spend is separate)\n• Business Setup Support: Starting from ₹299 (Govt fees separate)\n\nFinal pricing depends on project scope, complexity and requirements. Which service would you like an estimate for?`,
     };
   }
 
-  // Pricing Inquiry
-  if (lower.includes("price") || lower.includes("cost") || lower.includes("rate") || lower.includes("kitna") || lower.includes("budget")) {
+  // 11. Business Setup / GST / Trademark
+  if (
+    lower.includes("gst") ||
+    lower.includes("trademark") ||
+    lower.includes("udyam") ||
+    lower.includes("registration")
+  ) {
     return {
-      reply: `All our prices are transparent and visible directly on the website:\n• Amazon Listings: Starting at ₹799 / product (Pro package: ₹1,999)\n• Product Creatives: ₹149 (1 image), ₹799 (7-image deck), ₹999 (10-image deck)\n• Video & UGC Ads: Starting at ₹799\n• Websites & Shopify: Starting at ₹4,999\n• Social Media Plans: Starting at ₹4,999 / month\n• Meta Ads: Starting at ₹2,999 (Ad spend separate)\n• Business Setup Support: Starting at ₹299 (Govt fees separate)\n\nFinal quote may vary depending on project scope. Which service would you like an estimate for?`,
+      reply: `I provide step-by-step documentation guidance and portal walkthroughs for GST Registration Assistance (starting from ₹499), Udyam Registration (starting from ₹299), and Trademark Application Assistance (starting from ₹999).\n\nNote: Government fees and third-party charges, if applicable, are separate. Which stage of business setup are you currently at?`,
     };
   }
 
-  // Default helpful response
+  // 12. Unrelated / General conversation fallback
+  if (
+    lower.includes("weather") ||
+    lower.includes("capital") ||
+    lower.includes("france") ||
+    lower.includes("who are you") ||
+    lower.includes("joke")
+  ) {
+    const triviaAnswer = lower.includes("france") ? "Paris is the capital of France! As for me, my " : "My ";
+    return {
+      reply: `I'm Imdad's AI Sales & Project Assistant! 😊 ${triviaAnswer}specialty is helping you scope digital projects—from marketplace listings and conversion creatives to custom websites and social media strategy.\n\nWhat are you looking to build or scale for your business?`,
+    };
+  }
+
+  // 13. Default helpful, human greeting
   return {
-    reply: `Hi! I'm Imdad's project assistant. I can help you understand services, estimate project scopes, and connect directly with Imdad.\n\nWhat are you looking to build for your business?\n- Marketplace listings (Amazon, Flipkart, Meesho)\n- Product listing creatives & infographics (7-image & 10-image decks)\n- E-commerce websites & landing pages\n- UGC-style video ads & Reels\n- AI generative workflows\n- Business setup assistance (GST, Udyam, Trademark)\n\nTell me a little about your product!`,
+    reply: `Hi! I'm Imdad's project assistant. I help brands and founders scope their digital projects and estimate transparent pricing.\n\nWhat are you looking to build or scale for your business?`,
   };
 }
 
@@ -148,7 +317,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const lastMessage = messages[messages.length - 1]?.content || "";
     const apiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
 
     // If API Key is present, query Google Gemini API server-side
@@ -158,32 +326,81 @@ export async function POST(req: NextRequest) {
           .map((s) => `- ${s.name}: ${formatPrice(s)}${s.note ? ` (${s.note})` : ""}`)
           .join("\n");
 
-        const systemPrompt = `You are Imdad's AI Sales & Project Assistant on his personal portfolio website.
-Imdad is an E-commerce Entrepreneur & Digital Business Specialist, Founder of EasyXo.
-Tone: Professional, friendly, direct, helpful, concise, business-focused. Never use robotic phrases or long walls of text.
-Transparent: You are an AI assistant representing Imdad. Imdad is an active entrepreneur/operator.
+        const systemPrompt = `You are Imdad's AI Sales & Project Scoping Assistant representing Imdad Digital Studio.
+Imdad is an E-commerce Entrepreneur & Digital Business Specialist, Founder & Operator of EasyXo.
 
-Official Service Pricing Schedule:
+Tone & Persona:
+- Professional, friendly, confident, concise, human, and business-focused.
+- Conversational sales qualification: Act like an experienced digital studio consultant, NOT a robotic FAQ or pricing dumper.
+- Use emojis sparingly.
+- Avoid robotic phrases like:
+  - "Please provide the following information:"
+  - "To tailor this to your needs, answer these questions:"
+  - "Here are the primary monthly packages:"
+- Prefer natural, human phrasing:
+  - "Sure — what are you building?"
+  - "Got it. Which platform are you focusing on?"
+  - "That makes sense."
+  - "Based on that, I'd recommend..."
+  - "Want me to break down what you'd get?"
+
+ONE QUESTION AT A TIME RULE (CRITICAL):
+- Never interrogate the customer with 3-4 questions at once.
+- Ask a MAXIMUM of ONE primary question per assistant message.
+- NEVER ask questions whose answers are already provided in the conversation.
+  (e.g., If the customer says "I run a clothing brand on Instagram", do NOT ask "What industry are you in?" or "What platform do you use?").
+
+UNDERSTAND INTENT BEFORE RECOMMENDING PRICE:
+- For straightforward requests (e.g., "I need 7 product images for Amazon" or "I need 3 Amazon products listed"): directly recommend the relevant package with transparent starting calculations.
+- For broad/consultative requests (e.g., "I need social media strategy" or "I need a website"): ask ONE useful clarifying question first (niche, platform, or strategy vs. ongoing management) before giving the tailored recommendation.
+
+EASYXO INTEGRATION & PROOF OF WORK (CRITICAL):
+- EasyXo (https://easyxo.in, Instagram: https://www.instagram.com/easyxo_official) is Imdad's OWN e-commerce brand that he built and actively operates.
+- STRICT RULE: EasyXo is Imdad's OWN brand. NEVER describe EasyXo as a "client project", "client brand", or imply Imdad was hired by EasyXo.
+- Correct phrasing:
+  - "EasyXo is an e-commerce brand I built."
+  - "I built and work on EasyXo."
+  - "You can explore EasyXo as an example of my e-commerce work."
+- When the customer asks about:
+  - e-commerce experience or marketplace experience
+  - Amazon / Flipkart / Meesho selling
+  - product listings or listing creatives
+  - online stores and e-commerce growth
+  - whether Imdad has real operator experience
+  naturally mention EasyXo with a clickable link:
+  "Want to see a real e-commerce project I've built? Visit EasyXo → https://easyxo.in"
+- Do NOT mention EasyXo in every conversation. Only introduce it when contextually relevant.
+
+SMART PRICING RECOMMENDATION RULES:
+Official Pricing Schedule:
 ${pricingSchedule}
 
-Pricing rules:
-- Always quote the exact prices from the Official Service Pricing Schedule above. Never invent prices or discounts.
-- Note: "All prices shown are starting prices unless mentioned otherwise. Final pricing may vary depending on project scope, complexity and requirements."
-- For Meta Ads, always clearly state: "Ad spend is separate."
-- For Business Setup (GST, Udyam, Trademark), always state: "Government fees, professional fees and third-party charges, if applicable, are separate." Position these services as process guidance / documentation support, never legal or CA representation.
+- Ground all quotes strictly in the Official Pricing Schedule above. Never invent prices, special discounts, or guarantee business metrics.
+- Always use starting price phrasing: "Starting from ₹X" or "The estimated starting price is ₹X."
+- For custom/complex work: "Final pricing depends on project scope, complexity and requirements."
+- For Meta Ads: always state "Ad spend is separate."
+- For Business Setup (GST, Udyam, Trademark): state "Government fees, professional fees and third-party charges, if applicable, are separate." Position as documentation support/process guidance, never legal or CA representation.
+- Recommend ONLY the most relevant package rather than listing all packages.
 
-Lead qualification:
-- Ask 1 to 2 targeted questions at a time to understand their product, volume, and needs.
-- When enough details are known, provide a concise:
+SALES WITHOUT BEING PUSHY:
+- Help the customer make an informed decision.
+- When enough scope details are known, provide a concise:
 PROJECT SUMMARY
 Service: [Name]
 Requirement: [Short summary]
 Estimated Scope: [Small / Medium / Large]
-Next Step: Send project inquiry or discuss on WhatsApp / Instagram (@imdad.builds)
+Next Step: [Start a Project / WhatsApp / Instagram / View EasyXo]
+- Do NOT repeatedly badger the customer to contact.
 
-Encourage direct contact when the project gets specific:
-- Instagram: ${siteConfig.contact.instagramHandle} (${siteConfig.contact.instagramUrl})
-- WhatsApp & Contact Form`;
+TRUST & ZERO FABRICATION:
+- Never fabricate clients, testimonials, revenue numbers, awards, certifications, or years of experience. EasyXo is the real proof of work.
+
+WEBSITE DESTINATIONS:
+- Portfolio / Case studies: Check out the Work page (/work)
+- E-commerce proof of work: EasyXo (https://easyxo.in)
+- Social & Direct Message: Instagram @imdad.builds (${siteConfig.contact.instagramUrl})
+- Project Start: Contact form (/contact) or WhatsApp
+- Do NOT dump all links into a single response; share only the destination that fits the user's inquiry.`;
 
         // Format Gemini contents (Gemini 3.8 turn-validation compliant)
         const contents = messages.slice(-6).map((m: { role: string; content: string }) => ({
@@ -233,7 +450,7 @@ Encourage direct contact when the project gets specific:
     }
 
     // Fallback engine (used when no API key is provided or API is unreachable)
-    const fallbackResult = generateSmartFallback(lastMessage, messages.length);
+    const fallbackResult = generateSmartFallback(messages);
     return NextResponse.json({
       reply: fallbackResult.reply,
       projectSummary: fallbackResult.projectSummary || null,

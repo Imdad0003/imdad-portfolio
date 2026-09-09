@@ -24,9 +24,11 @@ export function Navbar() {
   }, []);
 
   // Close mobile menu on route change
-  useEffect(() => {
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
     setMobileMenuOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 py-3 sm:py-4 transition-all duration-300 pointer-events-none">

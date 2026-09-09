@@ -12,6 +12,7 @@ import {
   RotateCcw,
   MessageSquare,
   Send,
+  ShoppingBag,
 } from "lucide-react";
 import { Instagram } from "@/components/ui/InstagramIcon";
 
@@ -132,12 +133,12 @@ export function ChatWindow({
 
       {/* Direct Quick Contact Toolbar */}
       <div className="py-1.5 px-3 bg-[rgba(19,9,23,0.85)] border-t border-[#F6DBC0]/10 flex items-center justify-between text-[11px] text-[#bba89d]">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto scrollbar-none py-0.5">
           <a
             href={getWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded"
+            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded shrink-0"
           >
             <MessageSquare className="w-3 h-3 text-[#F6DBC0]" />
             <span>WhatsApp</span>
@@ -147,17 +148,27 @@ export function ChatWindow({
             href={siteConfig.contact.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded"
+            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded shrink-0"
           >
             <Instagram className="w-3 h-3 text-[#d68fad]" />
             <span>Instagram</span>
+          </a>
+          <span>•</span>
+          <a
+            href={siteConfig.easyxo?.website || "https://easyxo.in"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded shrink-0"
+          >
+            <ShoppingBag className="w-3 h-3 text-[#F6DBC0]" />
+            <span>EasyXo ↗</span>
           </a>
         </div>
 
         <a
           href="#contact"
           onClick={onClose}
-          className="hover:text-[#F8F4E9] text-[10px] uppercase font-mono tracking-wider flex items-center gap-0.5 focus-ring rounded"
+          className="hover:text-[#F8F4E9] text-[10px] uppercase font-mono tracking-wider flex items-center gap-0.5 focus-ring rounded shrink-0 ml-2"
         >
           Form <Send className="w-2.5 h-2.5 ml-0.5" />
         </a>

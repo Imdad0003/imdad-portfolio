@@ -4,6 +4,13 @@ export const siteConfig = {
   tagline: "I build and grow e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
   shortTagline: "BUILD • CREATE • SCALE",
   brand: "EasyXo",
+  easyxo: {
+    name: "EasyXo",
+    website: "https://easyxo.in",
+    instagramHandle: "@easyxo_official",
+    instagramUrl: "https://www.instagram.com/easyxo_official",
+    description: "An e-commerce brand built and operated by Imdad.",
+  },
   contact: {
     email: "imdad.ecommerce@gmail.com",
     whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "",
@@ -15,6 +22,8 @@ export const siteConfig = {
   links: {
     instagram: "https://www.instagram.com/imdad.builds",
     email: "mailto:imdad.ecommerce@gmail.com",
+    easyxo: "https://easyxo.in",
+    easyxoInstagram: "https://www.instagram.com/easyxo_official",
   },
 };
 
