@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container } from "@/components/ui/Container";
-import { appsData, AppStatus } from "@/data/apps";
+import { appsData, App, AppPlatform, AppStatus } from "@/data/apps";
 import { AppCard } from "@/components/apps/AppCard";
+import { getPublishedApps } from "@/lib/cms";
 import {
   Sparkles,
   Layers,
@@ -13,9 +14,50 @@ import {
 } from "lucide-react";
 
 export default function AppsPage() {
+  const [apps, setApps] = useState<App[]>(appsData);
   const [activeFilter, setActiveFilter] = useState<"all" | "new" | AppStatus>("all");
 
-  const filteredApps = appsData.filter((app) => {
+  useEffect(() => {
+    getPublishedApps()
+      .then((docs) => {
+        if (docs && docs.length > 0) {
+          setApps(
+            docs.map((d) => ({
+              id: d.id,
+              name: d.name,
+              slug: d.slug,
+              tagline: d.tagline || d.shortDescription,
+              description: d.shortDescription || d.description,
+              fullDescription: d.description,
+              platform: (d.platform || ["Web"]) as AppPlatform[],
+              status: (d.status === "LIVE"
+                ? "live"
+                : d.status === "IN_DEVELOPMENT"
+                ? "in-development"
+                : "coming-soon") as AppStatus,
+              statusLabel:
+                d.status === "LIVE"
+                  ? "Live Brand"
+                  : d.status === "IN_DEVELOPMENT"
+                  ? "In Development"
+                  : "Coming Soon",
+              isNew: d.isNew ?? false,
+              featured: d.featured ?? true,
+              category: d.category || "Application",
+              accentColor: d.accentColor || "#935073",
+              version: d.version,
+              releaseDate: d.releaseDate,
+              features: d.features || [],
+              techStack: d.technologies || [],
+              links: { liveUrl: d.url, waitlistUrl: d.waitlistUrl },
+            }))
+          );
+        }
+      })
+      .catch((err) => console.warn("Firestore AppsPage load error:", err));
+  }, []);
+
+  const filteredApps = apps.filter((app) => {
     if (activeFilter === "all") return true;
     if (activeFilter === "new") return app.isNew;
     return app.status === activeFilter;

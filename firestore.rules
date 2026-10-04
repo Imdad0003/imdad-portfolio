@@ -1,0 +1,510 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // This security rules file assumes the following data structures:
+    //
+    // Collection: apps
+    // Document ID: {appId} (e.g., 'wishmusic', 'wishtracking')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - name: string (required, 1-100 chars)
+    //   - slug: string (required, 1-100 chars)
+    //   - tagline: string (required, 1-250 chars)
+    //   - description: string (required, 1-2000 chars)
+    //   - fullDescription: string (optional, 1-10000 chars)
+    //   - shortDescription: string (optional, 1-2000 chars)
+    //   - platform: list of strings (optional, <= 10 items)
+    //   - status: string (optional, 1-50 chars)
+    //   - statusLabel: string (optional, 1-50 chars)
+    //   - published: bool (required) - Controls public visibility
+    //   - isNew: bool (optional)
+    //   - featured: bool (optional)
+    //   - category: string (optional, 1-100 chars)
+    //   - accentColor: string (optional, 1-30 chars)
+    //   - version: string (optional, 1-50 chars)
+    //   - releaseDate: string (optional, 1-50 chars)
+    //   - features: list (optional, <= 50 items)
+    //   - techStack: list (optional, <= 50 items)
+    //   - technologies: list (optional, <= 50 items)
+    //   - links: map (optional)
+    //   - logo: string (optional, max 1000 chars)
+    //   - screenshots: list (optional, <= 30 items)
+    //   - url: string (optional, max 1000 chars)
+    //   - waitlistUrl: string (optional, max 1000 chars)
+    //   - sortOrder: number (optional)
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: projects
+    // Document ID: {projectId} (e.g., 'easyxo-brand-ecosystem')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - name: string (required, 1-100 chars)
+    //   - slug: string (required, 1-100 chars)
+    //   - category: string (required, 1-50 chars)
+    //   - tagline: string (required, 1-250 chars)
+    //   - description: string (required, 1-5000 chars)
+    //   - shortDescription: string (optional, 1-2000 chars)
+    //   - published: bool (required) - Controls public visibility
+    //   - scope: list (optional, <= 20 items)
+    //   - tools: list (optional, <= 30 items)
+    //   - technologies: list (optional, <= 50 items)
+    //   - status: string (optional, 1-50 chars)
+    //   - featured: bool (optional)
+    //   - highlight: string (optional, 1-100 chars)
+    //   - url: string (optional, 1-500 chars)
+    //   - accentColor: string (optional, 1-30 chars)
+    //   - coverImage: string (optional, max 1000 chars)
+    //   - gallery: list (optional, <= 50 items)
+    //   - metrics: list (optional, <= 20 items)
+    //   - deliverables: list (optional, <= 30 items)
+    //   - sortOrder: number (optional)
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: services
+    // Document ID: {serviceId} (e.g., 'website-development')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - number: string (optional, 1-10 chars)
+    //   - title: string (optional, 1-100 chars)
+    //   - name: string (optional, 1-100 chars) - alias for title
+    //   - slug: string (required, 1-100 chars)
+    //   - tagline: string (required, 1-250 chars)
+    //   - shortDescription: string (required, 1-1000 chars)
+    //   - fullDescription: string (optional, 1-5000 chars)
+    //   - iconName: string (optional, 1-50 chars)
+    //   - accentColor: string (optional, 1-30 chars)
+    //   - capabilities: list (optional, <= 30 items)
+    //   - deliverables: list (optional, <= 30 items)
+    //   - suitableFor: list (optional, <= 30 items)
+    //   - targetAudience: string (optional, 1-1000 chars)
+    //   - process: list (optional, <= 20 items)
+    //   - subTypes: list (optional, <= 20 items)
+    //   - packages: list (optional, <= 20 items)
+    //   - pricing: list (optional, <= 30 items)
+    //   - hasRealPricing: bool (optional)
+    //   - pricingNote: string (optional, 1-500 chars)
+    //   - faqs: list (optional, <= 30 items)
+    //   - faq: list (optional, <= 30 items)
+    //   - featured: bool (optional)
+    //   - sortOrder: number (optional)
+    //   - published: bool (required) - Controls public visibility
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: websitePackages
+    // Document ID: {packageId}
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - name: string (required, 1-100 chars)
+    //   - price: number (required, >= 0)
+    //   - priceMax: number (optional)
+    //   - priceType: string (optional, 1-30 chars)
+    //   - unit: string (optional, 1-50 chars)
+    //   - description: string (required, 1-1000 chars)
+    //   - features: list (optional, <= 30 items)
+    //   - recommended: bool (optional)
+    //   - active: bool (optional)
+    //   - websiteType: string (optional, 1-100 chars)
+    //   - badge: string (optional, 1-100 chars)
+    //   - cta: string (optional, 1-200 chars)
+    //   - ctaText: string (optional, 1-100 chars)
+    //   - sortOrder: number (optional)
+    //   - published: bool (required) - Controls public visibility
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: siteContent
+    // Document ID: {contentId} (e.g., 'hero', 'about')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - section: string (optional, 1-100 chars)
+    //   - title: string (optional, 1-200 chars)
+    //   - content: string | map (optional)
+    //   - metadata: map (optional)
+    //   - hero: map (optional)
+    //   - about: map (optional)
+    //   - finalCta: map (optional)
+    //   - contact: map (optional)
+    //   - socialLinks: map | list (optional)
+    //   - footer: map (optional)
+    //   - published: bool (required) - Controls public visibility
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: settings
+    // Document ID: {settingId} (e.g., 'general', 'brand', 'contact')
+    // Fields:
+    //   - id: string (optional, max 64 chars, immutable)
+    //   - name: string (optional, 1-100 chars)
+    //   - studioName: string (optional, 1-100 chars)
+    //   - tagline: string (optional, 1-250 chars)
+    //   - contact: map (optional)
+    //   - contactEmail: string (optional, 1-150 chars)
+    //   - whatsappNumber: string (optional, 1-50 chars)
+    //   - instagramHandle: string (optional, 1-100 chars)
+    //   - liveUrl: string (optional, 1-500 chars)
+    //   - socials: map (optional)
+    //   - config: map (optional)
+    //   - maintenanceMode: bool (optional)
+    //   - allowPublicReviews: bool (optional)
+    //   - published: bool (required) - Controls public visibility
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: reviews
+    // Document ID: {reviewId}
+    // Fields:
+    //   - id: string (optional, max 100 chars, immutable)
+    //   - name: string (required, 2-100 chars)
+    //   - service: string (required, 2-150 chars)
+    //   - rating: number (required, 1-5)
+    //   - review: string (required, 10-2000 chars)
+    //   - status: string (required, 'pending' | 'approved' | 'rejected')
+    //   - email: string (optional, valid email, max 150 chars)
+    //   - image: string (optional, valid url, max 500 chars)
+    //   - verified: bool (optional, immutable for non-admins)
+    //   - createdAt: timestamp | string (optional, immutable)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: admins
+    // Document ID: {adminUid} (Firebase Auth UID of administrator)
+    // Fields:
+    //   - email: string (optional, max 150 chars)
+    //   - role: string (optional, max 50 chars)
+    //   - createdAt: timestamp | string (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'imdad.builds@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string &&
+        (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidApp(data) {
+      let allowedFields = [
+        'id', 'name', 'slug', 'tagline', 'description', 'fullDescription',
+        'shortDescription', 'platform', 'status', 'statusLabel', 'isNew',
+        'featured', 'category', 'accentColor', 'version', 'releaseDate',
+        'features', 'techStack', 'technologies', 'links', 'logo',
+        'screenshots', 'url', 'waitlistUrl', 'sortOrder', 'published',
+        'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['name', 'slug', 'tagline', 'description', 'published']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 &&
+        data.tagline is string && data.tagline.size() >= 1 && data.tagline.size() <= 250 &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 2000 &&
+        data.published is bool &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
+        (!('fullDescription' in data) || (data.fullDescription is string && data.fullDescription.size() <= 10000)) &&
+        (!('shortDescription' in data) || (data.shortDescription is string && data.shortDescription.size() <= 2000)) &&
+        (!('platform' in data) || (data.platform is list && data.platform.size() <= 10)) &&
+        (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+        (!('statusLabel' in data) || (data.statusLabel is string && data.statusLabel.size() <= 50)) &&
+        (!('isNew' in data) || data.isNew is bool) &&
+        (!('featured' in data) || data.featured is bool) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
+        (!('version' in data) || (data.version is string && data.version.size() <= 50)) &&
+        (!('releaseDate' in data) || (data.releaseDate is string && data.releaseDate.size() <= 50)) &&
+        (!('features' in data) || (data.features is list && data.features.size() <= 50)) &&
+        (!('techStack' in data) || (data.techStack is list && data.techStack.size() <= 50)) &&
+        (!('technologies' in data) || (data.technologies is list && data.technologies.size() <= 50)) &&
+        (!('links' in data) || data.links is map) &&
+        (!('logo' in data) || (data.logo is string && data.logo.size() <= 1000)) &&
+        (!('screenshots' in data) || (data.screenshots is list && data.screenshots.size() <= 30)) &&
+        (!('url' in data) || (data.url is string && data.url.size() <= 1000)) &&
+        (!('waitlistUrl' in data) || (data.waitlistUrl is string && data.waitlistUrl.size() <= 1000)) &&
+        (!('sortOrder' in data) || data.sortOrder is number) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidProject(data) {
+      let allowedFields = [
+        'id', 'name', 'slug', 'category', 'tagline', 'description',
+        'shortDescription', 'scope', 'tools', 'technologies', 'status',
+        'featured', 'highlight', 'url', 'accentColor', 'coverImage',
+        'gallery', 'metrics', 'deliverables', 'sortOrder', 'published',
+        'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['name', 'slug', 'category', 'tagline', 'description', 'published']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
+        data.tagline is string && data.tagline.size() >= 1 && data.tagline.size() <= 250 &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 5000 &&
+        data.published is bool &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
+        (!('shortDescription' in data) || (data.shortDescription is string && data.shortDescription.size() <= 2000)) &&
+        (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+        (!('featured' in data) || data.featured is bool) &&
+        (!('highlight' in data) || (data.highlight is string && data.highlight.size() <= 100)) &&
+        (!('url' in data) || (data.url is string && data.url.size() <= 500)) &&
+        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
+        (!('coverImage' in data) || (data.coverImage is string && data.coverImage.size() <= 1000)) &&
+        (!('gallery' in data) || (data.gallery is list && data.gallery.size() <= 50)) &&
+        (!('scope' in data) || (data.scope is list && data.scope.size() <= 20)) &&
+        (!('tools' in data) || (data.tools is list && data.tools.size() <= 30)) &&
+        (!('technologies' in data) || (data.technologies is list && data.technologies.size() <= 50)) &&
+        (!('metrics' in data) || (data.metrics is list && data.metrics.size() <= 20)) &&
+        (!('deliverables' in data) || (data.deliverables is list && data.deliverables.size() <= 30)) &&
+        (!('sortOrder' in data) || data.sortOrder is number) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidService(data) {
+      let allowedFields = [
+        'id', 'number', 'title', 'name', 'slug', 'tagline', 'shortDescription',
+        'description', 'fullDescription', 'iconName', 'accentColor', 'capabilities',
+        'deliverables', 'suitableFor', 'targetAudience', 'process', 'subTypes',
+        'packages', 'pricing', 'category', 'hasRealPricing', 'pricingNote', 'faqs',
+        'faq', 'featured', 'sortOrder', 'published', 'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['slug', 'shortDescription', 'published']) &&
+        ('title' in data || 'name' in data) &&
+        (!('title' in data) || (data.title is string && data.title.size() >= 1 && data.title.size() <= 100)) &&
+        (!('name' in data) || (data.name is string && data.name.size() >= 1 && data.name.size() <= 100)) &&
+        data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 &&
+        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 250)) &&
+        (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 10000)) &&
+        (!('fullDescription' in data) || (data.fullDescription is string && data.fullDescription.size() <= 10000)) &&
+        data.shortDescription is string && data.shortDescription.size() >= 1 && data.shortDescription.size() <= 1000 &&
+        data.published is bool &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
+        (!('number' in data) || (data.number is string && data.number.size() <= 10)) &&
+        (!('iconName' in data) || (data.iconName is string && data.iconName.size() <= 50)) &&
+        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
+        (!('capabilities' in data) || (data.capabilities is list && data.capabilities.size() <= 30)) &&
+        (!('deliverables' in data) || (data.deliverables is list && data.deliverables.size() <= 30)) &&
+        (!('suitableFor' in data) || (data.suitableFor is list && data.suitableFor.size() <= 30)) &&
+        (!('targetAudience' in data) || (data.targetAudience is string && data.targetAudience.size() <= 1000)) &&
+        (!('process' in data) || (data.process is list && data.process.size() <= 20)) &&
+        (!('subTypes' in data) || (data.subTypes is list && data.subTypes.size() <= 20)) &&
+        (!('packages' in data) || (data.packages is list && data.packages.size() <= 20)) &&
+        (!('pricing' in data) || (data.pricing is list && data.pricing.size() <= 30)) &&
+        (!('hasRealPricing' in data) || data.hasRealPricing is bool) &&
+        (!('pricingNote' in data) || (data.pricingNote is string && data.pricingNote.size() <= 500)) &&
+        (!('faqs' in data) || (data.faqs is list && data.faqs.size() <= 30)) &&
+        (!('faq' in data) || (data.faq is list && data.faq.size() <= 30)) &&
+        (!('featured' in data) || data.featured is bool) &&
+        (!('sortOrder' in data) || data.sortOrder is number) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidWebsitePackage(data) {
+      let allowedFields = [
+        'id', 'name', 'price', 'priceMax', 'priceType', 'unit', 'description',
+        'features', 'recommended', 'active', 'websiteType', 'badge',
+        'cta', 'ctaText', 'sortOrder', 'published', 'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['name', 'price', 'description', 'published']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.price is number && data.price >= 0 &&
+        data.description is string && data.description.size() >= 1 && data.description.size() <= 1000 &&
+        data.published is bool &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
+        (!('priceMax' in data) || data.priceMax is number) &&
+        (!('priceType' in data) || (data.priceType is string && data.priceType.size() <= 30)) &&
+        (!('unit' in data) || (data.unit is string && data.unit.size() <= 50)) &&
+        (!('features' in data) || (data.features is list && data.features.size() <= 30)) &&
+        (!('recommended' in data) || data.recommended is bool) &&
+        (!('active' in data) || data.active is bool) &&
+        (!('websiteType' in data) || (data.websiteType is string && data.websiteType.size() <= 100)) &&
+        (!('badge' in data) || (data.badge is string && data.badge.size() <= 100)) &&
+        (!('cta' in data) || (data.cta is string && data.cta.size() <= 200)) &&
+        (!('ctaText' in data) || (data.ctaText is string && data.ctaText.size() <= 100)) &&
+        (!('sortOrder' in data) || data.sortOrder is number) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidSiteContent(data) {
+      let allowedFields = [
+        'id', 'section', 'title', 'content', 'metadata', 'hero', 'about',
+        'finalCta', 'contact', 'socialLinks', 'footer', 'published',
+        'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['published']) &&
+        data.published is bool &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
+        (!('section' in data) || (data.section is string && data.section.size() <= 100)) &&
+        (!('title' in data) || (data.title is string && data.title.size() <= 200)) &&
+        (!('content' in data) || data.content is string || data.content is map) &&
+        (!('metadata' in data) || data.metadata is map) &&
+        (!('hero' in data) || data.hero is map) &&
+        (!('about' in data) || data.about is map) &&
+        (!('finalCta' in data) || data.finalCta is map) &&
+        (!('contact' in data) || data.contact is map) &&
+        (!('socialLinks' in data) || data.socialLinks is map || data.socialLinks is list) &&
+        (!('footer' in data) || data.footer is map) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidSettings(data) {
+      let allowedFields = [
+        'id', 'name', 'studioName', 'tagline', 'contact', 'contactEmail',
+        'whatsappNumber', 'instagramHandle', 'liveUrl', 'socials', 'config',
+        'maintenanceMode', 'allowPublicReviews', 'published', 'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['published']) &&
+        data.published is bool &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
+        (!('name' in data) || (data.name is string && data.name.size() <= 100)) &&
+        (!('studioName' in data) || (data.studioName is string && data.studioName.size() <= 100)) &&
+        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 250)) &&
+        (!('contact' in data) || data.contact is map) &&
+        (!('contactEmail' in data) || (data.contactEmail is string && data.contactEmail.size() <= 150)) &&
+        (!('whatsappNumber' in data) || (data.whatsappNumber is string && data.whatsappNumber.size() <= 50)) &&
+        (!('instagramHandle' in data) || (data.instagramHandle is string && data.instagramHandle.size() <= 100)) &&
+        (!('liveUrl' in data) || (data.liveUrl is string && data.liveUrl.size() <= 500)) &&
+        (!('socials' in data) || data.socials is map) &&
+        (!('config' in data) || data.config is map) &&
+        (!('maintenanceMode' in data) || data.maintenanceMode is bool) &&
+        (!('allowPublicReviews' in data) || data.allowPublicReviews is bool) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidReviewData(data) {
+      let allowedFields = [
+        'id', 'name', 'email', 'service', 'rating', 'review',
+        'image', 'status', 'verified', 'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['name', 'service', 'rating', 'review', 'status']) &&
+        data.name is string && data.name.size() >= 2 && data.name.size() <= 100 &&
+        data['service'] is string && data['service'].size() >= 2 && data['service'].size() <= 150 &&
+        data.rating is number && data.rating >= 1 && data.rating <= 5 &&
+        data.review is string && data.review.size() >= 10 && data.review.size() <= 2000 &&
+        data.status in ['pending', 'approved', 'rejected'] &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 100)) &&
+        (!('email' in data) || (data.email is string && isValidEmail(data.email) && data.email.size() <= 150)) &&
+        (!('image' in data) || (data.image is string && isValidUrl(data.image) && data.image.size() <= 500)) &&
+        (!('verified' in data) || data.verified is bool) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidPublicReviewCreate() {
+      let data = request.resource.data;
+      return isValidReviewData(data) &&
+        data.status == 'pending' &&
+        (!('verified' in data) || data.verified == false);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Apps Collection: Public reads published only; Admins have full access
+    match /apps/{appId} {
+      allow read: if (resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidApp(request.resource.data);
+      allow update: if isAdmin() && isValidApp(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow delete: if isAdmin();
+    }
+
+    // Projects Collection: Public reads published only; Admins have full access
+    match /projects/{projectId} {
+      allow read: if (resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidProject(request.resource.data);
+      allow update: if isAdmin() && isValidProject(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow delete: if isAdmin();
+    }
+
+    // Services Collection: Public reads published only; Admins have full access
+    match /services/{serviceId} {
+      allow read: if (resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidService(request.resource.data);
+      allow update: if isAdmin() && isValidService(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow delete: if isAdmin();
+    }
+
+    // Website Packages Collection: Public reads published only; Admins have full access
+    match /websitePackages/{packageId} {
+      allow read: if (resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidWebsitePackage(request.resource.data);
+      allow update: if isAdmin() && isValidWebsitePackage(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow delete: if isAdmin();
+    }
+
+    // Site Content Collection: Public reads published only; Admins have full access
+    match /siteContent/{contentId} {
+      allow read: if (resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidSiteContent(request.resource.data);
+      allow update: if isAdmin() && isValidSiteContent(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow delete: if isAdmin();
+    }
+
+    // Settings Collection: Public reads published only; Admins have full access
+    match /settings/{settingId} {
+      allow read: if (resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidSettings(request.resource.data);
+      allow update: if isAdmin() && isValidSettings(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow delete: if isAdmin();
+    }
+
+    // Reviews Collection: Public reads approved only; Public creates pending only; Admins moderate
+    match /reviews/{reviewId} {
+      allow read: if (resource.data.status == 'approved') || isAdmin();
+      allow create: if isValidPublicReviewCreate() || (isAdmin() && isValidReviewData(request.resource.data));
+      allow update: if isAdmin() && isValidReviewData(request.resource.data) && areImmutableFieldsUnchanged(['id', 'createdAt']);
+      allow delete: if isAdmin();
+    }
+
+    // Admins Collection: Admin users read only; Client writes denied
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Default Deny for all other collections and unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

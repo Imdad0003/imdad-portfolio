@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
-import { appsData, getAppBySlug } from "@/data/apps";
+import { appsData, getAppBySlug, App } from "@/data/apps";
+import { getPublishedAppBySlug } from "@/lib/cms";
 import { siteConfig, getWhatsAppUrl } from "@/data/config";
 import {
   ArrowLeft,
@@ -29,6 +30,8 @@ interface AppDetailPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export const dynamicParams = true;
+
 export async function generateStaticParams() {
   return appsData.map((app) => ({
     slug: app.slug,
@@ -39,27 +42,66 @@ export async function generateMetadata({
   params,
 }: AppDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const app = getAppBySlug(slug);
+  const cmsApp = await getPublishedAppBySlug(slug);
+  const staticApp = getAppBySlug(slug);
 
-  if (!app) {
+  if (!cmsApp && !staticApp) {
     return {
       title: "App Not Found | IMDAD.BUILDS",
     };
   }
 
+  const name = cmsApp?.name || staticApp?.name || "App";
+  const tagline = cmsApp?.tagline || cmsApp?.shortDescription || staticApp?.tagline || "";
+  const description =
+    cmsApp?.shortDescription || cmsApp?.description || staticApp?.description || "";
+
   return {
-    title: `${app.name} — ${app.tagline} | IMDAD.BUILDS Product Lab`,
-    description: app.description,
+    title: `${name} — ${tagline} | IMDAD.BUILDS Product Lab`,
+    description,
   };
 }
 
 export default async function AppDetailPage({ params }: AppDetailPageProps) {
   const { slug } = await params;
-  const app = getAppBySlug(slug);
+  const cmsApp = await getPublishedAppBySlug(slug);
+  const staticApp = getAppBySlug(slug);
 
-  if (!app) {
+  if (!cmsApp && !staticApp) {
     notFound();
   }
+
+  const app: App = cmsApp
+    ? {
+        id: cmsApp.id,
+        name: cmsApp.name,
+        slug: cmsApp.slug,
+        tagline: cmsApp.tagline || cmsApp.shortDescription,
+        description: cmsApp.shortDescription || cmsApp.description,
+        fullDescription: cmsApp.description,
+        platform: (cmsApp.platform || ["Web"]) as any,
+        status: (cmsApp.status === "LIVE"
+          ? "live"
+          : cmsApp.status === "IN_DEVELOPMENT"
+          ? "in-development"
+          : "coming-soon"),
+        statusLabel:
+          cmsApp.status === "LIVE"
+            ? "Live Brand"
+            : cmsApp.status === "IN_DEVELOPMENT"
+            ? "In Development"
+            : "Coming Soon",
+        isNew: cmsApp.isNew ?? false,
+        featured: cmsApp.featured ?? true,
+        category: cmsApp.category || "Application",
+        accentColor: cmsApp.accentColor || "#935073",
+        version: cmsApp.version,
+        releaseDate: cmsApp.releaseDate,
+        features: cmsApp.features || [],
+        techStack: cmsApp.technologies || [],
+        links: { liveUrl: cmsApp.url, waitlistUrl: cmsApp.waitlistUrl },
+      }
+    : staticApp!;
 
   const isLive = app.status === "live";
   const isInDev = app.status === "in-development";

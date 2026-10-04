@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "imdadbuilds-ead39"
+  },
+  "targets": {
+    "imdadbuilds-ead39": {
+      "storage": {
+        "default": [
+          "imdadbuilds-ead39.firebasestorage.app"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

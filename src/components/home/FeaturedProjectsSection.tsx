@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { getFeaturedProjects } from "@/data/projectsData";
+import { getFeaturedProjects, Project } from "@/data/projectsData";
+import { getPublishedProjects } from "@/lib/cms";
 import {
   ArrowRight,
   ExternalLink,
@@ -22,7 +23,41 @@ const categoryIconMap: Record<string, React.ComponentType<{ className?: string }
 };
 
 export function FeaturedProjectsSection() {
-  const featured = getFeaturedProjects().slice(0, 4);
+  const [featured, setFeatured] = useState<Project[]>(getFeaturedProjects().slice(0, 4));
+
+  useEffect(() => {
+    getPublishedProjects()
+      .then((docs) => {
+        if (docs && docs.length > 0) {
+          const mapped: Project[] = docs
+            .filter((d) => d.featured)
+            .slice(0, 4)
+            .map((d) => ({
+              id: d.id,
+              name: d.name,
+              slug: d.slug,
+              category: d.category as Project["category"],
+              tagline: d.shortDescription || "",
+              description: d.description,
+              scope: d.scope || [],
+              tools: d.technologies || [],
+              status: d.status,
+              featured: d.featured,
+              highlight: d.highlight,
+              url: d.url,
+              accentColor: d.accentColor || "#d97746",
+              metrics: d.metrics,
+              deliverables: d.deliverables || [],
+            }));
+          if (mapped.length > 0) {
+            setFeatured(mapped);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("FeaturedProjectsSection Firestore sync fallback:", err);
+      });
+  }, []);
 
   return (
     <section id="featured-projects" className="py-16 sm:py-24 relative overflow-hidden bg-white/40 border-t border-[#502D55]/08">

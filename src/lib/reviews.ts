@@ -1,5 +1,17 @@
 import fs from "fs/promises";
 import path from "path";
+import { db, isFirebaseConfigured } from "./firebase";
+import {
+  collection,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  orderBy,
+} from "firebase/firestore";
 
 export type ReviewStatus = "pending" | "approved" | "rejected";
 
@@ -44,6 +56,37 @@ export async function getAllReviews(): Promise<Review[]> {
 }
 
 export async function getApprovedReviews(): Promise<PublicReview[]> {
+  if (db && isFirebaseConfigured) {
+    try {
+      const q = query(
+        collection(db, "reviews"),
+        where("status", "==", "approved")
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        return snapshot.docs
+          .map((d) => {
+            const data = d.data();
+            return {
+              id: d.id,
+              name: data.name,
+              service: data.service,
+              rating: data.rating,
+              review: data.review,
+              createdAt: data.createdAt,
+              updatedAt: data.updatedAt,
+              verified: data.verified,
+              status: data.status,
+              image: data.image,
+            } as PublicReview;
+          })
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      }
+    } catch (err) {
+      console.warn("Firestore getApprovedReviews fallback:", err);
+    }
+  }
+
   const reviews = await getAllReviews();
   return reviews
     .filter((r) => r.status === "approved")
@@ -91,6 +134,15 @@ export async function createReview(input: {
   reviews.push(newReview);
   await fs.writeFile(REVIEWS_FILE, JSON.stringify(reviews, null, 2), "utf-8");
 
+  // Also sync to Firestore if configured
+  if (db && isFirebaseConfigured) {
+    try {
+      await setDoc(doc(db, "reviews", newReview.id), newReview);
+    } catch (err) {
+      console.warn("Firestore createReview sync fallback:", err);
+    }
+  }
+
   return newReview;
 }
 
@@ -114,6 +166,17 @@ export async function updateReview(
   reviews[index] = updated;
   await fs.writeFile(REVIEWS_FILE, JSON.stringify(reviews, null, 2), "utf-8");
 
+  if (db && isFirebaseConfigured) {
+    try {
+      await updateDoc(doc(db, "reviews", id), {
+        ...updates,
+        updatedAt: updated.updatedAt,
+      });
+    } catch (err) {
+      console.warn("Firestore updateReview sync fallback:", err);
+    }
+  }
+
   return updated;
 }
 
@@ -125,5 +188,14 @@ export async function deleteReview(id: string): Promise<boolean> {
   if (filtered.length === reviews.length) return false;
 
   await fs.writeFile(REVIEWS_FILE, JSON.stringify(filtered, null, 2), "utf-8");
+
+  if (db && isFirebaseConfigured) {
+    try {
+      await deleteDoc(doc(db, "reviews", id));
+    } catch (err) {
+      console.warn("Firestore deleteReview sync fallback:", err);
+    }
+  }
+
   return true;
 }

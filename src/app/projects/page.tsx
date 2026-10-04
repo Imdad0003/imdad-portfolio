@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { projectsData, Project } from "@/data/projectsData";
+import { getPublishedProjects } from "@/lib/cms";
 import {
   ArrowRight,
   ExternalLink,
@@ -25,19 +26,49 @@ type ProjectCategoryFilter =
   | "Branding";
 
 export default function ProjectsPage() {
+  const [projects, setProjects] = useState<Project[]>(projectsData);
   const [activeCategory, setActiveCategory] = useState<ProjectCategoryFilter>("all");
+
+  useEffect(() => {
+    getPublishedProjects()
+      .then((docs) => {
+        if (docs && docs.length > 0) {
+          const mapped: Project[] = docs.map((d) => ({
+            id: d.id,
+            name: d.name,
+            slug: d.slug,
+            category: d.category as Project["category"],
+            tagline: d.shortDescription || "",
+            description: d.description,
+            scope: d.scope || [],
+            tools: d.technologies || [],
+            status: d.status,
+            featured: d.featured,
+            highlight: d.highlight,
+            url: d.url,
+            accentColor: d.accentColor || "#d97746",
+            metrics: d.metrics,
+            deliverables: d.deliverables || [],
+          }));
+          setProjects(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn("ProjectsPage Firestore sync fallback:", err);
+      });
+  }, []);
 
   const filteredProjects =
     activeCategory === "all"
-      ? projectsData
-      : projectsData.filter((p) => p.category === activeCategory);
+      ? projects
+      : projects.filter((p) => p.category === activeCategory);
 
   // Split into Tier 1 (Flagship), Tier 2 (Core), and Tier 3 (Supporting)
-  const flagshipProject = projectsData.find((p) => p.id === "easyxo-brand-ecosystem");
-  const secondaryProjects = projectsData.filter(
+  const flagshipProject = projects.find((p) => p.id === "easyxo-brand-ecosystem");
+  const secondaryProjects = projects.filter(
     (p) => p.id === "d2c-storefront-smartbiz" || p.id === "marketplace-infographic-system"
   );
-  const supportingProjects = projectsData.filter(
+  const supportingProjects = projects.filter(
     (p) => p.id !== "easyxo-brand-ecosystem" && p.id !== "d2c-storefront-smartbiz" && p.id !== "marketplace-infographic-system"
   );
 

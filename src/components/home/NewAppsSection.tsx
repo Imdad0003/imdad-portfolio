@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { appsData } from "@/data/apps";
+import { appsData, App, AppPlatform, AppStatus } from "@/data/apps";
+import { getPublishedApps } from "@/lib/cms";
 import {
   ArrowRight,
   Sparkles,
@@ -17,6 +18,49 @@ import {
 } from "lucide-react";
 
 export function NewAppsSection() {
+  const [apps, setApps] = useState<App[]>(appsData);
+
+  useEffect(() => {
+    getPublishedApps()
+      .then((docs) => {
+        if (docs && docs.length > 0) {
+          setApps(
+            docs.map((d) => ({
+              id: d.id,
+              name: d.name,
+              slug: d.slug,
+              tagline: d.tagline || d.shortDescription,
+              description: d.shortDescription || d.description,
+              fullDescription: d.description,
+              platform: (d.platform || ["Web"]) as AppPlatform[],
+              status: (d.status === "LIVE"
+                ? "live"
+                : d.status === "IN_DEVELOPMENT"
+                ? "in-development"
+                : "coming-soon") as AppStatus,
+              statusLabel:
+                d.status === "LIVE"
+                  ? "Live Brand"
+                  : d.status === "IN_DEVELOPMENT"
+                  ? "In Development"
+                  : "Coming Soon",
+              isNew: d.isNew ?? false,
+              featured: d.featured ?? true,
+              category: d.category || "Application",
+              accentColor: d.accentColor || "#935073",
+              version: d.version,
+              releaseDate: d.releaseDate,
+              features: d.features || [],
+              techStack: d.technologies || [],
+              links: { liveUrl: d.url, waitlistUrl: d.waitlistUrl },
+            }))
+          );
+        }
+      })
+      .catch((err) => {
+        console.warn("Firestore NewAppsSection load error:", err);
+      });
+  }, []);
   return (
     <section id="new-apps" className="py-16 sm:py-24 relative overflow-hidden bg-white/40 border-y border-[#502D55]/08">
       {/* Decorative architectural grid markers */}
@@ -54,7 +98,7 @@ export function NewAppsSection() {
 
         {/* 3-Card Studio Product Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
-          {appsData.map((app) => {
+          {apps.map((app) => {
             const isLive = app.status === "live";
             const isInDev = app.status === "in-development";
             const isComingSoon = app.status === "coming-soon";

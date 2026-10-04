@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { studioServices } from "@/data/servicesData";
+import { studioServices, StudioService } from "@/data/servicesData";
+import { getPublishedServices } from "@/lib/cms";
 import {
   ArrowRight,
   Globe,
@@ -24,7 +25,39 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export function StudioServicesSection() {
+  const [services, setServices] = useState<StudioService[]>(studioServices);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(0);
+
+  useEffect(() => {
+    getPublishedServices()
+      .then((docs) => {
+        if (docs && docs.length > 0) {
+          const merged = docs.map((doc, idx) => {
+            const base =
+              studioServices.find((s) => s.slug === doc.slug) ||
+              studioServices[idx] ||
+              studioServices[0];
+            return {
+              ...base,
+              id: doc.id,
+              title: doc.name || base.title,
+              slug: doc.slug || base.slug,
+              shortDescription: doc.shortDescription || base.shortDescription,
+              fullDescription: doc.description || base.fullDescription,
+              deliverables: doc.deliverables || base.deliverables,
+              accentColor: doc.accentColor || base.accentColor,
+              iconName: doc.iconName || base.iconName,
+            };
+          });
+          if (merged.length > 0) {
+            setServices(merged);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn("StudioServicesSection Firestore sync fallback:", err);
+      });
+  }, []);
 
   return (
     <section id="services" className="py-16 sm:py-24 relative overflow-hidden">
@@ -55,7 +88,7 @@ export function StudioServicesSection() {
 
         {/* Editorial Services Architectural Stack */}
         <div className="divide-y divide-[#502D55]/12 border-y border-[#502D55]/12">
-          {studioServices.map((service, index) => {
+          {services.map((service, index) => {
             const Icon = iconMap[service.iconName] || Globe;
             const isHovered = hoveredIndex === index;
 
