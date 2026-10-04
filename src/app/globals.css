@@ -206,3 +206,38 @@ body {
 .animate-ribbon-drift {
   animation: ribbon-drift 14s ease-in-out infinite;
 }
+
+/* Studio Design System Utilities */
+.studio-border {
+  border: 1px solid rgba(80, 45, 85, 0.1);
+}
+
+.studio-border-strong {
+  border: 1px solid rgba(80, 45, 85, 0.18);
+}
+
+.studio-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.badge-live {
+  background-color: #ECFDF5;
+  color: #065F46;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-in-development {
+  background-color: #FFFBEB;
+  color: #92400E;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-coming-soon {
+  background-color: #FAF5FF;
+  color: #6B21A8;
+  border: 1px solid rgba(168, 85, 247, 0.35);
+}
+

@@ -1,0 +1,193 @@
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { Container } from "@/components/ui/Container";
+import { appsData } from "@/data/apps";
+import {
+  ArrowRight,
+  Sparkles,
+  Smartphone,
+  Globe,
+  Music,
+  Target,
+  ShoppingBag,
+  ExternalLink,
+  CheckCircle2,
+} from "lucide-react";
+
+export function NewAppsSection() {
+  return (
+    <section id="new-apps" className="py-16 sm:py-24 relative overflow-hidden bg-white/40 border-y border-[#502D55]/08">
+      {/* Decorative architectural grid markers */}
+      <div className="absolute top-0 left-8 text-[10px] font-mono text-[#502D55]/20 select-none pointer-events-none">
+        +---+ APP_LAB_01
+      </div>
+      <div className="absolute bottom-0 right-8 text-[10px] font-mono text-[#502D55]/20 select-none pointer-events-none">
+        +---+ IMDAD.BUILDS
+      </div>
+
+      <Container>
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12 sm:mb-16">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#502D55]/12 text-[10px] font-mono text-[#56475C] mb-3 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#935073] animate-pulse" />
+              PRODUCT LAB // CURRENT RELEASES
+            </div>
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#180D1D]">
+              New Apps
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-[#56475C] max-w-xl">
+              Digital products conceptualized, engineered, and shipped by Imdad.builds. Distinctive tools with zero bloat.
+            </p>
+          </div>
+
+          <Link
+            href="/apps"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#180D1D] hover:text-[#935073] transition-colors group shrink-0"
+          >
+            <span>VIEW ALL APPS &amp; ECOSYSTEM</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </div>
+
+        {/* 3-Card Studio Product Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
+          {appsData.map((app) => {
+            const isLive = app.status === "live";
+            const isInDev = app.status === "in-development";
+            const isComingSoon = app.status === "coming-soon";
+
+            return (
+              <div
+                key={app.id}
+                className="group rounded-3xl bg-white/90 border border-[#502D55]/12 backdrop-blur-xl p-6 sm:p-7 flex flex-col justify-between transition-all duration-300 hover:border-[#935073]/40 hover:shadow-[0_20px_45px_rgba(80,45,85,0.08)] relative overflow-hidden"
+              >
+                {/* Top Ambient Glow on Hover */}
+                <div
+                  className="absolute top-0 right-0 w-40 h-40 opacity-15 rounded-full blur-3xl pointer-events-none group-hover:opacity-30 transition-opacity"
+                  style={{ backgroundColor: app.accentColor }}
+                />
+
+                <div>
+                  {/* Top Bar: Status Badge + Platform Tags */}
+                  <div className="flex items-center justify-between gap-2 mb-5">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-bold tracking-wide uppercase ${
+                        isLive
+                          ? "badge-live"
+                          : isInDev
+                          ? "badge-in-development"
+                          : "badge-coming-soon"
+                      }`}
+                    >
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          isLive
+                            ? "bg-emerald-500 animate-pulse"
+                            : isInDev
+                            ? "bg-amber-500"
+                            : "bg-purple-500"
+                        }`}
+                      />
+                      {app.statusLabel}
+                    </span>
+
+                    <div className="flex items-center gap-1">
+                      {app.platform.map((p) => (
+                        <span
+                          key={p}
+                          className="px-2 py-0.5 rounded-md bg-[#FAF4F9] border border-[#502D55]/08 text-[9px] font-mono text-[#56475C]"
+                        >
+                          {p}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* App Title & Identity */}
+                  <div className="flex items-start gap-3.5 mb-3">
+                    <div
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-white/50 text-white"
+                      style={{ backgroundColor: app.accentColor }}
+                    >
+                      {app.id === "wishmusic" && <Music className="w-6 h-6" />}
+                      {app.id === "wishtracking" && <Target className="w-6 h-6" />}
+                      {app.id === "easyxo" && <ShoppingBag className="w-6 h-6" />}
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-black text-[#180D1D] tracking-tight group-hover:text-[#935073] transition-colors">
+                        {app.name}
+                      </h3>
+                      <p className="text-xs text-[#7A6880] font-mono">
+                        {app.category}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs sm:text-sm text-[#56475C] leading-relaxed mb-6 font-normal">
+                    {app.description}
+                  </p>
+
+                  {/* App Feature Highlights */}
+                  <div className="space-y-2 mb-6 pt-4 border-t border-[#502D55]/08">
+                    {app.features.slice(0, 2).map((feat, idx) => (
+                      <div key={idx} className="flex items-start gap-2 text-xs text-[#56475C]">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-[#935073] shrink-0 mt-0.5" />
+                        <div>
+                          <span className="font-bold text-[#180D1D]">{feat.title}: </span>
+                          <span className="text-[#7A6880]">{feat.description}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tech Stack Pills */}
+                  <div className="flex flex-wrap gap-1.5 mb-6">
+                    {app.techStack.map((tech) => (
+                      <span
+                        key={tech}
+                        className="px-2 py-0.5 rounded-md bg-white border border-[#502D55]/10 text-[10px] font-mono text-[#56475C]"
+                      >
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card Bottom CTA */}
+                <div className="pt-4 border-t border-[#502D55]/08 flex items-center justify-between">
+                  <span className="studio-tag text-[9px] text-[#7A6880]">
+                    {app.version || "STUDIO LAB"}
+                  </span>
+
+                  <Link
+                    href={`/apps/${app.slug}`}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FAF2EA] hover:bg-[#180D1D] hover:text-white border border-[#502D55]/10 text-xs font-bold text-[#180D1D] transition-all group/btn shadow-2xs"
+                  >
+                    <span>Inspect App</span>
+                    <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Studio Stamp Banner */}
+        <div className="mt-12 p-4 rounded-2xl bg-white/70 border border-[#502D55]/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#56475C]">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+            <span className="font-bold text-[#180D1D]">Independent Product Lab:</span>
+            <span>All apps engineered with tactile performance and zero telemetry bloat.</span>
+          </div>
+          <span className="studio-tag text-[9px] text-[#935073] font-bold">
+            POWERED BY IMDAD.BUILDS
+          </span>
+        </div>
+      </Container>
+    </section>
+  );
+}

@@ -1,17 +1,18 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/data/config";
 import { Hero } from "@/components/sections/Hero";
-import { SelectedServices } from "@/components/home/SelectedServices";
-import { SelectedWork } from "@/components/home/SelectedWork";
-import { WhyWorkWithMeHome } from "@/components/home/WhyWorkWithMeHome";
+import { NewAppsSection } from "@/components/home/NewAppsSection";
+import { StudioServicesSection } from "@/components/home/StudioServicesSection";
+import { FeaturedProjectsSection } from "@/components/home/FeaturedProjectsSection";
+import { StudioAboutSection } from "@/components/home/StudioAboutSection";
 import { ReviewsPreview } from "@/components/home/ReviewsPreview";
 import { AiAssistantCta } from "@/components/home/AiAssistantCta";
 import { FinalCta } from "@/components/home/FinalCta";
 
 export const metadata: Metadata = {
-  title: "Imdad Digital Studio | E-commerce, Websites & Digital Solutions",
+  title: "IMDAD.BUILDS | Independent Digital Product Studio",
   description:
-    "Imdad Digital Studio helps businesses build and grow online with e-commerce solutions, marketplace listings, product creatives, websites, social media, AI services and more.",
+    "Welcome to Imdad.builds. Independent digital product studio building mobile apps, web applications, e-commerce systems, and high-retention creative media.",
   alternates: {
     canonical: siteConfig.siteUrl,
   },
@@ -20,25 +21,28 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <main className="flex-1 flex flex-col">
-      {/* 1. Curated Studio Hero */}
+      {/* 1. Hero: Asymmetric Typography + Product Lab Preview */}
       <Hero />
 
-      {/* 2. Selected Services (4-6 core disciplines) */}
-      <SelectedServices />
+      {/* 2. New Apps: WishMusic, WishTracking, EasyXo */}
+      <NewAppsSection />
 
-      {/* 3. Selected Work (3-4 strongest projects) */}
-      <SelectedWork />
+      {/* 3. Studio Services: 5 Core Disciplines */}
+      <StudioServicesSection />
 
-      {/* 4. Why Work With Me (4 concise operator points) */}
-      <WhyWorkWithMeHome />
+      {/* 4. Featured Projects / Proven Case Studies */}
+      <FeaturedProjectsSection />
 
-      {/* 5. Verified Reviews Preview */}
+      {/* 5. Studio Manifesto & Builder Mindset */}
+      <StudioAboutSection />
+
+      {/* 6. Verified Client Reviews Preview (Preserved) */}
       <ReviewsPreview />
 
-      {/* 6. AI Assistant Interactive Prompt */}
+      {/* 7. AI Scoping Assistant Prompt (Preserved) */}
       <AiAssistantCta />
 
-      {/* 7. Final Project Kickoff CTA */}
+      {/* 8. Final Project Kickoff CTA */}
       <FinalCta />
     </main>
   );

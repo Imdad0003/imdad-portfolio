@@ -2,12 +2,15 @@ const rawSiteUrl =
   process.env.NEXT_PUBLIC_SITE_URL || "https://imdad-portfolio-three.vercel.app";
 
 export const siteConfig = {
-  name: "Imdad Digital Studio",
+  name: "IMDAD.BUILDS",
+  studioName: "Imdad.builds",
   shortName: "Imdad",
   siteUrl: rawSiteUrl.replace(/\/+$/, ""),
-  role: "E-commerce Entrepreneur & Digital Business Specialist",
-  tagline: "I build and grow e-commerce businesses — from marketplace listings and product creatives to websites, content and digital marketing.",
+  role: "Product Creator & Digital Studio Builder",
+  tagline: "Building digital products, apps & experiences.",
+  subTagline: "Independent product lab building mobile apps, web applications, e-commerce systems, and high-impact digital experiences.",
   shortTagline: "BUILD • CREATE • SCALE",
+  poweredBy: "Powered by imdad.builds",
   brand: "EasyXo",
   easyxo: {
     name: "EasyXo",
@@ -20,7 +23,7 @@ export const siteConfig = {
     email: "imdad.builds@gmail.com",
     whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+91 7352608269",
     whatsappDisplay: "+91 7352608269",
-    whatsappMessage: "Hi Imdad, I came across your website and would like to discuss a project for my business.",
+    whatsappMessage: "Hi Imdad, I came across imdad.builds and would like to discuss building a project with your studio.",
     instagramHandle: "@imdad.builds",
     instagramUrl: "https://www.instagram.com/imdad.builds",
   },

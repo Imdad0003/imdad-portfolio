@@ -87,8 +87,114 @@ export default function ServicesPage() {
           </div>
         </div>
 
+        {/* 5 Core Studio Disciplines Dedicated Hub */}
+        <div className="mt-12 mb-16 p-6 sm:p-8 rounded-3xl bg-white/95 border border-[#502D55]/14 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-5 border-b border-[#502D55]/08 mb-6">
+            <div>
+              <span className="studio-tag text-[10px] text-[#935073] font-bold block mb-1">
+                IN-DEPTH SERVICE DIRECTORIES
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black text-[#180D1D]">
+                The 5 Studio Disciplines
+              </h2>
+            </div>
+            <p className="text-xs text-[#7A6880] max-w-sm">
+              Each discipline has dedicated scopes, process blueprints, deliverables, and transparent packages.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Link
+              href="/services/website-development"
+              className="p-5 rounded-2xl bg-[#FAF4F9]/60 hover:bg-[#FAF4F9] border border-[#502D55]/08 hover:border-[#935073]/30 transition-all group"
+            >
+              <span className="font-mono text-xs font-black text-[#935073] block mb-1">01</span>
+              <h3 className="font-bold text-base text-[#180D1D] group-hover:text-[#935073] flex items-center justify-between">
+                <span>Website Development</span>
+                <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </h3>
+              <p className="text-xs text-[#56475C] mt-1.5 leading-relaxed">
+                Business websites, portfolios, landing page funnels, and e-commerce stores with Razorpay.
+              </p>
+            </Link>
+
+            <Link
+              href="/services/app-development"
+              className="p-5 rounded-2xl bg-[#FAF4F9]/60 hover:bg-[#FAF4F9] border border-[#502D55]/08 hover:border-[#935073]/30 transition-all group"
+            >
+              <span className="font-mono text-xs font-black text-[#935073] block mb-1">02</span>
+              <h3 className="font-bold text-base text-[#180D1D] group-hover:text-[#935073] flex items-center justify-between">
+                <span>App Development</span>
+                <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </h3>
+              <p className="text-xs text-[#56475C] mt-1.5 leading-relaxed">
+                Cross-platform mobile apps for iOS and Android, PWAs, and custom digital software.
+              </p>
+            </Link>
+
+            <Link
+              href="/services/ecommerce"
+              className="p-5 rounded-2xl bg-[#FAF4F9]/60 hover:bg-[#FAF4F9] border border-[#502D55]/08 hover:border-[#935073]/30 transition-all group"
+            >
+              <span className="font-mono text-xs font-black text-[#935073] block mb-1">03</span>
+              <h3 className="font-bold text-base text-[#180D1D] group-hover:text-[#935073] flex items-center justify-between">
+                <span>E-Commerce</span>
+                <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </h3>
+              <p className="text-xs text-[#56475C] mt-1.5 leading-relaxed">
+                Marketplace cataloging for Amazon, Flipkart, and Meesho, and D2C online storefronts.
+              </p>
+            </Link>
+
+            <Link
+              href="/services/video-editing"
+              className="p-5 rounded-2xl bg-[#FAF4F9]/60 hover:bg-[#FAF4F9] border border-[#502D55]/08 hover:border-[#935073]/30 transition-all group"
+            >
+              <span className="font-mono text-xs font-black text-[#935073] block mb-1">04</span>
+              <h3 className="font-bold text-base text-[#180D1D] group-hover:text-[#935073] flex items-center justify-between">
+                <span>Video Editing</span>
+                <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </h3>
+              <p className="text-xs text-[#56475C] mt-1.5 leading-relaxed">
+                High-retention Reels, Shorts, product demonstrations, and UGC-style ad creatives.
+              </p>
+            </Link>
+
+            <Link
+              href="/services/social-media"
+              className="p-5 rounded-2xl bg-[#FAF4F9]/60 hover:bg-[#FAF4F9] border border-[#502D55]/08 hover:border-[#935073]/30 transition-all group"
+            >
+              <span className="font-mono text-xs font-black text-[#935073] block mb-1">05</span>
+              <h3 className="font-bold text-base text-[#180D1D] group-hover:text-[#935073] flex items-center justify-between">
+                <span>Social Media</span>
+                <ArrowRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </h3>
+              <p className="text-xs text-[#56475C] mt-1.5 leading-relaxed">
+                Structured monthly content roadmaps, carousel post designs, and reels ideation.
+              </p>
+            </Link>
+
+            <div className="p-5 rounded-2xl bg-[#FAF2EA] border border-[#F6DBC0] flex flex-col justify-between">
+              <div>
+                <span className="studio-tag text-[10px] text-[#7A3F26] font-bold block mb-1">CUSTOM SCOPE</span>
+                <h3 className="font-bold text-base text-[#180D1D]">Need Multi-Service Setup?</h3>
+                <p className="text-xs text-[#56475C] mt-1.5 leading-relaxed">
+                  Combine website, cataloging, video ads, and brand packaging into a single coordinated rollout.
+                </p>
+              </div>
+              <Link
+                href="/contact"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-[#935073] hover:underline"
+              >
+                <span>Discuss Full-Stack Scope</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+
         {/* Categorized Service Sections */}
-        <div className="mt-16 space-y-24">
+        <div className="mt-8 space-y-24">
           {categories.map((cat) => {
             const services = allServices.filter((s) => s.category === cat.id);
             const Icon = categoryIcons[cat.id] || Sparkles;

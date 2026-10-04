@@ -3,33 +3,22 @@
 import React, { useEffect, useRef } from "react";
 
 interface Particle {
-  layer: 1 | 2 | 3;
-  baseAngle: number;
-  angularVelocity: number;
-  baseRadius: number;
-  radiusAmp: number;
-  radialFreq: number;
-  radialPhase: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
   size: number;
-  colorRgb: string; // e.g. "168, 85, 145"
+  alpha: number;
   baseAlpha: number;
-  alphaSpeed: number;
-  alphaPhase: number;
-  aspectSkew: number; // slight elliptical shape
-  offsetX: number;
-  offsetY: number;
+  colorRgb: string;
 }
 
-const PASTEL_PALETTE = [
-  "147, 80, 115", // Soft Violet
-  "120, 70, 155", // Soft Purple
-  "225, 130, 165", // Rose Pink
-  "245, 175, 140", // Warm Peach
-  "245, 145, 105", // Soft Coral Orange
-  "130, 180, 240", // Soft Sky Blue
-  "235, 110, 125", // Soft Crimson / Red
-  "175, 140, 220", // Lavender
-  "210, 160, 185", // Muted Orchid
+// Studio restrained palette: warm violet-night, muted studio rose, subtle warm taupe
+const STUDIO_PALETTE = [
+  "24, 13, 29",   // Night Violet (subtle dark)
+  "80, 45, 85",   // Deep Studio Violet
+  "147, 80, 115", // Muted Studio Rose
+  "184, 104, 144",// Soft Rose Accent
 ];
 
 export function ParticleField() {
@@ -46,26 +35,17 @@ export function ParticleField() {
     let width = 0;
     let height = 0;
     let dpr = 1;
-
-    // Mouse tracking with smooth lerp
-    let targetMouseX = -1000;
-    let targetMouseY = -1000;
-    let currentMouseX = -1000;
-    let currentMouseY = -1000;
-    let isMouseActive = false;
-
-    // Scroll tracking
     let scrollY = window.scrollY;
 
     const prefersReducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    // Determine particle count based on screen width (optimized for mobile performance)
+    // Restrained count for studio cleanliness and peak battery/CPU performance
     const getParticleCount = (w: number) => {
-      if (w < 640) return 35; // Lightweight on mobile CPU/GPU
-      if (w < 1024) return 90;
-      return 200;
+      if (w < 640) return 20;
+      if (w < 1024) return 40;
+      return 65;
     };
 
     let particles: Particle[] = [];
@@ -74,76 +54,29 @@ export function ParticleField() {
       const count = getParticleCount(width);
       particles = [];
 
-      // Hero center area exclusion
-      const isMobile = width < 768;
-      const minRadius = isMobile ? 90 : 200;
-      const maxRadius = Math.max(width, height) * 0.75;
-
       for (let i = 0; i < count; i++) {
-        // Layer distribution: 60% Layer 1 (tiny, slow), 28% Layer 2 (medium), 12% Layer 3 (soft glow)
-        const rand = Math.random();
-        let layer: 1 | 2 | 3 = 1;
-        let size = 1.0;
-        let baseAlpha = 0.5;
-
-        if (rand < 0.6) {
-          layer = 1;
-          size = 0.8 + Math.random() * 0.8; // 0.8 - 1.6px
-          baseAlpha = 0.35 + Math.random() * 0.35;
-        } else if (rand < 0.88) {
-          layer = 2;
-          size = 1.6 + Math.random() * 1.2; // 1.6 - 2.8px
-          baseAlpha = 0.45 + Math.random() * 0.4;
-        } else {
-          layer = 3;
-          size = 3.2 + Math.random() * 2.2; // 3.2 - 5.4px (blurred glow)
-          baseAlpha = 0.2 + Math.random() * 0.3;
-        }
-
-        const distanceFactor = Math.pow(Math.random(), 0.75);
-        const baseRadius = minRadius + distanceFactor * (maxRadius - minRadius);
-
-        const speedDir = Math.random() > 0.45 ? 1 : -1;
-        const baseSpeed =
-          layer === 1
-            ? 0.0004 + Math.random() * 0.0006
-            : layer === 2
-            ? 0.0006 + Math.random() * 0.0008
-            : 0.0003 + Math.random() * 0.0005;
-
+        const size = 1.0 + Math.random() * 1.5;
+        const baseAlpha = 0.08 + Math.random() * 0.18;
         const colorRgb =
-          PASTEL_PALETTE[Math.floor(Math.random() * PASTEL_PALETTE.length)];
+          STUDIO_PALETTE[Math.floor(Math.random() * STUDIO_PALETTE.length)];
 
         particles.push({
-          layer,
-          baseAngle: Math.random() * Math.PI * 2,
-          angularVelocity: baseSpeed * speedDir,
-          baseRadius,
-          radiusAmp: 15 + Math.random() * 40,
-          radialFreq: 0.0008 + Math.random() * 0.0015,
-          radialPhase: Math.random() * Math.PI * 2,
+          x: Math.random() * width,
+          y: Math.random() * height,
+          vx: (Math.random() - 0.5) * 0.25,
+          vy: -0.1 - Math.random() * 0.2, // gentle upward drift
           size,
-          colorRgb,
+          alpha: baseAlpha,
           baseAlpha,
-          alphaSpeed: 0.001 + Math.random() * 0.002,
-          alphaPhase: Math.random() * Math.PI * 2,
-          aspectSkew: 0.85 + Math.random() * 0.3,
-          offsetX: 0,
-          offsetY: 0,
+          colorRgb,
         });
       }
     };
 
-    const isTouchDevice =
-      typeof window !== "undefined" &&
-      ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-
     const handleResize = () => {
       width = window.innerWidth;
       height = window.innerHeight;
-      const isMobileScreen = width < 768;
-      // Clamp DPR to 1.5 on mobile to avoid high-DPI GPU fill-rate strain
-      dpr = Math.min(window.devicePixelRatio || 1, isMobileScreen ? 1.5 : 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
       canvas.width = width * dpr;
       canvas.height = height * dpr;
@@ -154,18 +87,8 @@ export function ParticleField() {
       initParticles();
 
       if (prefersReducedMotion) {
-        draw(0, true);
+        draw(true);
       }
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      targetMouseX = e.clientX;
-      targetMouseY = e.clientY;
-      isMouseActive = true;
-    };
-
-    const handleMouseLeave = () => {
-      isMouseActive = false;
     };
 
     const handleScroll = () => {
@@ -173,144 +96,56 @@ export function ParticleField() {
     };
 
     window.addEventListener("resize", handleResize);
-    if (!isTouchDevice) {
-      window.addEventListener("mousemove", handleMouseMove, { passive: true });
-      document.addEventListener("mouseleave", handleMouseLeave);
-    }
     window.addEventListener("scroll", handleScroll, { passive: true });
-
     handleResize();
 
-    let lastTime = performance.now();
+    const draw = (staticOnly = false) => {
+      // Fade out as user scrolls deeply into content
+      const scrollFade = Math.max(0, 1 - scrollY / 900);
+      ctx.clearRect(0, 0, width, height);
 
-    const draw = (currentTime: number, staticOnly = false) => {
-      const delta = Math.min(currentTime - lastTime, 100);
-      lastTime = currentTime;
-
-      // Scroll fade: particles fade out gracefully as user scrolls down beyond hero
-      const scrollFade = Math.max(0, 1 - scrollY / 750);
-      if (scrollFade <= 0.02) {
-        ctx.clearRect(0, 0, width, height);
+      if (scrollFade <= 0.01) {
         if (!staticOnly) {
-          animationFrameId = requestAnimationFrame(draw);
+          animationFrameId = requestAnimationFrame(() => draw(false));
         }
         return;
       }
 
-      ctx.clearRect(0, 0, width, height);
-
-      // Smooth mouse lerp
-      if (isMouseActive) {
-        currentMouseX += (targetMouseX - currentMouseX) * 0.06;
-        currentMouseY += (targetMouseY - currentMouseY) * 0.06;
-      }
-
-      // Hero anchor center: horizontally centered, vertical ~42% of viewport height
-      const originX = width * 0.5;
-      const originY = Math.min(height * 0.42, 380);
-
-      // Render each particle
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
         if (!staticOnly) {
-          p.baseAngle += p.angularVelocity * delta;
-          p.radialPhase += p.radialFreq * delta;
-          p.alphaPhase += p.alphaSpeed * delta;
+          p.x += p.vx;
+          p.y += p.vy;
+
+          // Wrap boundaries gently
+          if (p.x < 0) p.x = width;
+          if (p.x > width) p.x = 0;
+          if (p.y < 0) p.y = height;
+          if (p.y > height) p.y = 0;
         }
 
-        // Radial oscillation (gentle wave movement)
-        const currentR =
-          p.baseRadius + Math.sin(p.radialPhase) * p.radiusAmp;
-
-        // Position in orbital ellipse
-        let x = originX + Math.cos(p.baseAngle) * currentR * p.aspectSkew;
-        let y = originY + Math.sin(p.baseAngle) * currentR;
-
-        // Subtle mouse reaction
-        if (isMouseActive && !staticOnly) {
-          const dx = x - currentMouseX;
-          const dy = y - currentMouseY;
-          const distToMouse = Math.sqrt(dx * dx + dy * dy);
-          const maxDist = 180;
-
-          if (distToMouse < maxDist && distToMouse > 0) {
-            const force = (1 - distToMouse / maxDist) * 18;
-            const nx = dx / distToMouse;
-            const ny = dy / distToMouse;
-            p.offsetX += (nx * force - p.offsetX) * 0.08;
-            p.offsetY += (ny * force - p.offsetY) * 0.08;
-          } else {
-            p.offsetX *= 0.94;
-            p.offsetY *= 0.94;
-          }
-        } else {
-          p.offsetX *= 0.94;
-          p.offsetY *= 0.94;
-        }
-
-        x += p.offsetX;
-        y += p.offsetY;
-
-        // Dynamic alpha: gentle pulsing
-        const alphaSine = 0.5 + 0.5 * Math.sin(p.alphaPhase);
-        const dynamicAlpha =
-          (p.baseAlpha * (0.7 + 0.3 * alphaSine)) * scrollFade;
-
-        if (dynamicAlpha <= 0.01) continue;
-
-        // Draw particle based on layer
-        ctx.save();
-        if (p.layer === 3) {
-          // Soft blurred particle
-          const glowGrad = ctx.createRadialGradient(
-            x,
-            y,
-            0,
-            x,
-            y,
-            p.size * 2.2
-          );
-          glowGrad.addColorStop(
-            0,
-            `rgba(${p.colorRgb}, ${dynamicAlpha * 0.9})`
-          );
-          glowGrad.addColorStop(
-            0.5,
-            `rgba(${p.colorRgb}, ${dynamicAlpha * 0.4})`
-          );
-          glowGrad.addColorStop(1, `rgba(${p.colorRgb}, 0)`);
-
-          ctx.fillStyle = glowGrad;
-          ctx.beginPath();
-          ctx.arc(x, y, p.size * 2.2, 0, Math.PI * 2);
-          ctx.fill();
-        } else {
-          // Sharp, crisp particle (Layer 1 or 2)
-          ctx.fillStyle = `rgba(${p.colorRgb}, ${dynamicAlpha})`;
-          ctx.beginPath();
-          ctx.arc(x, y, p.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        ctx.restore();
+        const currentAlpha = p.alpha * scrollFade;
+        ctx.fillStyle = `rgba(${p.colorRgb}, ${currentAlpha})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       if (!staticOnly) {
-        animationFrameId = requestAnimationFrame(draw);
+        animationFrameId = requestAnimationFrame(() => draw(false));
       }
     };
 
     if (prefersReducedMotion) {
-      draw(0, true);
+      draw(true);
     } else {
-      animationFrameId = requestAnimationFrame(draw);
+      animationFrameId = requestAnimationFrame(() => draw(false));
     }
 
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseleave", handleMouseLeave);
       window.removeEventListener("scroll", handleScroll);
     };
   }, []);

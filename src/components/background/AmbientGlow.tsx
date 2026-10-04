@@ -19,11 +19,10 @@ export function AmbientGlow() {
     let currentY = 0;
 
     const handleMouseMove = (e: MouseEvent) => {
-      // Calculate normalized offset from center [-1, 1]
       const nx = (e.clientX / window.innerWidth - 0.5) * 2;
       const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      targetX = nx * 35; // max 35px shift
-      targetY = ny * 35;
+      targetX = nx * 25;
+      targetY = ny * 25;
     };
 
     const updatePosition = () => {
@@ -50,33 +49,19 @@ export function AmbientGlow() {
       }}
       aria-hidden="true"
     >
-      {/* 1. Top-Left / Center-Left Soft Violet Orb */}
+      {/* 1. Top-Left Restrained Violet Orb */}
       <div
-        className="absolute -top-16 -left-12 w-[280px] h-[280px] sm:w-[850px] sm:h-[850px] rounded-full bg-gradient-to-br from-[#935073]/12 via-[#502D55]/08 to-transparent blur-[80px] sm:blur-[220px] motion-reduce:animate-none animate-liquid-pulse"
-        style={{ animationDuration: "14s" }}
+        className="absolute -top-24 -left-16 w-[320px] h-[320px] sm:w-[800px] sm:h-[800px] rounded-full bg-gradient-to-br from-[#502D55]/07 to-transparent blur-[100px] sm:blur-[200px]"
       />
 
-      {/* 2. Hero Center-Right Warm Peach & Rose Orb */}
+      {/* 2. Top-Right Restrained Studio Rose & Peach Accent */}
       <div
-        className="absolute top-[8%] -right-12 w-[260px] h-[260px] sm:w-[800px] sm:h-[800px] rounded-full bg-gradient-to-bl from-[#F6DBC0]/40 via-[#eab8a5]/25 to-transparent blur-[80px] sm:blur-[240px] motion-reduce:animate-none animate-liquid-pulse"
-        style={{ animationDuration: "16s", animationDelay: "-4s" }}
+        className="absolute top-[4%] -right-20 w-[280px] h-[280px] sm:w-[750px] sm:h-[750px] rounded-full bg-gradient-to-bl from-[#F6DBC0]/20 via-[#935073]/06 to-transparent blur-[90px] sm:blur-[220px]"
       />
 
-      {/* 3. Central Ambient Sky Blue Hue (Desktop / Tablet) */}
+      {/* 3. Subtle Bottom Grounding Orb */}
       <div
-        className="hidden sm:block absolute top-[28%] left-[25%] w-[500px] h-[500px] sm:w-[700px] sm:h-[700px] rounded-full bg-gradient-to-tr from-[#9bbce8]/18 via-[#b8d4f6]/10 to-transparent blur-[160px] sm:blur-[260px] motion-reduce:animate-none animate-liquid-pulse"
-        style={{ animationDuration: "18s", animationDelay: "-8s" }}
-      />
-
-      {/* 4. Lower-Page Rose & Soft Lavender Bloom */}
-      <div
-        className="absolute top-[58%] -left-16 w-[280px] h-[280px] sm:w-[900px] sm:h-[900px] rounded-full bg-gradient-to-tr from-[#e6b3cb]/20 via-[#c39ac7]/15 to-transparent blur-[85px] sm:blur-[250px] motion-reduce:animate-none animate-liquid-pulse"
-        style={{ animationDuration: "20s", animationDelay: "-11s" }}
-      />
-
-      {/* 5. Footer / Bottom Warm Peach Grounding */}
-      <div
-        className="absolute bottom-[-50px] right-[5%] w-[260px] h-[260px] sm:w-[600px] sm:h-[600px] rounded-full bg-gradient-to-t from-[#F6DBC0]/30 to-transparent blur-[85px] sm:blur-[200px] pointer-events-none"
+        className="absolute bottom-[-100px] right-[10%] w-[300px] h-[300px] sm:w-[650px] sm:h-[650px] rounded-full bg-gradient-to-t from-[#935073]/05 to-transparent blur-[100px] sm:blur-[220px]"
       />
     </div>
   );
