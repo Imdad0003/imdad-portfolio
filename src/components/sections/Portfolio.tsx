@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy component from previous site iterations.
+ * Not imported by any active page. Superseded by /projects and FeaturedProjectsSection.
+ * Preserved for reference; do not delete without approval.
+ */
 "use client";
 
 import React, { useState } from "react";

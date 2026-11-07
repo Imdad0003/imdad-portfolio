@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy data file. Superseded by StudioAboutSection.
+ * Preserved for reference; do not delete without approval.
+ */
 import { ProcessStep } from "@/types";
 
 export const processSteps: ProcessStep[] = [

@@ -1,11 +1,11 @@
 import React from "react";
 import Image from "next/image";
-import Link from "next/link";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { siteConfig } from "@/data/config";
+import { getSiteContent } from "@/lib/cms";
 import {
   ShoppingBag,
   Sparkles,
@@ -13,8 +13,6 @@ import {
   Smartphone,
   ArrowRight,
   ShieldCheck,
-  Cpu,
-  Layers,
 } from "lucide-react";
 import { Instagram } from "@/components/ui/InstagramIcon";
 
@@ -27,15 +25,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const siteContent = await getSiteContent();
+  const about = siteContent.about;
+  const skills = siteContent.metadata?.skills || [];
+
   return (
     <div className="py-16 sm:py-24">
       <Container>
         {/* Header */}
         <SectionHeading
-          badgeText="Product Studio &amp; Builder"
-          title="IMDAD.BUILDS — Digital Product Lab"
-          description="A personal digital studio engineering mobile apps, web applications, e-commerce engines, and high-retention media."
+          badgeText={about.eyebrow || "Product Studio & Builder"}
+          title={about.headline || "IMDAD.BUILDS — Digital Product Lab"}
+          description={about.bio || "A personal digital studio engineering mobile apps, web applications, e-commerce engines, and high-retention media."}
           align="center"
           as="h1"
         />
@@ -71,13 +73,13 @@ export default function AboutPage() {
 
                 <div className="pt-4 border-t border-[#502D55]/08 flex items-center justify-center gap-3">
                   <a
-                    href={siteConfig.links.instagram}
+                    href={siteContent.socialLinks?.instagram || siteConfig.links.instagram}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 min-h-[36px] rounded-full bg-white border border-[#502D55]/15 text-xs font-semibold text-[#180D1D] hover:text-[#935073] hover:border-[#935073]/40 transition-colors shadow-2xs"
                   >
                     <Instagram className="w-3.5 h-3.5 text-[#935073]" />
-                    <span>@imdad.builds</span>
+                    <span>{siteContent.contact?.instagramHandle || "@imdad.builds"}</span>
                   </a>
                 </div>
 
@@ -87,7 +89,7 @@ export default function AboutPage() {
                     &quot;Powered by imdad.builds&quot;
                   </p>
                   <p className="text-[11px] text-[#56475C]">
-                    Every product we incubate or build for clients carries the stamp of rigorous firsthand execution.
+                    {about.ethos || "Every product we incubate or build for clients carries the stamp of rigorous firsthand execution."}
                   </p>
                 </div>
               </div>
@@ -101,7 +103,7 @@ export default function AboutPage() {
             </h3>
 
             <p>
-              Imdad.builds is not an agency of theories, presentations, and account managers. It is an independent digital product lab where software, mobile apps, digital storefronts, and conversion-engineered media are conceptualized and built directly by me.
+              {about.bio}
             </p>
 
             <p>
@@ -150,6 +152,30 @@ export default function AboutPage() {
                 </p>
               </div>
             </div>
+
+            {/* Skills & Technologies from CMS */}
+            {skills.length > 0 && (
+              <div className="pt-6 border-t border-[#502D55]/10 space-y-4">
+                <div className="flex items-center gap-2 font-bold text-xs text-[#0A192F]">
+                  <Sparkles className="w-4 h-4 text-[#0284C7]" />
+                  Core Technologies &amp; Disciplines
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {skills.map((group) => (
+                    <div key={group.category} className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                      <div className="text-[11px] font-mono font-bold text-[#0284C7] mb-1.5">{group.category}</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {group.items.map((item) => (
+                          <span key={item} className="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-mono text-slate-700">
+                            {item}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Operating Principles */}
             <div className="pt-6 border-t border-[#502D55]/10 space-y-3">

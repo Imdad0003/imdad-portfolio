@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy component from previous site iterations.
+ * Not imported by any active page. Superseded by StudioServicesSection.
+ * Preserved for reference; do not delete without approval.
+ */
 import React from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";

@@ -1,16 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F8F4E9;
-  --foreground: #180D1D;
-  --violet-deep: #502D55;
-  --violet-night: #180D1D;
-  --violet-mid: #2b1435;
-  --rose-muted: #935073;
-  --rose-light: #b86890;
-  --peach-warm: #F6DBC0;
-  --ivory-warm: #F8F4E9;
-  --ivory-muted: #d8cfc4;
+  /* Clean Light-Only Surface System */
+  --background: #F8FAFC;          /* Clean soft-blue/slate background */
+  --foreground: #0A192F;          /* Deep navy high-contrast text */
+  --navy-deep: #0A192F;           /* Primary deep navy */
+  --navy-dark: #0F172A;           /* Slate 900 */
+  --navy-slate: #1E293B;          /* Slate 800 */
+  --navy-muted: #334155;          /* Slate 700 (WCAG AA compliant contrast) */
+  --navy-subtle: #475569;         /* Slate 600 */
+  --blue-electric: #0284C7;       /* Electric blue accent (Sky 600) */
+  --blue-vibrant: #2563EB;        /* Blue 600 */
+  --blue-ice: #E0F2FE;            /* Sky 100 ice-blue surface */
+  --blue-soft: #F0F9FF;           /* Sky 50 soft-blue surface */
+  --cyan-accent: #06B6D4;         /* Tech Cyan */
   color-scheme: light;
 }
 
@@ -53,21 +56,21 @@ body {
   padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
 }
 
-/* Liquid Glass System (Clean Light Aesthetic) */
+/* Liquid Glass System (Clean Light-Only Electric-Blue Aesthetic) */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(80, 45, 85, 0.08);
-  box-shadow: 0 10px 30px -5px rgba(80, 45, 85, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(14, 165, 233, 0.12);
+  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
 }
 
 .glass-panel-elevated {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(80, 45, 85, 0.12);
-  box-shadow: 0 20px 45px -10px rgba(80, 45, 85, 0.07), inset 0 1px 0 0 rgba(255, 255, 255, 1);
+  border: 1px solid rgba(14, 165, 233, 0.18);
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 1);
 }
 
 .glass-panel-interactive {
@@ -75,50 +78,50 @@ body {
 }
 
 .glass-panel-interactive:hover {
-  background: rgba(255, 255, 255, 0.96);
-  border-color: rgba(147, 80, 115, 0.25);
+  background: #ffffff;
+  border-color: rgba(2, 132, 199, 0.35);
   transform: translateY(-3px);
-  box-shadow: 0 20px 45px -10px rgba(80, 45, 85, 0.09), 0 0 30px -5px rgba(246, 219, 192, 0.4), inset 0 1px 0 0 #ffffff;
+  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 30px -5px rgba(2, 132, 199, 0.15), inset 0 1px 0 0 #ffffff;
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(80, 45, 85, 0.1);
-  box-shadow: 0 4px 15px -2px rgba(80, 45, 85, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(14, 165, 233, 0.16);
+  box-shadow: 0 4px 15px -2px rgba(15, 23, 42, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
 }
 
-/* Violet Dusk Typography Gradients (High-Contrast for Light Theme) */
+/* Deep Navy & Electric Blue Typography Gradients */
 .text-gradient-dusk {
-  background: linear-gradient(135deg, #180D1D 0%, #502D55 45%, #935073 100%);
+  background: linear-gradient(135deg, #0A192F 0%, #0F172A 45%, #0284C7 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.text-gradient-peach {
-  background: linear-gradient(135deg, #180D1D 0%, #935073 70%, #d1829e 100%);
+.text-gradient-electric {
+  background: linear-gradient(135deg, #0A192F 0%, #2563EB 60%, #06B6D4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.text-gradient-rose {
-  background: linear-gradient(135deg, #502D55 0%, #935073 55%, #b86890 100%);
+.text-gradient-blue {
+  background: linear-gradient(135deg, #0F172A 0%, #0284C7 55%, #06B6D4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 /* Glow effects */
-.glow-peach {
-  box-shadow: 0 0 45px -5px rgba(246, 219, 192, 0.45);
+.glow-blue {
+  box-shadow: 0 0 45px -5px rgba(2, 132, 199, 0.25);
 }
 
-.glow-rose {
-  box-shadow: 0 0 50px -5px rgba(147, 80, 115, 0.25);
+.glow-ice {
+  box-shadow: 0 0 50px -5px rgba(224, 242, 254, 0.7);
 }
 
-.glow-violet {
-  box-shadow: 0 0 60px -5px rgba(80, 45, 85, 0.2);
+.glow-electric {
+  box-shadow: 0 0 60px -5px rgba(37, 99, 235, 0.2);
 }
 
 /* Custom Scrollbar */
@@ -127,17 +130,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F8F4E9;
+  background: #F8FAFC;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #dcd0d9;
+  background: #CBD5E1;
   border-radius: 9999px;
-  border: 2px solid #F8F4E9;
+  border: 2px solid #F8FAFC;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #935073;
+  background: #0284C7;
 }
 
 /* Focus Ring */
@@ -146,7 +149,7 @@ body {
 }
 .focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #935073;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #0284C7;
 }
 
 /* Animation Keyframes (Preserved) */

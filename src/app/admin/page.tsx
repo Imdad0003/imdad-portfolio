@@ -17,16 +17,19 @@ import {
 import {
   verifyAdminStatus,
   adminSignIn,
+  adminSignInWithGoogle,
   adminSignOut,
   adminSendPasswordReset,
-  BOOTSTRAP_ADMIN_EMAILS,
 } from "@/lib/auth";
-import { uploadStudioAsset, isStorageAvailable } from "@/lib/storage";
+import { uploadStudioAsset } from "@/lib/storage";
+import { AppReleaseManager } from "@/components/admin/AppReleaseManager";
+import { ReleaseHistoryView } from "@/components/admin/ReleaseHistoryView";
 import { appsData } from "@/data/apps";
 import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
-import { allServices } from "@/data/pricing";
+import { allServices, corePackages } from "@/data/pricing";
 import { siteConfig } from "@/data/config";
+import { migrateInitialDataToFirestore } from "@/lib/migration";
 import type {
   AppDocument,
   ProjectDocument,
@@ -58,7 +61,22 @@ import {
   AlertTriangle,
   Sparkles,
   Upload,
+  History,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
+
+const SECTION_INFO: Record<string, { label: string; desc: string }> = {
+  hero: { label: "Hero Section", desc: "Main headline, announcement, and initial action buttons" },
+  packages: { label: "Commercial Packages", desc: "Starter (₹999), A+ (₹1,499), Pro (₹1,999) & Complete pricing" },
+  apps: { label: "Apps Catalog", desc: "WishMusic, WishTracking, and active product previews" },
+  services: { label: "Studio Disciplines", desc: "Core studio disciplines, capabilities, and workflows" },
+  projects: { label: "Case Studies & Work", desc: "Selected client case studies, deliverables, and tech" },
+  about: { label: "Studio Origin & Ethos", desc: "Independent studio ethos, philosophy, and founder narrative" },
+  reviews: { label: "Client Testimonials", desc: "Authentic client reviews and rating metrics" },
+  "ai-assistant": { label: "AI Concierge Assistant", desc: "Interactive product advisory assistant" },
+  "final-cta": { label: "Final Collaboration CTA", desc: "Closing call-to-action for new project briefs" },
+};
 
 export default function AdminPortalPage() {
   // Auth state
@@ -68,10 +86,20 @@ export default function AdminPortalPage() {
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Tab & data state
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "apps" | "projects" | "services" | "packages" | "content" | "reviews" | "settings"
+    | "dashboard"
+    | "apps"
+    | "app-releases"
+    | "release-history"
+    | "projects"
+    | "services"
+    | "packages"
+    | "content"
+    | "reviews"
+    | "settings"
   >("dashboard");
 
   const [apps, setApps] = useState<AppDocument[]>([]);
@@ -85,6 +113,7 @@ export default function AdminPortalPage() {
   const [loadingData, setLoadingData] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [seedingDemo, setSeedingDemo] = useState(false);
 
   // Modal editing state
   const [editingApp, setEditingApp] = useState<Partial<AppDocument> | null>(null);
@@ -95,7 +124,7 @@ export default function AdminPortalPage() {
   // 1. Listen to Firebase Auth state
   useEffect(() => {
     if (!auth) {
-      setAuthLoading(false);
+      queueMicrotask(() => setAuthLoading(false));
       return;
     }
 
@@ -219,24 +248,42 @@ export default function AdminPortalPage() {
       if (pkgSnap && !pkgSnap.empty) {
         setPackages(pkgSnap.docs.map((d) => ({ id: d.id, ...d.data() } as WebsitePackageDocument)));
       } else {
+        const defaultCorePkgs: WebsitePackageDocument[] = corePackages.map((x, i) => ({
+          id: x.id,
+          name: x.name,
+          websiteType: "Commercial Package",
+          description: x.tagline,
+          features: x.deliverables,
+          price: x.price,
+          priceType: "fixed",
+          unit: x.turnaround,
+          badge: x.badge || null,
+          recommended: x.popular || x.badge === "Best Value",
+          active: true,
+          sortOrder: i,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          published: true,
+        }));
         const pkgs = allServices.filter((x) => x.category === "websites" || x.category === "ecommerce");
-        setPackages(
-          pkgs.map((x, i) => ({
-            id: x.id,
-            name: x.name,
-            websiteType: x.categoryLabel,
-            description: x.description,
-            features: x.deliverables,
-            price: x.price,
-            priceType: x.priceType,
-            unit: x.unit,
-            active: true,
-            sortOrder: i,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            published: true,
-          }))
-        );
+        const defaultServicePkgs: WebsitePackageDocument[] = pkgs.map((x, i) => ({
+          id: x.id,
+          name: x.name,
+          websiteType: x.categoryLabel,
+          description: x.description,
+          features: x.deliverables,
+          price: x.price,
+          priceType: x.priceType,
+          unit: x.unit,
+          badge: x.badge || null,
+          recommended: x.recommended || false,
+          active: true,
+          sortOrder: defaultCorePkgs.length + i,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          published: true,
+        }));
+        setPackages([...defaultCorePkgs, ...defaultServicePkgs]);
       }
 
       // Reviews
@@ -266,7 +313,7 @@ export default function AdminPortalPage() {
           about: {
             eyebrow: "STUDIO ORIGIN",
             headline: "Building software, platforms & creative assets with commercial precision.",
-            bio: "Imdad.builds was founded as an independent digital studio where software engineering converges with direct commercial reality.",
+            bio: "Imdad.builds was founded as an independent digital studio where software engineering converges with direct commercial reality. Unlike agencies who theorize about products, we build, launch, and operate them ourselves.",
             ethos: "Zero bloat. Fast iterations. Real products powered by imdad.builds.",
             location: "India • Global Distribution",
           },
@@ -295,6 +342,53 @@ export default function AdminPortalPage() {
             tagline: siteConfig.subTagline,
             copyrightYear: 2026,
             studioName: siteConfig.name,
+          },
+          metadata: {
+            sectionOrder: [
+              "hero",
+              "packages",
+              "apps",
+              "services",
+              "projects",
+              "about",
+              "reviews",
+              "ai-assistant",
+              "final-cta",
+            ],
+            sectionVisibility: {
+              hero: true,
+              packages: true,
+              apps: true,
+              services: true,
+              projects: true,
+              about: true,
+              reviews: true,
+              "ai-assistant": true,
+              "final-cta": true,
+            },
+            skills: [
+              {
+                category: "Mobile & App Engineering",
+                items: ["Flutter", "Dart", "iOS", "Android", "Offline-First SQLite"],
+              },
+              {
+                category: "Web & Storefronts",
+                items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay"],
+              },
+              {
+                category: "Marketplace & E-Commerce",
+                items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo"],
+              },
+              {
+                category: "AI & Media Systems",
+                items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging"],
+              },
+            ],
+            seo: {
+              title: "IMDAD.BUILDS | Independent Digital Product Studio",
+              description:
+                "Independent digital product studio building mobile apps, web applications, e-commerce systems, and conversion-engineered creative media.",
+            },
           },
           published: true,
           updatedAt: new Date().toISOString(),
@@ -328,11 +422,35 @@ export default function AdminPortalPage() {
 
   useEffect(() => {
     if (currentUser) {
-      loadAllData();
+      queueMicrotask(() => {
+        void loadAllData();
+      });
     }
   }, [currentUser, loadAllData]);
 
   // Auth Handlers
+  const handleGoogleSignIn = async () => {
+    setAuthError(null);
+    setGoogleLoading(true);
+    try {
+      const user = await adminSignInWithGoogle();
+      setCurrentUser(user);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Google authentication failed";
+      if (msg.includes("auth/popup-closed-by-user")) {
+        setAuthError("Sign-in cancelled: The Google popup was closed.");
+      } else if (msg.includes("auth/unauthorized-domain")) {
+        setAuthError(
+          "Domain not authorized in Firebase Console (Authentication > Settings > Authorized domains). Please add localhost or your custom domain."
+        );
+      } else {
+        setAuthError(msg.replace("Firebase: ", ""));
+      }
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
@@ -524,6 +642,148 @@ export default function AdminPortalPage() {
     setTimeout(() => setSyncStatus(null), 3000);
   };
 
+  // Seed / Sync Demo Data to Firestore
+  const handleSeedDemoData = async () => {
+    if (!db) return;
+    if (
+      !confirm(
+        "Sync sample demo content to Cloud Firestore?\n\nThis will safely populate apps, projects, services, website packages, site content, and settings with sample demo data. It uses non-destructive merge ({ merge: true }), preserving existing custom edits."
+      )
+    ) {
+      return;
+    }
+    setSeedingDemo(true);
+    try {
+      setSyncStatus("Seeding sample demo data to Firestore...");
+      const res = await migrateInitialDataToFirestore(false);
+      if (res.success) {
+        setSyncStatus("✓ Sample demo content synchronized successfully!");
+        await loadAllData();
+      } else {
+        setSyncStatus(`Sync notice: ${res.message}`);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Sync failed";
+      setSyncStatus(`Sync error: ${msg}`);
+    } finally {
+      setSeedingDemo(false);
+      setTimeout(() => setSyncStatus(null), 5000);
+    }
+  };
+
+  // Section Reordering and Visibility Controls
+  const moveSection = (index: number, direction: "up" | "down") => {
+    if (!siteContent) return;
+    const currentOrder = [
+      ...(siteContent.metadata?.sectionOrder || [
+        "hero",
+        "packages",
+        "apps",
+        "services",
+        "projects",
+        "about",
+        "reviews",
+        "ai-assistant",
+        "final-cta",
+      ]),
+    ];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= currentOrder.length) return;
+    const temp = currentOrder[index];
+    currentOrder[index] = currentOrder[targetIndex];
+    currentOrder[targetIndex] = temp;
+
+    setSiteContent({
+      ...siteContent,
+      metadata: {
+        ...siteContent.metadata,
+        sectionOrder: currentOrder,
+        sectionVisibility: siteContent.metadata?.sectionVisibility || {
+          hero: true,
+          packages: true,
+          apps: true,
+          services: true,
+          projects: true,
+          about: true,
+          reviews: true,
+          "ai-assistant": true,
+          "final-cta": true,
+        },
+      },
+    });
+  };
+
+  const toggleSectionVisibility = (secId: string) => {
+    if (!siteContent) return;
+    const currentVisibility = {
+      ...(siteContent.metadata?.sectionVisibility || {
+        hero: true,
+        packages: true,
+        apps: true,
+        services: true,
+        projects: true,
+        about: true,
+        reviews: true,
+        "ai-assistant": true,
+        "final-cta": true,
+      }),
+    };
+    currentVisibility[secId] = currentVisibility[secId] === false ? true : false;
+
+    setSiteContent({
+      ...siteContent,
+      metadata: {
+        ...siteContent.metadata,
+        sectionOrder: siteContent.metadata?.sectionOrder || [
+          "hero",
+          "packages",
+          "apps",
+          "services",
+          "projects",
+          "about",
+          "reviews",
+          "ai-assistant",
+          "final-cta",
+        ],
+        sectionVisibility: currentVisibility,
+      },
+    });
+  };
+
+  const resetSectionOrder = () => {
+    if (!siteContent) return;
+    const defaultOrder = [
+      "hero",
+      "packages",
+      "apps",
+      "services",
+      "projects",
+      "about",
+      "reviews",
+      "ai-assistant",
+      "final-cta",
+    ];
+    const defaultVisibility: Record<string, boolean> = {
+      hero: true,
+      packages: true,
+      apps: true,
+      services: true,
+      projects: true,
+      about: true,
+      reviews: true,
+      "ai-assistant": true,
+      "final-cta": true,
+    };
+    setSiteContent({
+      ...siteContent,
+      metadata: {
+        ...siteContent.metadata,
+        sectionOrder: defaultOrder,
+        sectionVisibility: defaultVisibility,
+      },
+    });
+  };
+
   // -------------------------------------------------------------
   // RENDER: Loading Auth
   // -------------------------------------------------------------
@@ -572,6 +832,43 @@ export default function AdminPortalPage() {
                 <span>Password reset link has been dispatched to {emailInput}.</span>
               </div>
             )}
+
+            {/* 1. Google One-Click Administrator Sign-In */}
+            <button
+              type="button"
+              onClick={handleGoogleSignIn}
+              disabled={googleLoading}
+              className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#FAF4F9] text-[#180D1D] border border-[#502D55]/20 text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2.5 mb-4 hover:border-[#502D55]/30 disabled:opacity-50"
+            >
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
+                />
+              </svg>
+              <span>{googleLoading ? "Connecting to Google..." : "Continue with Google"}</span>
+            </button>
+
+            <div className="relative my-4 text-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[#502D55]/10" />
+              </div>
+              <span className="relative px-3 bg-white text-[10px] font-mono uppercase tracking-wider text-[#7A6880]">
+                or authenticate with password
+              </span>
+            </div>
 
             <form onSubmit={handleSignIn} className="space-y-3.5 text-left">
               <div>
@@ -654,6 +951,14 @@ export default function AdminPortalPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => { void loadAllData(); }}
+              disabled={loadingData}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-[#502D55]/15 text-[#180D1D] hover:bg-white/80 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingData ? "animate-spin" : ""}`} />
+              <span>{loadingData ? "Refreshing..." : "Refresh"}</span>
+            </button>
             <Link
               href="/"
               target="_blank"
@@ -684,7 +989,9 @@ export default function AdminPortalPage() {
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/70 border border-[#502D55]/10 backdrop-blur-md mb-8 overflow-x-auto">
           {[
             { id: "dashboard", label: "Dashboard", icon: Layers },
-            { id: "apps", label: `Apps (${apps.length})`, icon: Smartphone },
+            { id: "apps", label: `App Directory (${apps.length})`, icon: Smartphone },
+            { id: "app-releases", label: "Release Manager", icon: Upload },
+            { id: "release-history", label: "Release History", icon: History },
             { id: "projects", label: `Projects (${projects.length})`, icon: Globe },
             { id: "services", label: `Services (${services.length})`, icon: ShoppingBag },
             { id: "packages", label: `Packages (${packages.length})`, icon: FileText },
@@ -773,6 +1080,26 @@ export default function AdminPortalPage() {
                 <span className="px-2.5 py-1 rounded-md bg-[#FAF2EA] border border-[#F6DBC0]">
                   settings: {settings ? "Initialized" : "Pending"}
                 </span>
+              </div>
+            </div>
+
+            {/* Sample Demo Data Seeder */}
+            <div className="p-6 rounded-3xl bg-white border border-[#502D55]/12 shadow-xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-base font-bold text-[#180D1D]">Sample Demo Content Setup</h2>
+                  <p className="text-xs text-[#56475C] mt-1 leading-relaxed max-w-xl">
+                    Populate your Firestore collections with curated sample demo data (apps, case studies, disciplines, commercial packages, homepage copy, and settings). Uses non-destructive merge: existing custom edits in Firestore are preserved.
+                  </p>
+                </div>
+                <button
+                  onClick={handleSeedDemoData}
+                  disabled={seedingDemo}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#180D1D] text-white hover:bg-[#2B1435] transition-all cursor-pointer shrink-0 disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${seedingDemo ? "animate-spin" : ""}`} />
+                  <span>{seedingDemo ? "Syncing Demo Data..." : "Seed Sample Demo Data"}</span>
+                </button>
               </div>
             </div>
           </div>
@@ -885,6 +1212,33 @@ export default function AdminPortalPage() {
               </table>
             </div>
           </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* APP RELEASES MANAGEMENT                                  */}
+        {/* ======================================================== */}
+        {activeTab === "app-releases" && (
+          <AppReleaseManager
+            currentUser={currentUser}
+            apps={apps}
+            onReleaseCreated={() => {
+              loadAllData();
+              setActiveTab("release-history");
+            }}
+            onNavigateToHistory={() => setActiveTab("release-history")}
+          />
+        )}
+
+        {/* ======================================================== */}
+        {/* RELEASE HISTORY & ROLLBACK                               */}
+        {/* ======================================================== */}
+        {activeTab === "release-history" && (
+          <ReleaseHistoryView
+            currentUser={currentUser}
+            apps={apps}
+            onNavigateToUpload={() => setActiveTab("app-releases")}
+            onRollbackComplete={() => loadAllData()}
+          />
         )}
 
         {/* ======================================================== */}
@@ -1173,6 +1527,98 @@ export default function AdminPortalPage() {
               </button>
             </div>
 
+            {/* 0. Homepage Layout & Section Reordering */}
+            <div className="p-6 rounded-3xl bg-white border border-[#502D55]/12 shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#502D55]/10 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-[#180D1D]">Homepage Section Layout & Ordering</h3>
+                  <p className="text-[11px] text-[#56475C]">
+                    Reorder sections on the public homepage or toggle their visibility.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={resetSectionOrder}
+                  className="text-[11px] font-mono text-[#7A3F26] hover:underline cursor-pointer"
+                >
+                  Reset to Default Layout
+                </button>
+              </div>
+
+              <div className="space-y-2">
+                {(siteContent.metadata?.sectionOrder || [
+                  "hero",
+                  "packages",
+                  "apps",
+                  "services",
+                  "projects",
+                  "about",
+                  "reviews",
+                  "ai-assistant",
+                  "final-cta",
+                ]).map((secKey, idx, arr) => {
+                  const info = SECTION_INFO[secKey] || { label: secKey, desc: "Homepage section" };
+                  const isVisible = siteContent.metadata?.sectionVisibility?.[secKey] !== false;
+
+                  return (
+                    <div
+                      key={secKey}
+                      className={`flex items-center justify-between gap-3 p-3 rounded-2xl border transition-all ${
+                        isVisible
+                          ? "bg-white border-[#502D55]/12"
+                          : "bg-gray-50 border-gray-200 opacity-60"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-5 h-5 rounded-full bg-[#FAF4F9] text-[#180D1D] font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <div>
+                          <div className="text-xs font-bold text-[#180D1D] flex items-center gap-2">
+                            <span>{info.label}</span>
+                            <span className="font-mono text-[10px] text-[#56475C]">({secKey})</span>
+                          </div>
+                          <div className="text-[10px] text-[#56475C]">{info.desc}</div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility(secKey)}
+                          className={`px-2 py-1 rounded-lg text-[10px] font-mono font-bold cursor-pointer transition-colors ${
+                            isVisible
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                              : "bg-gray-100 text-gray-500 border border-gray-300"
+                          }`}
+                        >
+                          {isVisible ? "Visible" : "Hidden"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={() => moveSection(idx, "up")}
+                          aria-label={`Move ${info.label} up`}
+                          className="p-1.5 rounded-lg border border-[#502D55]/15 text-[#56475C] hover:text-[#180D1D] hover:bg-[#FAF4F9] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === arr.length - 1}
+                          onClick={() => moveSection(idx, "down")}
+                          aria-label={`Move ${info.label} down`}
+                          className="p-1.5 rounded-lg border border-[#502D55]/15 text-[#56475C] hover:text-[#180D1D] hover:bg-[#FAF4F9] disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* 1. Hero */}
             <div className="p-6 rounded-3xl bg-white border border-[#502D55]/12 shadow-xs space-y-4">
               <h3 className="text-sm font-bold text-[#180D1D] border-b border-[#502D55]/10 pb-2">1. Hero Section</h3>
@@ -1228,6 +1674,66 @@ export default function AdminPortalPage() {
                       setSiteContent({
                         ...siteContent,
                         hero: { ...siteContent.hero, announcement: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Primary CTA Text</label>
+                  <input
+                    type="text"
+                    value={siteContent.hero.primaryCtaText || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        hero: { ...siteContent.hero, primaryCtaText: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Primary CTA Link</label>
+                  <input
+                    type="text"
+                    value={siteContent.hero.primaryCtaLink || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        hero: { ...siteContent.hero, primaryCtaLink: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Secondary CTA Text</label>
+                  <input
+                    type="text"
+                    value={siteContent.hero.secondaryCtaText || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        hero: { ...siteContent.hero, secondaryCtaText: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Secondary CTA Link</label>
+                  <input
+                    type="text"
+                    value={siteContent.hero.secondaryCtaLink || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        hero: { ...siteContent.hero, secondaryCtaLink: e.target.value },
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
@@ -1342,6 +1848,36 @@ export default function AdminPortalPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Primary CTA Button</label>
+                  <input
+                    type="text"
+                    value={siteContent.finalCta.primaryCtaText || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        finalCta: { ...siteContent.finalCta, primaryCtaText: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Secondary CTA Button</label>
+                  <input
+                    type="text"
+                    value={siteContent.finalCta.secondaryCtaText || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        finalCta: { ...siteContent.finalCta, secondaryCtaText: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* 4. Contact & Socials */}
@@ -1376,6 +1912,137 @@ export default function AdminPortalPage() {
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Instagram Handle</label>
+                  <input
+                    type="text"
+                    value={siteContent.contact.instagramHandle || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        contact: { ...siteContent.contact, instagramHandle: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1">Instagram URL</label>
+                  <input
+                    type="url"
+                    value={siteContent.contact.instagramUrl || ""}
+                    onChange={(e) =>
+                      setSiteContent({
+                        ...siteContent,
+                        contact: { ...siteContent.contact, instagramUrl: e.target.value },
+                      })
+                    }
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* 5. Skills & Disciplines */}
+            <div className="p-6 rounded-3xl bg-white border border-[#502D55]/12 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-[#180D1D] border-b border-[#502D55]/10 pb-2">
+                5. Skills & Studio Disciplines (About Page)
+              </h3>
+              <p className="text-[11px] text-[#56475C]">
+                These skill categories and tags are rendered on the public <code>/about</code> page. Separate items with commas.
+              </p>
+              <div className="space-y-3">
+                {(siteContent.metadata?.skills || [
+                  { category: "Mobile & App Engineering", items: ["Flutter", "Dart", "iOS", "Android", "Offline-First SQLite"] },
+                  { category: "Web & Storefronts", items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay"] },
+                  { category: "Marketplace & E-Commerce", items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo"] },
+                  { category: "AI & Media Systems", items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging"] },
+                ]).map((skillGroup, idx) => (
+                  <div key={idx} className="p-3 rounded-2xl bg-[#FAF4F9]/60 border border-[#502D55]/10 space-y-2">
+                    <label className="text-[11px] font-bold text-[#180D1D] block">
+                      {skillGroup.category}
+                    </label>
+                    <input
+                      type="text"
+                      value={skillGroup.items.join(", ")}
+                      onChange={(e) => {
+                        const newSkills = [
+                          ...(siteContent.metadata?.skills || [
+                            { category: "Mobile & App Engineering", items: ["Flutter", "Dart", "iOS", "Android", "Offline-First SQLite"] },
+                            { category: "Web & Storefronts", items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay"] },
+                            { category: "Marketplace & E-Commerce", items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo"] },
+                            { category: "AI & Media Systems", items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging"] },
+                          ]),
+                        ];
+                        newSkills[idx] = {
+                          ...newSkills[idx],
+                          items: e.target.value
+                            .split(",")
+                            .map((s) => s.trim())
+                            .filter(Boolean),
+                        };
+                        setSiteContent({
+                          ...siteContent,
+                          metadata: {
+                            ...siteContent.metadata,
+                            skills: newSkills,
+                          },
+                        });
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-white border border-[#502D55]/15 text-xs text-[#180D1D]"
+                      placeholder="Skill 1, Skill 2, Skill 3"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 6. SEO & Meta Information */}
+            <div className="p-6 rounded-3xl bg-white border border-[#502D55]/12 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-[#180D1D] border-b border-[#502D55]/10 pb-2">
+                6. SEO & Meta Information
+              </h3>
+              <div>
+                <label className="block text-[11px] font-mono text-[#56475C] mb-1">Default Meta Title</label>
+                <input
+                  type="text"
+                  value={siteContent.metadata?.seo?.title || ""}
+                  onChange={(e) =>
+                    setSiteContent({
+                      ...siteContent,
+                      metadata: {
+                        ...siteContent.metadata,
+                        seo: {
+                          title: e.target.value,
+                          description: siteContent.metadata?.seo?.description || "",
+                        },
+                      },
+                    })
+                  }
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-mono text-[#56475C] mb-1">Default Meta Description</label>
+                <textarea
+                  rows={2}
+                  value={siteContent.metadata?.seo?.description || ""}
+                  onChange={(e) =>
+                    setSiteContent({
+                      ...siteContent,
+                      metadata: {
+                        ...siteContent.metadata,
+                        seo: {
+                          title: siteContent.metadata?.seo?.title || "",
+                          description: e.target.value,
+                        },
+                      },
+                    })
+                  }
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs text-[#180D1D]"
+                />
               </div>
             </div>
           </div>
@@ -2044,7 +2711,7 @@ export default function AdminPortalPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-4 gap-3">
                   <div>
                     <label className="block font-mono text-[10px] text-[#56475C] mb-1">Price (₹)</label>
                     <input
@@ -2058,33 +2725,62 @@ export default function AdminPortalPage() {
                     <label className="block font-mono text-[10px] text-[#56475C] mb-1">Price Type</label>
                     <input
                       type="text"
-                      value={editingPackage.priceType || "starting"}
+                      value={editingPackage.priceType || "fixed"}
                       onChange={(e) => setEditingPackage({ ...editingPackage, priceType: e.target.value as WebsitePackageDocument["priceType"] })}
                       className="w-full px-3 py-2 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15"
                     />
                   </div>
                   <div>
-                    <label className="block font-mono text-[10px] text-[#56475C] mb-1">Unit</label>
+                    <label className="block font-mono text-[10px] text-[#56475C] mb-1">Turnaround / Unit</label>
                     <input
                       type="text"
-                      value={editingPackage.unit || "/ project"}
+                      value={editingPackage.unit || "3-5 days delivery"}
                       onChange={(e) => setEditingPackage({ ...editingPackage, unit: e.target.value })}
+                      placeholder="e.g. 3-5 days delivery"
+                      className="w-full px-3 py-2 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[10px] text-[#56475C] mb-1">Badge</label>
+                    <input
+                      type="text"
+                      value={editingPackage.badge || ""}
+                      onChange={(e) => setEditingPackage({ ...editingPackage, badge: e.target.value })}
+                      placeholder="e.g. Best Value, Starter"
                       className="w-full px-3 py-2 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block font-mono text-[10px] text-[#56475C] mb-1">Description</label>
+                  <label className="block font-mono text-[10px] text-[#56475C] mb-1">Description / Tagline</label>
                   <textarea
-                    rows={3}
+                    rows={2}
                     value={editingPackage.description || ""}
                     onChange={(e) => setEditingPackage({ ...editingPackage, description: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15"
                   />
                 </div>
 
-                <div className="flex items-center gap-4 pt-2">
+                <div>
+                  <label className="block font-mono text-[10px] text-[#56475C] mb-1">
+                    Deliverables & Features (one per line)
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={(editingPackage.features || []).join("\n")}
+                    onChange={(e) =>
+                      setEditingPackage({
+                        ...editingPackage,
+                        features: e.target.value.split("\n").filter((l) => l.trim().length > 0),
+                      })
+                    }
+                    placeholder="Complete Listing Optimization&#10;7 High-Resolution Infographics&#10;Backend Search Terms"
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 font-mono text-xs leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4 pt-2">
                   <label className="flex items-center gap-2 cursor-pointer font-bold">
                     <input
                       type="checkbox"
@@ -2099,7 +2795,15 @@ export default function AdminPortalPage() {
                       checked={editingPackage.recommended ?? false}
                       onChange={(e) => setEditingPackage({ ...editingPackage, recommended: e.target.checked })}
                     />
-                    <span>Recommended Badge</span>
+                    <span>Recommended</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer font-bold">
+                    <input
+                      type="checkbox"
+                      checked={editingPackage.popular ?? false}
+                      onChange={(e) => setEditingPackage({ ...editingPackage, popular: e.target.checked })}
+                    />
+                    <span>Popular Highlight</span>
                   </label>
                 </div>
               </div>

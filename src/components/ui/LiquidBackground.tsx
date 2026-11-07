@@ -10,20 +10,20 @@ export function LiquidBackground() {
       className="fixed inset-0 pointer-events-none overflow-hidden"
       aria-hidden="true"
     >
-      {/* Layer 0: Base Light Background (#F8F4E9 / #FFFFFF with subtle warm gradients) */}
-      <div className="absolute inset-0 bg-[#F8F4E9] z-0" />
+      {/* Layer 0: Base Clean Light Background (#F8FAFC / #FFFFFF with subtle ice-blue gradients) */}
+      <div className="absolute inset-0 bg-[#F8FAFC] z-0" />
       <div
-        className="absolute inset-0 z-0 opacity-80"
+        className="absolute inset-0 z-0 opacity-90"
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% -10%, #FFFFFF 0%, #FDFBF7 45%, #F8F4E9 100%)",
+            "radial-gradient(ellipse 80% 60% at 50% -10%, #FFFFFF 0%, #F0F9FF 50%, #F8FAFC 100%)",
         }}
       />
       <div
         className="absolute inset-0 z-0 opacity-40 pointer-events-none"
         style={{
           background:
-            "linear-gradient(180deg, rgba(246, 219, 192, 0.2) 0%, rgba(255, 255, 255, 0) 35%, rgba(147, 80, 115, 0.05) 70%, rgba(248, 244, 233, 0.8) 100%)",
+            "linear-gradient(180deg, rgba(224, 242, 254, 0.3) 0%, rgba(255, 255, 255, 0) 35%, rgba(14, 165, 233, 0.04) 70%, rgba(248, 250, 252, 0.8) 100%)",
         }}
       />
 
@@ -33,24 +33,24 @@ export function LiquidBackground() {
       {/* Layer 2: Animated Particle Field */}
       <ParticleField />
 
-      {/* Layer 3: Existing Organic Liquid Ribbons & Subtle Analog Texture */}
+      {/* Layer 3: Organic Technical Ribbons & Subtle Texture */}
       <div className="absolute inset-0 z-[3] pointer-events-none">
         <svg
-          className="absolute inset-0 w-full h-full opacity-30 mix-blend-multiply motion-reduce:animate-none animate-ribbon-drift"
+          className="absolute inset-0 w-full h-full opacity-35 mix-blend-multiply motion-reduce:animate-none animate-ribbon-drift"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 1440 900"
           preserveAspectRatio="none"
         >
           <defs>
             <linearGradient id="softRibbon1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="#F6DBC0" stopOpacity="0.6" />
-              <stop offset="50%" stopColor="#935073" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#502D55" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#BAE6FD" stopOpacity="0.5" />
+              <stop offset="50%" stopColor="#0284C7" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#0F172A" stopOpacity="0.08" />
             </linearGradient>
             <linearGradient id="softRibbon2" x1="100%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#935073" stopOpacity="0.35" />
-              <stop offset="60%" stopColor="#502D55" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#F6DBC0" stopOpacity="0.1" />
+              <stop offset="0%" stopColor="#0284C7" stopOpacity="0.25" />
+              <stop offset="60%" stopColor="#06B6D4" stopOpacity="0.15" />
+              <stop offset="100%" stopColor="#BAE6FD" stopOpacity="0.1" />
             </linearGradient>
           </defs>
 

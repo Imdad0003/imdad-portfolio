@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { siteConfig } from "@/data/config";
+import { getSiteContent } from "@/lib/cms";
 import { Hero } from "@/components/sections/Hero";
+import { HomePackagesSection } from "@/components/home/HomePackagesSection";
 import { NewAppsSection } from "@/components/home/NewAppsSection";
 import { StudioServicesSection } from "@/components/home/StudioServicesSection";
 import { FeaturedProjectsSection } from "@/components/home/FeaturedProjectsSection";
@@ -18,32 +20,52 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const siteContent = await getSiteContent();
+
+  const defaultOrder = [
+    "hero",
+    "packages",
+    "apps",
+    "services",
+    "projects",
+    "about",
+    "reviews",
+    "ai-assistant",
+    "final-cta",
+  ];
+  const sectionOrder = siteContent.metadata?.sectionOrder || defaultOrder;
+  const visibility = siteContent.metadata?.sectionVisibility || {};
+
+  const renderSection = (id: string) => {
+    if (visibility[id] === false) return null;
+    switch (id) {
+      case "hero":
+        return <Hero key="hero" initialContent={siteContent.hero} />;
+      case "packages":
+        return <HomePackagesSection key="packages" />;
+      case "apps":
+        return <NewAppsSection key="apps" />;
+      case "services":
+        return <StudioServicesSection key="services" />;
+      case "projects":
+        return <FeaturedProjectsSection key="projects" />;
+      case "about":
+        return <StudioAboutSection key="about" initialContent={siteContent.about} />;
+      case "reviews":
+        return <ReviewsPreview key="reviews" />;
+      case "ai-assistant":
+        return <AiAssistantCta key="ai-assistant" />;
+      case "final-cta":
+        return <FinalCta key="final-cta" initialContent={siteContent.finalCta} />;
+      default:
+        return null;
+    }
+  };
+
   return (
     <main className="flex-1 flex flex-col">
-      {/* 1. Hero: Asymmetric Typography + Product Lab Preview */}
-      <Hero />
-
-      {/* 2. New Apps: WishMusic, WishTracking, EasyXo */}
-      <NewAppsSection />
-
-      {/* 3. Studio Services: 5 Core Disciplines */}
-      <StudioServicesSection />
-
-      {/* 4. Featured Projects / Proven Case Studies */}
-      <FeaturedProjectsSection />
-
-      {/* 5. Studio Manifesto & Builder Mindset */}
-      <StudioAboutSection />
-
-      {/* 6. Verified Client Reviews Preview (Preserved) */}
-      <ReviewsPreview />
-
-      {/* 7. AI Scoping Assistant Prompt (Preserved) */}
-      <AiAssistantCta />
-
-      {/* 8. Final Project Kickoff CTA */}
-      <FinalCta />
+      {sectionOrder.map((sectionId) => renderSection(sectionId))}
     </main>
   );
 }

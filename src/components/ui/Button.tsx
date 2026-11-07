@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 
 interface ButtonBaseProps {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "glass";
@@ -30,7 +31,7 @@ export function Button({
     "inline-flex items-center justify-center font-medium rounded-xl transition-all duration-300 focus-ring disabled:opacity-50 disabled:pointer-events-none cursor-pointer active:scale-[0.98]";
 
   const sizeStyles = {
-    sm: "text-xs px-3.5 py-1.5 gap-1.5 font-medium",
+    sm: "text-xs px-3.5 py-1.5 min-h-[36px] gap-1.5 font-medium",
     md: "text-sm px-5 py-2.5 min-h-[44px] gap-2 font-semibold",
     lg: "text-base px-7 py-3.5 min-h-[48px] gap-2.5 font-bold tracking-tight",
   };
@@ -51,8 +52,28 @@ export function Button({
   const combinedClasses = `${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`;
 
   if (props.href) {
+    const isInternal =
+      (props.href.startsWith("/") || props.href.startsWith("#")) &&
+      !props.href.startsWith("//");
+
+    if (isInternal) {
+      return (
+        <Link
+          href={props.href}
+          className={combinedClasses}
+          {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+        >
+          {children}
+        </Link>
+      );
+    }
+
     return (
-      <a className={combinedClasses} {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}>
+      <a
+        href={props.href}
+        className={combinedClasses}
+        {...(props as React.AnchorHTMLAttributes<HTMLAnchorElement>)}
+      >
         {children}
       </a>
     );

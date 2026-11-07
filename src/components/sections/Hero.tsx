@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
-import { siteConfig } from "@/data/config";
+import type { SiteContentDocument } from "@/types/cms";
+import { getSiteContent } from "@/lib/cms";
 import {
   ArrowRight,
   Music,
@@ -14,12 +15,37 @@ import {
   CheckCircle2,
   Play,
   Pause,
-  Volume2,
-  Sparkles,
 } from "lucide-react";
-import { Instagram } from "@/components/ui/InstagramIcon";
 
-export function Hero() {
+interface HeroProps {
+  initialContent?: SiteContentDocument["hero"];
+}
+
+export function Hero({ initialContent }: HeroProps) {
+  const [heroContent, setHeroContent] = useState<SiteContentDocument["hero"]>(
+    initialContent || {
+      badge: "INDEPENDENT PRODUCT LAB",
+      headline: "Building digital products, apps & experiences.",
+      subheadline:
+        "An independent studio where products are built from scratch: mobile apps, web applications, e-commerce engines, and high-retention creative media.",
+      primaryCtaText: "Explore Apps",
+      primaryCtaLink: "/apps",
+      secondaryCtaText: "View Services",
+      secondaryCtaLink: "/services",
+      announcement: "Now building: WishMusic & WishTracking for iOS/Android",
+    }
+  );
+
+  useEffect(() => {
+    getSiteContent()
+      .then((content) => {
+        if (content && content.hero) {
+          setHeroContent(content.hero);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const [activeTab, setActiveTab] = useState<"wishmusic" | "wishtracking" | "easyxo">("wishmusic");
   const [isPlaying, setIsPlaying] = useState(true);
 
@@ -38,63 +64,60 @@ export function Hero() {
           <div className="lg:col-span-7 flex flex-col items-start text-left">
             
             {/* Studio Monospace Metadata Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 border border-[#502D55]/12 text-[10px] sm:text-[11px] font-mono text-[#56475C] mb-5 backdrop-blur-md shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 border border-slate-200 text-[10px] sm:text-[11px] font-mono text-slate-600 mb-5 backdrop-blur-md shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-              <span className="font-bold text-[#180D1D]">IMDAD.BUILDS</span>
-              <span className="text-[#935073]">•</span>
-              <span className="text-[#7A6880]">INDEPENDENT PRODUCT LAB</span>
+              <span className="font-bold text-[#0A192F]">IMDAD.BUILDS</span>
+              <span className="text-[#0284C7]">•</span>
+              <span className="text-slate-500 uppercase">{heroContent.badge || "INDEPENDENT PRODUCT LAB"}</span>
             </div>
 
             {/* Main Display Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-black tracking-[-0.03em] text-[#180D1D] leading-[1.06]">
-              Building digital products, apps &amp;{" "}
-              <span className="text-gradient-dusk block">
-                experiences.
-              </span>
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-black tracking-[-0.03em] text-[#0A192F] leading-[1.06]">
+              {heroContent.headline}
             </h1>
 
             {/* Supporting Editorial Copy */}
-            <p className="mt-5 sm:mt-6 text-base sm:text-lg lg:text-xl text-[#56475C] max-w-xl leading-relaxed font-normal">
-              An independent studio where products are built from scratch: mobile apps, web applications, e-commerce engines, and high-retention creative media.
+            <p className="mt-5 sm:mt-6 text-base sm:text-lg lg:text-xl text-slate-600 max-w-xl leading-relaxed font-normal">
+              {heroContent.subheadline}
             </p>
 
             {/* Primary & Secondary Studio CTAs */}
             <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <Button
-                href="/apps"
+                href={heroContent.primaryCtaLink || "/apps"}
                 variant="primary"
                 size="lg"
-                className="justify-center min-h-[48px] font-bold shadow-xs px-7"
+                className="justify-center min-h-[48px] font-bold shadow-xs px-7 bg-[#0284C7] hover:bg-[#0369A1] text-white"
               >
-                Explore Apps
+                {heroContent.primaryCtaText || "Explore Apps"}
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
               <Button
-                href="/services"
+                href={heroContent.secondaryCtaLink || "/services"}
                 variant="secondary"
                 size="lg"
-                className="justify-center min-h-[48px] font-bold px-7"
+                className="justify-center min-h-[48px] font-bold px-7 border-slate-200 text-[#0A192F] hover:bg-slate-50"
               >
-                View Services
+                {heroContent.secondaryCtaText || "View Services"}
               </Button>
             </div>
 
             {/* Technical Proof Points Strip */}
-            <div className="mt-10 pt-6 border-t border-[#502D55]/10 grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-lg">
+            <div className="mt-10 pt-6 border-t border-slate-200 grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-lg">
               <div>
-                <span className="studio-tag text-[9px] text-[#7A6880] block mb-0.5">DISCIPLINE</span>
-                <span className="font-black text-sm sm:text-base text-[#180D1D]">Product Lab</span>
-                <span className="block text-[11px] text-[#7A6880]">Real code &amp; tools</span>
+                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">DISCIPLINE</span>
+                <span className="font-black text-sm sm:text-base text-[#0A192F]">Product Lab</span>
+                <span className="block text-[11px] text-slate-500">Real code &amp; tools</span>
               </div>
-              <div className="border-l border-[#502D55]/10 pl-4">
-                <span className="studio-tag text-[9px] text-[#7A6880] block mb-0.5">ECOSYSTEM</span>
-                <span className="font-black text-sm sm:text-base text-[#180D1D]">Apps &amp; Web</span>
-                <span className="block text-[11px] text-[#7A6880]">Mobile, D2C, Video</span>
+              <div className="border-l border-slate-200 pl-4">
+                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">ECOSYSTEM</span>
+                <span className="font-black text-sm sm:text-base text-[#0A192F]">Apps &amp; Web</span>
+                <span className="block text-[11px] text-slate-500">Mobile, D2C, Video</span>
               </div>
-              <div className="border-l border-[#502D55]/10 pl-4">
-                <span className="studio-tag text-[9px] text-[#7A6880] block mb-0.5">OPERATOR</span>
-                <span className="font-black text-sm sm:text-base text-[#180D1D]">EasyXo</span>
-                <span className="block text-[11px] text-[#7A6880]">Live brand founder</span>
+              <div className="border-l border-slate-200 pl-4">
+                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">OPERATOR</span>
+                <span className="font-black text-sm sm:text-base text-[#0A192F]">EasyXo</span>
+                <span className="block text-[11px] text-slate-500">Live brand founder</span>
               </div>
             </div>
 
@@ -102,33 +125,33 @@ export function Hero() {
 
           {/* Right Column: Interactive Product Stage Preview (5 Cols) */}
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl bg-white/95 border border-[#502D55]/14 backdrop-blur-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(80,45,85,0.08)] overflow-hidden">
+            <div className="relative rounded-3xl bg-white/95 border border-slate-200 backdrop-blur-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(10,25,47,0.08)] overflow-hidden">
               
               {/* Product Stage Header */}
-              <div className="flex items-center justify-between pb-3.5 border-b border-[#502D55]/08 mb-4">
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#180D1D]" />
-                  <span className="studio-tag text-[9px] text-[#56475C] font-bold">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#0284C7]" />
+                  <span className="studio-tag text-[9px] text-slate-500 font-bold font-mono uppercase tracking-wider">
                     STUDIO VIEWPORT // INTERACTIVE PROTOTYPE
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-[#935073] bg-[#935073]/08 px-2 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] font-mono text-[#0284C7] bg-sky-50 border border-sky-200/80 px-2 py-0.5 rounded-full font-bold">
                   UI PROTOTYPE
                 </span>
               </div>
 
               {/* Product Selector Segment Tabs */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-[#FAF2EA] border border-[#502D55]/08 mb-4">
+              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-50 border border-slate-200 mb-4">
                 <button
                   type="button"
                   onClick={() => setActiveTab("wishmusic")}
                   className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     activeTab === "wishmusic"
-                      ? "bg-white text-[#180D1D] shadow-2xs font-bold"
-                      : "text-[#7A6880] hover:text-[#180D1D]"
+                      ? "bg-white text-[#0A192F] shadow-xs font-bold"
+                      : "text-slate-500 hover:text-[#0A192F]"
                   }`}
                 >
-                  <Music className="w-3.5 h-3.5 text-[#935073]" />
+                  <Music className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span className="truncate">WishMusic</span>
                 </button>
                 <button
@@ -136,11 +159,11 @@ export function Hero() {
                   onClick={() => setActiveTab("wishtracking")}
                   className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     activeTab === "wishtracking"
-                      ? "bg-white text-[#180D1D] shadow-2xs font-bold"
-                      : "text-[#7A6880] hover:text-[#180D1D]"
+                      ? "bg-white text-[#0A192F] shadow-xs font-bold"
+                      : "text-slate-500 hover:text-[#0A192F]"
                   }`}
                 >
-                  <Target className="w-3.5 h-3.5 text-[#502D55]" />
+                  <Target className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span className="truncate">WishTrack</span>
                 </button>
                 <button
@@ -148,11 +171,11 @@ export function Hero() {
                   onClick={() => setActiveTab("easyxo")}
                   className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     activeTab === "easyxo"
-                      ? "bg-white text-[#180D1D] shadow-2xs font-bold"
-                      : "text-[#7A6880] hover:text-[#180D1D]"
+                      ? "bg-white text-[#0A192F] shadow-xs font-bold"
+                      : "text-slate-500 hover:text-[#0A192F]"
                   }`}
                 >
-                  <ShoppingBag className="w-3.5 h-3.5 text-[#d97746]" />
+                  <ShoppingBag className="w-3.5 h-3.5 text-[#0284C7]" />
                   <span className="truncate">EasyXo</span>
                 </button>
               </div>

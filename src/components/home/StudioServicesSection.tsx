@@ -12,8 +12,6 @@ import {
   ShoppingBag,
   Video,
   Share2,
-  CheckCircle2,
-  Sparkles,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -65,21 +63,21 @@ export function StudioServicesSection() {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12 sm:mb-16">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-[#502D55]/12 text-[10px] font-mono text-[#56475C] mb-3 shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#502D55] animate-pulse" />
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono text-[#0284C7] mb-3 shadow-2xs font-bold uppercase tracking-wider">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />
               STUDIO CAPABILITIES // 5 DISCIPLINES
             </div>
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#180D1D]">
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0A192F]">
               Studio Services
             </h2>
-            <p className="mt-2 text-sm sm:text-base text-[#56475C] max-w-xl">
+            <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-xl">
               High-precision engineering, e-commerce operations, and direct-response creative media tailored for ambitious brands.
             </p>
           </div>
 
           <Link
             href="/services"
-            className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#180D1D] hover:text-[#935073] transition-colors group shrink-0"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#0A192F] hover:text-[#0284C7] transition-colors group shrink-0"
           >
             <span>EXPLORE ALL SERVICES &amp; PRICING</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -87,7 +85,7 @@ export function StudioServicesSection() {
         </div>
 
         {/* Editorial Services Architectural Stack */}
-        <div className="divide-y divide-[#502D55]/12 border-y border-[#502D55]/12">
+        <div className="divide-y divide-slate-200 border-y border-slate-200">
           {services.map((service, index) => {
             const Icon = iconMap[service.iconName] || Globe;
             const isHovered = hoveredIndex === index;
@@ -104,22 +102,21 @@ export function StudioServicesSection() {
                   
                   {/* Number & Service Name (5 Cols) */}
                   <div className="lg:col-span-5 flex items-start gap-4 sm:gap-6">
-                    <span className="font-mono text-2xl sm:text-3xl font-black text-[#502D55]/30 group-hover:text-[#935073] transition-colors shrink-0">
+                    <span className="font-mono text-2xl sm:text-3xl font-black text-slate-300 group-hover:text-[#0284C7] transition-colors shrink-0">
                       {service.number}
                     </span>
                     <div>
                       <div className="flex items-center gap-2.5 mb-1.5">
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs"
-                          style={{ backgroundColor: service.accentColor }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-2xs bg-[#0284C7]"
                         >
                           <Icon className="w-4 h-4" />
                         </div>
-                        <h3 className="text-xl sm:text-2xl font-black text-[#180D1D] tracking-tight group-hover:text-[#935073] transition-colors">
+                        <h3 className="text-xl sm:text-2xl font-black text-[#0A192F] tracking-tight group-hover:text-[#0284C7] transition-colors">
                           {service.title}
                         </h3>
                       </div>
-                      <p className="text-xs sm:text-sm text-[#7A6880] font-mono">
+                      <p className="text-xs sm:text-sm text-slate-500 font-mono">
                         {service.tagline}
                       </p>
                     </div>
@@ -127,7 +124,7 @@ export function StudioServicesSection() {
 
                   {/* Description & Capabilities Tags (5 Cols) */}
                   <div className="lg:col-span-5 space-y-3">
-                    <p className="text-xs sm:text-sm text-[#56475C] leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                       {service.shortDescription}
                     </p>
 
@@ -135,7 +132,7 @@ export function StudioServicesSection() {
                       {service.capabilities.slice(0, 3).map((cap) => (
                         <span
                           key={cap}
-                          className="px-2 py-0.5 rounded-md bg-[#FAF4F9] border border-[#502D55]/08 text-[10px] font-mono text-[#502D55]"
+                          className="px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-[10px] font-mono text-slate-600"
                         >
                           {cap}
                         </span>
@@ -147,7 +144,7 @@ export function StudioServicesSection() {
                   <div className="lg:col-span-2 flex items-center lg:justify-end">
                     <Link
                       href={`/services/${service.slug}`}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white group-hover:bg-[#180D1D] group-hover:text-white border border-[#502D55]/15 text-xs font-bold text-[#180D1D] transition-all shadow-2xs group/btn"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white group-hover:bg-[#0284C7] group-hover:text-white border border-slate-200 text-xs font-bold text-[#0A192F] transition-all shadow-2xs group/btn"
                     >
                       <span>Explore</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover/btn:translate-x-1 transition-transform" />

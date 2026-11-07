@@ -3,31 +3,27 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
-import { projectsData, Project } from "@/data/projectsData";
+import {
+  projectsData,
+  Project,
+  ProjectCategory,
+  projectCategoryTaxonomy,
+  normalizeProjectCategory,
+} from "@/data/projectsData";
 import { getPublishedProjects } from "@/lib/cms";
 import {
   ArrowRight,
   ExternalLink,
-  ShoppingBag,
-  Globe,
-  Sparkles,
-  Video,
   CheckCircle2,
-  Layers,
   Award,
 } from "lucide-react";
 
-type ProjectCategoryFilter =
-  | "all"
-  | "E-commerce"
-  | "Websites"
-  | "Creatives"
-  | "Video & Ads"
-  | "Branding";
+type ProjectCategoryFilter = "all" | ProjectCategory;
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>(projectsData);
   const [activeCategory, setActiveCategory] = useState<ProjectCategoryFilter>("all");
+  const [visibleCount, setVisibleCount] = useState<number>(10);
 
   useEffect(() => {
     getPublishedProjects()
@@ -37,7 +33,7 @@ export default function ProjectsPage() {
             id: d.id,
             name: d.name,
             slug: d.slug,
-            category: d.category as Project["category"],
+            category: normalizeProjectCategory(d.category || ""),
             tagline: d.shortDescription || "",
             description: d.description,
             scope: d.scope || [],
@@ -46,7 +42,7 @@ export default function ProjectsPage() {
             featured: d.featured,
             highlight: d.highlight,
             url: d.url,
-            accentColor: d.accentColor || "#d97746",
+            accentColor: d.accentColor || "#0284C7",
             metrics: d.metrics,
             deliverables: d.deliverables || [],
           }));
@@ -58,10 +54,15 @@ export default function ProjectsPage() {
       });
   }, []);
 
+  const handleCategoryChange = (cat: ProjectCategoryFilter) => {
+    setActiveCategory(cat);
+    setVisibleCount(10);
+  };
+
   const filteredProjects =
     activeCategory === "all"
       ? projects
-      : projects.filter((p) => p.category === activeCategory);
+      : projects.filter((p) => normalizeProjectCategory(p.category) === activeCategory);
 
   // Split into Tier 1 (Flagship), Tier 2 (Core), and Tier 3 (Supporting)
   const flagshipProject = projects.find((p) => p.id === "easyxo-brand-ecosystem");
@@ -77,39 +78,32 @@ export default function ProjectsPage() {
       <Container>
         {/* Projects Hero Header */}
         <div className="max-w-3xl mb-12 sm:mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-[#502D55]/12 text-[10px] font-mono text-[#56475C] mb-4 shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#d97746] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono text-[#0284C7] mb-4 shadow-2xs font-bold uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />
             CASE STUDIES // PROVEN COMMERCIAL EXECUTION
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#180D1D] leading-[1.08]">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-[#0A192F] leading-[1.08]">
             Selected Case Studies
           </h1>
 
-          <p className="mt-4 text-base sm:text-lg text-[#56475C] leading-relaxed">
+          <p className="mt-4 text-base sm:text-lg text-slate-600 leading-relaxed">
             Real e-commerce brands, high-speed digital storefronts, and conversion-engineered visual assets. Work executed firsthand in the studio.
           </p>
         </div>
 
         {/* Category Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-5 mb-12 border-b border-[#502D55]/10">
+        <div className="flex flex-wrap items-center justify-between gap-4 pb-5 mb-12 border-b border-slate-200">
           <div className="flex flex-wrap items-center gap-2">
-            {[
-              { id: "all", label: "All Work" },
-              { id: "E-commerce", label: "E-Commerce" },
-              { id: "Websites", label: "Websites" },
-              { id: "Creatives", label: "Creatives" },
-              { id: "Video & Ads", label: "Video & Ads" },
-              { id: "Branding", label: "Branding" },
-            ].map((cat) => (
+            {projectCategoryTaxonomy.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setActiveCategory(cat.id as ProjectCategoryFilter)}
+                onClick={() => handleCategoryChange(cat.id)}
                 className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
                   activeCategory === cat.id
-                    ? "bg-[#180D1D] text-white shadow-2xs"
-                    : "bg-white text-[#56475C] hover:text-[#180D1D] border border-[#502D55]/10"
+                    ? "bg-[#0A192F] text-white shadow-xs"
+                    : "bg-white text-slate-600 hover:text-[#0A192F] border border-slate-200 hover:border-slate-300"
                 }`}
               >
                 {cat.label}
@@ -117,7 +111,7 @@ export default function ProjectsPage() {
             ))}
           </div>
 
-          <span className="studio-tag text-[10px] text-[#7A6880]">
+          <span className="studio-tag text-[10px] text-slate-500 font-mono">
             SHOWING {filteredProjects.length} CASE STUDIES
           </span>
         </div>
@@ -128,14 +122,14 @@ export default function ProjectsPage() {
             
             {/* TIER 1: FLAGSHIP CASE STUDY SHOWCASE (FULL-WIDTH HERO SCALE) */}
             {flagshipProject && (
-              <div className="rounded-3xl bg-gradient-to-br from-white via-[#FAF5F2] to-white border border-[#502D55]/14 p-6 sm:p-12 shadow-[0_20px_50px_rgba(80,45,85,0.06)] relative overflow-hidden">
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-[#502D55]/08">
+              <div className="rounded-3xl bg-gradient-to-br from-white via-sky-50/20 to-white border border-slate-200 p-6 sm:p-12 shadow-[0_20px_50px_rgba(10,25,47,0.06)] relative overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-2">
-                    <span className="px-3 py-1 rounded-full bg-[#d97746]/10 text-[#d97746] border border-[#d97746]/25 text-[10px] font-mono font-bold tracking-wider uppercase flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full bg-sky-50 text-[#0284C7] border border-sky-200 text-[10px] font-mono font-bold tracking-wider uppercase flex items-center gap-1.5">
                       <Award className="w-3.5 h-3.5" />
                       FLAGSHIP VENTURE CASE STUDY
                     </span>
-                    <span className="studio-tag text-[10px] text-[#7A6880]">FOUNDER OPERATED</span>
+                    <span className="studio-tag text-[10px] text-slate-500 font-mono">FOUNDER OPERATED</span>
                   </div>
                   <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-mono font-bold">
                     Active Live Brand
@@ -144,25 +138,25 @@ export default function ProjectsPage() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
                   <div className="lg:col-span-7 space-y-4">
-                    <h2 className="text-2xl sm:text-4xl font-black text-[#180D1D] tracking-tight">
+                    <h2 className="text-2xl sm:text-4xl font-black text-[#0A192F] tracking-tight">
                       {flagshipProject.name}
                     </h2>
-                    <p className="text-sm sm:text-base font-semibold text-[#935073]">
+                    <p className="text-sm sm:text-base font-semibold text-[#0284C7]">
                       {flagshipProject.tagline}
                     </p>
-                    <p className="text-xs sm:text-sm text-[#56475C] leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                       {flagshipProject.description}
                     </p>
 
                     {/* Operational Scope */}
                     <div className="space-y-2 pt-2">
-                      <span className="studio-tag text-[9px] text-[#7A6880] block">
+                      <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block uppercase tracking-wider">
                         FULL-STACK RESPONSIBILITIES
                       </span>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {flagshipProject.scope.map((s, idx) => (
-                          <div key={idx} className="flex items-center gap-2 text-xs text-[#56475C]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
+                          <div key={idx} className="flex items-center gap-2 text-xs text-slate-600">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
                             <span>{s}</span>
                           </div>
                         ))}
@@ -174,7 +168,7 @@ export default function ProjectsPage() {
                         href="https://easyxo.in"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-6 py-3 rounded-xl bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs"
+                        className="px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs cursor-pointer focus-ring"
                       >
                         <span>Visit Live Store (easyxo.in)</span>
                         <ExternalLink className="w-4 h-4" />
@@ -183,30 +177,30 @@ export default function ProjectsPage() {
                   </div>
 
                   {/* Right Column: Live Metrics & Tech Stack */}
-                  <div className="lg:col-span-5 p-6 rounded-2xl bg-white/90 border border-[#502D55]/10 space-y-4">
-                    <span className="studio-tag text-[9px] text-[#7A6880] block">
+                  <div className="lg:col-span-5 p-6 rounded-2xl bg-white/95 border border-slate-200 space-y-4 shadow-xs">
+                    <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block uppercase tracking-wider">
                       COMMERCIAL &amp; OPERATIONAL SCOPE
                     </span>
                     <div className="grid grid-cols-2 gap-3">
                       {flagshipProject.metrics?.map((m, idx) => (
-                        <div key={idx} className="p-3 rounded-xl bg-[#FAF4F9] border border-[#502D55]/08">
-                          <span className="text-[10px] font-mono text-[#7A6880] block truncate">
+                        <div key={idx} className="p-3 rounded-xl bg-slate-50 border border-slate-100">
+                          <span className="text-[10px] font-mono text-slate-500 block truncate">
                             {m.label}
                           </span>
-                          <span className="text-base font-black text-[#180D1D]">
+                          <span className="text-base font-black text-[#0A192F]">
                             {m.value}
                           </span>
                         </div>
                       ))}
                     </div>
 
-                    <div className="pt-3 border-t border-[#502D55]/08">
-                      <span className="studio-tag text-[9px] text-[#7A6880] block mb-1.5">
+                    <div className="pt-3 border-t border-slate-100">
+                      <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-1.5 uppercase tracking-wider">
                         PLATFORMS &amp; TOOLS
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {flagshipProject.tools.map((t) => (
-                          <span key={t} className="px-2.5 py-1 rounded-md bg-[#FAF2EA] border border-[#F6DBC0] text-[10px] font-mono font-bold text-[#180D1D]">
+                          <span key={t} className="px-2.5 py-1 rounded-md bg-sky-50 border border-sky-100 text-[10px] font-mono font-bold text-[#0284C7]">
                             {t}
                           </span>
                         ))}
@@ -220,10 +214,10 @@ export default function ProjectsPage() {
             {/* TIER 2: SECONDARY CORE PROJECTS (2-COL BALANCED SPREAD) */}
             <div>
               <div className="mb-6">
-                <span className="studio-tag text-[10px] text-[#935073] font-bold block mb-1">
+                <span className="studio-tag text-[10px] text-[#0284C7] font-bold block mb-1 font-mono uppercase tracking-wider">
                   CORE INFRASTRUCTURE
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-[#180D1D]">
+                <h3 className="text-xl sm:text-2xl font-black text-[#0A192F]">
                   Web Storefronts &amp; Listing Architectures
                 </h3>
               </div>
@@ -232,42 +226,42 @@ export default function ProjectsPage() {
                 {secondaryProjects.map((project) => (
                   <div
                     key={project.id}
-                    className="p-6 sm:p-8 rounded-3xl bg-white/95 border border-[#502D55]/12 shadow-xs space-y-4 flex flex-col justify-between"
+                    className="p-6 sm:p-8 rounded-3xl bg-white/95 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between hover:border-[#0284C7]/40 transition-colors"
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
-                        <span className="px-2.5 py-0.5 rounded-full bg-[#FAF2EA] border border-[#F6DBC0] text-[10px] font-mono font-bold text-[#180D1D]">
+                        <span className="px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono font-bold text-[#0284C7]">
                           {project.highlight}
                         </span>
-                        <span className="text-[10px] font-mono text-[#7A6880]">
+                        <span className="text-[10px] font-mono text-slate-500">
                           {project.status}
                         </span>
                       </div>
 
-                      <h4 className="text-xl font-bold text-[#180D1D] mb-1">
+                      <h4 className="text-xl font-bold text-[#0A192F] mb-1">
                         {project.name}
                       </h4>
-                      <p className="text-xs font-mono text-[#7A6880] mb-3">
+                      <p className="text-xs font-mono text-slate-500 mb-3">
                         {project.tagline}
                       </p>
-                      <p className="text-xs sm:text-sm text-[#56475C] leading-relaxed mb-4">
+                      <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
                         {project.description}
                       </p>
 
                       <div className="space-y-1.5 mb-4">
                         {project.deliverables.map((del, idx) => (
-                          <div key={idx} className="flex items-start gap-2 text-xs text-[#56475C]">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0 mt-0.5" />
+                          <div key={idx} className="flex items-start gap-2 text-xs text-slate-600">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#0284C7] shrink-0 mt-0.5" />
                             <span>{del}</span>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-[#502D55]/08 flex items-center justify-between text-xs">
+                    <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
                       <div className="flex flex-wrap gap-1">
                         {project.tools.slice(0, 2).map((t) => (
-                          <span key={t} className="px-2 py-0.5 rounded bg-[#FAF4F9] text-[9px] font-mono text-[#7A6880]">
+                          <span key={t} className="px-2 py-0.5 rounded bg-slate-50 text-[9px] font-mono text-slate-600">
                             {t}
                           </span>
                         ))}
@@ -278,15 +272,15 @@ export default function ProjectsPage() {
                           href={project.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-bold text-[#180D1D] hover:text-[#935073] flex items-center gap-1"
+                          className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
                         >
                           <span>Live Site</span>
                           <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       ) : (
                         <Link
-                          href="/contact"
-                          className="font-bold text-[#180D1D] hover:text-[#935073] flex items-center gap-1"
+                          href={`/contact?subject=${encodeURIComponent(`Case study inquiry: ${project.name}`)}`}
+                          className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
                         >
                           <span>Inquire Scope</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -301,15 +295,15 @@ export default function ProjectsPage() {
             {/* TIER 3: EDITORIAL ARCHITECTURAL LIST (ADS, VIDEO, BRANDING) */}
             <div>
               <div className="mb-6">
-                <span className="studio-tag text-[10px] text-[#935073] font-bold block mb-1">
+                <span className="studio-tag text-[10px] text-[#0284C7] font-bold block mb-1 font-mono uppercase tracking-wider">
                   CREATIVE MEDIA &amp; IDENTITY
                 </span>
-                <h3 className="text-xl sm:text-2xl font-black text-[#180D1D]">
+                <h3 className="text-xl sm:text-2xl font-black text-[#0A192F]">
                   Video Campaigns, Reels &amp; Packaging
                 </h3>
               </div>
 
-              <div className="divide-y divide-[#502D55]/12 border-y border-[#502D55]/12 bg-white/60 rounded-2xl overflow-hidden px-6">
+              <div className="divide-y divide-slate-100 border border-slate-200 bg-white/80 rounded-2xl overflow-hidden px-6">
                 {supportingProjects.map((project) => (
                   <div
                     key={project.id}
@@ -317,18 +311,18 @@ export default function ProjectsPage() {
                   >
                     <div className="space-y-1 max-w-xl">
                       <div className="flex items-center gap-2.5">
-                        <h4 className="font-bold text-base text-[#180D1D]">{project.name}</h4>
-                        <span className="px-2 py-0.5 rounded bg-[#FAF2EA] text-[9px] font-mono text-[#7A3F26]">
+                        <h4 className="font-bold text-base text-[#0A192F]">{project.name}</h4>
+                        <span className="px-2 py-0.5 rounded bg-sky-50 text-[9px] font-mono text-[#0284C7] font-bold">
                           {project.category}
                         </span>
                       </div>
-                      <p className="text-xs text-[#56475C]">{project.tagline}</p>
+                      <p className="text-xs text-slate-600">{project.tagline}</p>
                     </div>
 
                     <div className="flex items-center gap-4 shrink-0">
                       <div className="hidden sm:flex flex-wrap gap-1">
                         {project.tools.slice(0, 2).map((t) => (
-                          <span key={t} className="px-2 py-0.5 rounded bg-white border border-[#502D55]/10 text-[9px] font-mono text-[#7A6880]">
+                          <span key={t} className="px-2 py-0.5 rounded bg-slate-50 border border-slate-100 text-[9px] font-mono text-slate-600">
                             {t}
                           </span>
                         ))}
@@ -336,7 +330,7 @@ export default function ProjectsPage() {
 
                       <Link
                         href={`/contact?subject=${encodeURIComponent(`Case study inquiry: ${project.name}`)}`}
-                        className="px-4 py-2 rounded-xl bg-white hover:bg-[#FAF4F9] border border-[#502D55]/12 text-xs font-bold text-[#180D1D] flex items-center gap-1.5 transition-colors shadow-2xs"
+                        className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-[#0A192F] hover:text-[#0284C7] flex items-center gap-1.5 transition-colors shadow-2xs"
                       >
                         <span>Inquire</span>
                         <ArrowRight className="w-3.5 h-3.5" />
@@ -349,75 +343,106 @@ export default function ProjectsPage() {
 
           </div>
         ) : (
-          /* FILTERED VIEW GRID */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {filteredProjects.map((project) => (
-              <div
-                key={project.id}
-                className="p-6 sm:p-8 rounded-3xl bg-white/95 border border-[#502D55]/12 shadow-xs space-y-4 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="px-2.5 py-0.5 rounded-full bg-[#FAF2EA] border border-[#F6DBC0] text-[10px] font-mono font-bold text-[#180D1D]">
-                      {project.category}
-                    </span>
-                    <span className="text-[10px] font-mono text-[#7A6880]">
-                      {project.status}
-                    </span>
+          /* FILTERED VIEW GRID WITH 10-PROJECT PAGINATION */
+          <div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {filteredProjects.slice(0, visibleCount).map((project) => (
+                <div
+                  key={project.id}
+                  className="p-6 sm:p-8 rounded-3xl bg-white/95 border border-slate-200 shadow-xs space-y-4 flex flex-col justify-between hover:border-[#0284C7]/40 transition-colors"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="px-2.5 py-0.5 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono font-bold text-[#0284C7]">
+                        {project.category}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-500">
+                        {project.status}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl sm:text-2xl font-black text-[#0A192F] mb-1">
+                      {project.name}
+                    </h3>
+                    <p className="text-xs font-mono text-slate-500 mb-3">
+                      {project.tagline}
+                    </p>
+                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed mb-4">
+                      {project.description}
+                    </p>
+
+                    {/* Deliverables snippet */}
+                    {project.deliverables && project.deliverables.length > 0 && (
+                      <div className="space-y-1.5 mb-4">
+                        {project.deliverables.slice(0, 3).map((del, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-xs text-slate-600">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#0284C7] shrink-0 mt-0.5" />
+                            <span>{del}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
-                  <h3 className="text-xl sm:text-2xl font-black text-[#180D1D] mb-1">
-                    {project.name}
-                  </h3>
-                  <p className="text-xs font-mono text-[#7A6880] mb-3">
-                    {project.tagline}
-                  </p>
-                  <p className="text-xs sm:text-sm text-[#56475C] leading-relaxed mb-4">
-                    {project.description}
-                  </p>
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="studio-tag text-[9px] text-slate-500 font-mono">
+                      {project.tools[0]}
+                    </span>
+                    {project.url ? (
+                      <a
+                        href={project.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
+                      >
+                        <span>Live Site</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    ) : (
+                      <Link
+                        href={`/contact?subject=${encodeURIComponent(`Case study inquiry: ${project.name}`)}`}
+                        className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
+                      >
+                        <span>Inquire</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    )}
+                  </div>
                 </div>
+              ))}
+            </div>
 
-                <div className="pt-4 border-t border-[#502D55]/08 flex items-center justify-between text-xs">
-                  <span className="studio-tag text-[9px] text-[#7A6880]">
-                    {project.tools[0]}
-                  </span>
-                  {project.url ? (
-                    <a
-                      href={project.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-bold text-[#180D1D] hover:text-[#935073] flex items-center gap-1"
-                    >
-                      <span>Live Site</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  ) : (
-                    <Link
-                      href="/contact"
-                      className="font-bold text-[#180D1D] hover:text-[#935073] flex items-center gap-1"
-                    >
-                      <span>Inquire</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  )}
-                </div>
+            {/* Pagination / View More */}
+            {filteredProjects.length > visibleCount && (
+              <div className="mt-12 text-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((prev) => prev + 10)}
+                  className="px-8 py-3.5 rounded-full font-bold text-xs sm:text-sm bg-white hover:bg-slate-50 text-[#0A192F] border border-slate-300 shadow-xs transition-all cursor-pointer focus-ring"
+                >
+                  Show More Projects ({filteredProjects.length - visibleCount} remaining)
+                </button>
               </div>
-            ))}
+            )}
           </div>
         )}
 
         {/* Kickoff Banner */}
-        <div className="mt-16 p-8 sm:p-12 rounded-3xl bg-[#FAF2EA] border border-[#F6DBC0] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-16 p-8 sm:p-12 rounded-3xl bg-sky-50/70 border border-sky-200/80 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>
-            <span className="studio-tag text-[10px] text-[#7A3F26] font-bold block mb-1">REAL EXECUTION ONLY</span>
-            <h3 className="text-xl sm:text-2xl font-black text-[#180D1D]">Have a project worth building?</h3>
-            <p className="text-xs sm:text-sm text-[#56475C] mt-1 max-w-xl">
+            <span className="studio-tag text-[10px] text-[#0284C7] font-bold block mb-1 font-mono uppercase tracking-wider">
+              REAL EXECUTION ONLY
+            </span>
+            <h3 className="text-xl sm:text-2xl font-black text-[#0A192F]">
+              Have a project worth building?
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-xl">
               We apply this exact battle-tested framework to your product, storefront, or marketplace listings.
             </p>
           </div>
           <Link
             href="/contact"
-            className="px-6 py-3.5 rounded-xl bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] font-bold text-xs sm:text-sm shrink-0 transition-all shadow-2xs"
+            className="px-7 py-3.5 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs sm:text-sm shrink-0 transition-all shadow-sm"
           >
             Start a Project
           </Link>

@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
-import { studioServices, getStudioServiceBySlug } from "@/data/servicesData";
-import { siteConfig, getWhatsAppUrl } from "@/data/config";
+import { studioServices, getStudioServiceBySlug, StudioService } from "@/data/servicesData";
+import { getPublishedServiceBySlug } from "@/lib/cms";
+import { getWhatsAppUrl } from "@/data/config";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,13 +15,7 @@ import {
   ShoppingBag,
   Video,
   Share2,
-  ShieldCheck,
-  Zap,
   HelpCircle,
-  ExternalLink,
-  Layers,
-  Calendar,
-  Sparkles,
 } from "lucide-react";
 
 interface ServicePageProps {
@@ -37,7 +32,16 @@ export async function generateMetadata({
   params,
 }: ServicePageProps): Promise<Metadata> {
   const { slug } = await params;
-  const service = getStudioServiceBySlug(slug);
+  const staticService = getStudioServiceBySlug(slug);
+  const cmsDoc = await getPublishedServiceBySlug(slug);
+  const service = cmsDoc
+    ? {
+        title: cmsDoc.name,
+        number: staticService?.number || "01",
+        tagline: cmsDoc.shortDescription,
+        shortDescription: cmsDoc.shortDescription,
+      }
+    : staticService;
 
   if (!service) {
     return {
@@ -61,7 +65,40 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export default async function ServiceDetailPage({ params }: ServicePageProps) {
   const { slug } = await params;
-  const service = getStudioServiceBySlug(slug);
+  const staticService = getStudioServiceBySlug(slug);
+  const cmsDoc = await getPublishedServiceBySlug(slug);
+
+  const service: StudioService | null = cmsDoc
+    ? {
+        id: cmsDoc.id,
+        number: staticService?.number || "01",
+        title: cmsDoc.name || staticService?.title || "",
+        slug: cmsDoc.slug,
+        tagline: cmsDoc.shortDescription || staticService?.tagline || "",
+        shortDescription: cmsDoc.shortDescription,
+        fullDescription: cmsDoc.description,
+        capabilities: staticService?.capabilities || cmsDoc.deliverables,
+        deliverables: cmsDoc.deliverables,
+        suitableFor: staticService?.suitableFor || ["Businesses & Creators"],
+        process: (cmsDoc.process || []).map((p) => ({
+          step: p.step,
+          title: p.title,
+          description: p.description,
+        })),
+        packages: (cmsDoc.pricing || []).map((pkg) => ({
+          name: pkg.tierName,
+          price: parseInt(pkg.price.replace(/[^0-9]/g, ""), 10) || 0,
+          priceType: "fixed" as const,
+          unit: pkg.turnaround || "per project",
+          description: pkg.description,
+          features: pkg.deliverables,
+        })),
+        hasRealPricing: staticService?.hasRealPricing ?? true,
+        faqs: cmsDoc.faq || [],
+        accentColor: cmsDoc.accentColor || staticService?.accentColor || "#0284C7",
+        iconName: cmsDoc.iconName || staticService?.iconName || "Globe",
+      }
+    : (staticService || null);
 
   if (!service) {
     notFound();

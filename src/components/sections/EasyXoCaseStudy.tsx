@@ -1,3 +1,8 @@
+/**
+ * @deprecated Legacy component from previous site iterations.
+ * Not imported by any active page. Superseded by /apps/easyxo and FeaturedProjectsSection.
+ * Preserved for reference; do not delete without approval.
+ */
 import React from "react";
 import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";

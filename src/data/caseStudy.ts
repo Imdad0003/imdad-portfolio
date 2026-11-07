@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy data file. Superseded by /apps/easyxo and projectsData.ts.
+ * Preserved for reference; do not delete without approval.
+ */
 import { CaseStudyMetric } from "@/types";
 
 export interface CaseStudyPillar {

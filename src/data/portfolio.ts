@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy data file. Superseded by src/data/projectsData.ts.
+ * Preserved for reference; do not delete without approval.
+ */
 import { PortfolioProject } from "@/types";
 
 export const portfolioProjects: PortfolioProject[] = [

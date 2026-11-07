@@ -40,6 +40,92 @@ export const pricingCategories: { id: PricingCategory; label: string }[] = [
   { id: "setup", label: "Business Setup" },
 ];
 
+export interface CorePackage {
+  id: string;
+  name: string;
+  tagline: string;
+  price: number;
+  badge?: "Popular" | "Best Value" | "Starter" | "Brand Story";
+  turnaround: string;
+  deliverables: string[];
+  highlight?: string;
+  popular?: boolean;
+  chatbotPrompt: string;
+}
+
+export const corePackages: CorePackage[] = [
+  {
+    id: "amazon-listing-starter",
+    name: "Amazon Listing Starter",
+    tagline: "Essential launch setup for new product listings",
+    price: 999,
+    badge: "Starter",
+    turnaround: "24–48 Hours",
+    deliverables: [
+      "5 High-Converting Product Images (White BG + Key Features)",
+      "SEO-Optimized Product Title & 5 Benefit Bullets",
+      "Backend Search Terms & High-Intent Keywords",
+      "Mobile-First Framing & Amazon Zoom Compliance",
+      "1 Structured Revision Round",
+    ],
+    chatbotPrompt:
+      "I'm interested in the Amazon Listing Starter package (₹999). How do we get started?",
+  },
+  {
+    id: "a-plus-content-design",
+    name: "A+ Content Design",
+    tagline: "Engaging Enhanced Brand Content (EBC) modules",
+    price: 1499,
+    badge: "Brand Story",
+    turnaround: "48–72 Hours",
+    deliverables: [
+      "5 Custom High-Resolution Modular Banners",
+      "Brand Story & Visual Differentiation Modules",
+      "Technical Comparison & Specification Chart",
+      "Cross-Sell Product Grid Graphics",
+      "Full Amazon Brand Registry Guidelines Compliance",
+    ],
+    chatbotPrompt:
+      "I'm interested in the A+ Content Design package (₹1,499). Can you help design my brand story?",
+  },
+  {
+    id: "amazon-listing-pro",
+    name: "Amazon Listing Pro",
+    tagline: "Full conversion-engineered 7-image stack & deep SEO",
+    price: 1999,
+    badge: "Popular",
+    turnaround: "48 Hours",
+    popular: true,
+    deliverables: [
+      "Complete 7-Image Conversion Stack (Hero, Infographics, Dimensions, Lifestyle)",
+      "Deep Competitor Keyword Indexing & Keyword Density Optimization",
+      "5 Persuasive Bullet Points + HTML Product Description",
+      "Competitor Comparison Matrix Graphic",
+      "2 Fast-Turnaround Revision Rounds",
+    ],
+    chatbotPrompt:
+      "I'm interested in the Amazon Listing Pro package (₹1,999). How do we optimize my existing listing?",
+  },
+  {
+    id: "complete-package",
+    name: "Complete Package",
+    tagline: "All-in-one catalog mastery: Pro Listing + A+ Content Suite",
+    price: 2999,
+    badge: "Best Value",
+    turnaround: "3–4 Days",
+    highlight: "Save ₹500+",
+    deliverables: [
+      "Complete 7-Image Pro Listing Architecture",
+      "Full 5-Module A+ Content / EBC Suite",
+      "Complete SEO Copywriting (Title, Bullets, Backend Keywords)",
+      "Packaging & Unboxing Insert Card Layout Guidance",
+      "Priority Studio Support & Unlimited Minor Tweaks",
+    ],
+    chatbotPrompt:
+      "I want the Complete Package (₹2,999) combining Pro Listing and A+ Content. Can we start immediately?",
+  },
+];
+
 export const allServices: ServiceItem[] = [
   // ==========================================
   // 1. E-COMMERCE & MARKETPLACE SERVICES

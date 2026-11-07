@@ -28,15 +28,22 @@ export const navItems: NavItem[] = [
     ],
   },
   { label: "Projects", href: "/projects" },
+  { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
+];
+
+export const companyNavItems: { label: string; href: string }[] = [
+  { label: "About Studio", href: "/about" },
+  { label: "Projects & Work", href: "/projects" },
+  { label: "Pricing Packages", href: "/pricing" },
+  { label: "Client Reviews", href: "/reviews" },
+  { label: "Direct Contact", href: "/contact" },
+  { label: "FAQ", href: "/faq" },
 ];
 
 export const legalNavItems: { label: string; href: string }[] = [
   { label: "Privacy Policy", href: "/privacy-policy" },
   { label: "Terms & Conditions", href: "/terms" },
   { label: "Refund Policy", href: "/refund-policy" },
-  { label: "FAQ", href: "/faq" },
-  { label: "Client Reviews", href: "/reviews" },
-  { label: "Pricing Calculator", href: "/pricing" },
 ];

@@ -174,6 +174,53 @@ service cloud.firestore {
     //   - createdAt: timestamp | string (optional, immutable)
     //   - updatedAt: timestamp | string (optional)
     //
+    // Collection: appReleases
+    // Document ID: {releaseId} (e.g., '{appId}_{versionCode}' or unique ID)
+    // Fields:
+    //   - id: string (optional, max 100 chars, immutable)
+    //   - appId: string (required, 1-64 chars, immutable)
+    //   - appName: string (optional, 1-100 chars)
+    //   - packageName: string (required, 1-150 chars, immutable)
+    //   - versionName: string (required, 1-50 chars)
+    //   - versionCode: int (required, >= 1, immutable)
+    //   - releaseTitle: string (optional, 1-200 chars)
+    //   - releaseNotes: string (optional, 1-10000 chars)
+    //   - channel: string (required, 'stable' | 'beta')
+    //   - status: string (required, 'draft' | 'published' | 'archived' | 'rolled_back')
+    //   - isLatestStable: bool (optional)
+    //   - fileName: string (optional, 1-200 chars)
+    //   - fileSize: number (optional, >= 0)
+    //   - fileSizeFormatted: string (optional, 1-50 chars)
+    //   - sha256: string (required, 64 chars, immutable)
+    //   - minSdkVersion: int (optional, >= 1)
+    //   - minAndroidVersion: string (optional, 1-50 chars)
+    //   - targetSdkVersion: int (optional, >= 1)
+    //   - targetAndroidVersion: string (optional, 1-50 chars)
+    //   - permissions: list (optional, <= 100 items)
+    //   - certificateFingerprintSha256: string (optional, 1-128 chars)
+    //   - certificateSubject: string (optional, 1-500 chars)
+    //   - isProductionSigned: bool (optional)
+    //   - hostingProvider: string (optional, 'github' | 'storage' | 'custom')
+    //   - downloadUrl: string (required, 1-1000 chars)
+    //   - githubReleaseId: number (optional)
+    //   - githubTag: string (optional, 1-100 chars)
+    //   - githubAssetId: number (optional)
+    //   - uploadedBy: string (optional, 1-100 chars)
+    //   - createdAt: timestamp | string (optional)
+    //   - publishedAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
+    // Collection: releaseAuditLogs
+    // Document ID: {logId}
+    // Fields:
+    //   - id: string (optional, max 100 chars)
+    //   - appId: string (required, 1-64 chars)
+    //   - releaseId: string (optional, 1-100 chars)
+    //   - action: string (required, 'upload' | 'validate' | 'publish' | 'rollback' | 'archive' | 'download')
+    //   - performedBy: string (required, 1-100 chars)
+    //   - details: map | string (optional, max 5000 chars if string)
+    //   - timestamp: timestamp | string (required, max 50 chars if string)
+    //
     // Collection: admins
     // Document ID: {adminUid} (Firebase Auth UID of administrator)
     // Fields:
@@ -436,6 +483,65 @@ service cloud.firestore {
         (!('verified' in data) || data.verified == false);
     }
 
+    function isValidAppRelease(data) {
+      let allowedFields = [
+        'id', 'appId', 'appName', 'packageName', 'versionName', 'versionCode',
+        'releaseTitle', 'releaseNotes', 'channel', 'status', 'isLatestStable',
+        'fileName', 'fileSize', 'fileSizeFormatted', 'sha256', 'minSdkVersion',
+        'minAndroidVersion', 'targetSdkVersion', 'targetAndroidVersion',
+        'permissions', 'certificateFingerprintSha256', 'certificateSubject',
+        'isProductionSigned', 'hostingProvider', 'downloadUrl', 'githubReleaseId',
+        'githubTag', 'githubAssetId', 'uploadedBy', 'createdAt', 'publishedAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['appId', 'packageName', 'versionName', 'versionCode', 'status', 'channel', 'sha256', 'downloadUrl']) &&
+        data.appId is string && data.appId.size() >= 1 && data.appId.size() <= 64 &&
+        data.packageName is string && data.packageName.size() >= 1 && data.packageName.size() <= 150 &&
+        data.versionName is string && data.versionName.size() >= 1 && data.versionName.size() <= 50 &&
+        data.versionCode is int && data.versionCode >= 1 &&
+        data.channel in ['stable', 'beta'] &&
+        data.status in ['draft', 'published', 'archived', 'rolled_back'] &&
+        data.sha256 is string && data.sha256.size() == 64 &&
+        data.downloadUrl is string && data.downloadUrl.size() >= 1 && data.downloadUrl.size() <= 1000 && isValidUrl(data.downloadUrl) &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 100)) &&
+        (!('appName' in data) || (data.appName is string && data.appName.size() <= 100)) &&
+        (!('releaseTitle' in data) || (data.releaseTitle is string && data.releaseTitle.size() <= 200)) &&
+        (!('releaseNotes' in data) || (data.releaseNotes is string && data.releaseNotes.size() <= 10000)) &&
+        (!('isLatestStable' in data) || data.isLatestStable is bool) &&
+        (!('fileName' in data) || (data.fileName is string && data.fileName.size() <= 200)) &&
+        (!('fileSize' in data) || (data.fileSize is number && data.fileSize >= 0)) &&
+        (!('fileSizeFormatted' in data) || (data.fileSizeFormatted is string && data.fileSizeFormatted.size() <= 50)) &&
+        (!('minSdkVersion' in data) || (data.minSdkVersion is int && data.minSdkVersion >= 1)) &&
+        (!('minAndroidVersion' in data) || (data.minAndroidVersion is string && data.minAndroidVersion.size() <= 50)) &&
+        (!('targetSdkVersion' in data) || (data.targetSdkVersion is int && data.targetSdkVersion >= 1)) &&
+        (!('targetAndroidVersion' in data) || (data.targetAndroidVersion is string && data.targetAndroidVersion.size() <= 50)) &&
+        (!('permissions' in data) || (data.permissions is list && data.permissions.size() <= 100)) &&
+        (!('certificateFingerprintSha256' in data) || (data.certificateFingerprintSha256 is string && data.certificateFingerprintSha256.size() <= 128)) &&
+        (!('certificateSubject' in data) || (data.certificateSubject is string && data.certificateSubject.size() <= 500)) &&
+        (!('isProductionSigned' in data) || data.isProductionSigned is bool) &&
+        (!('hostingProvider' in data) || data.hostingProvider in ['github', 'storage', 'custom']) &&
+        (!('githubReleaseId' in data) || data.githubReleaseId is number) &&
+        (!('githubTag' in data) || (data.githubTag is string && data.githubTag.size() <= 100)) &&
+        (!('githubAssetId' in data) || data.githubAssetId is number) &&
+        (!('uploadedBy' in data) || (data.uploadedBy is string && data.uploadedBy.size() <= 100)) &&
+        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('publishedAt' in data) || data.publishedAt is timestamp || (data.publishedAt is string && data.publishedAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidReleaseAuditLog(data) {
+      let allowedFields = ['id', 'appId', 'releaseId', 'action', 'performedBy', 'details', 'timestamp'];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['appId', 'action', 'performedBy', 'timestamp']) &&
+        data.appId is string && data.appId.size() >= 1 && data.appId.size() <= 64 &&
+        data.action in ['upload', 'validate', 'publish', 'rollback', 'archive', 'download'] &&
+        data.performedBy is string && data.performedBy.size() >= 1 && data.performedBy.size() <= 100 &&
+        (data.timestamp is timestamp || (data.timestamp is string && data.timestamp.size() <= 50)) &&
+        (!('id' in data) || (data.id is string && data.id.size() <= 100)) &&
+        (!('releaseId' in data) || (data.releaseId is string && data.releaseId.size() <= 100)) &&
+        (!('details' in data) || data.details is map || (data.details is string && data.details.size() <= 5000));
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -494,6 +600,21 @@ service cloud.firestore {
       allow create: if isValidPublicReviewCreate() || (isAdmin() && isValidReviewData(request.resource.data));
       allow update: if isAdmin() && isValidReviewData(request.resource.data) && areImmutableFieldsUnchanged(['id', 'createdAt']);
       allow delete: if isAdmin();
+    }
+
+    // App Releases Collection: Public reads published releases; Admins manage releases
+    match /appReleases/{releaseId} {
+      allow read: if (resource.data.status == 'published') || isAdmin();
+      allow create: if isAdmin() && isValidAppRelease(request.resource.data);
+      allow update: if isAdmin() && isValidAppRelease(request.resource.data) && areImmutableFieldsUnchanged(['id', 'appId', 'packageName', 'versionCode', 'sha256']);
+      allow delete: if isAdmin();
+    }
+
+    // Release Audit Logs Collection: Admin read only; Admin create only; Immutable
+    match /releaseAuditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin() && isValidReleaseAuditLog(request.resource.data);
+      allow update, delete: if false;
     }
 
     // Admins Collection: Admin users read only; Client writes denied

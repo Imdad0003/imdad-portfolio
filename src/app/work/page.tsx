@@ -1,3 +1,5 @@
-import ProjectsPage from "@/app/projects/page";
+import { redirect } from "next/navigation";
 
-export default ProjectsPage;
+export default function WorkPage() {
+  redirect("/projects");
+}

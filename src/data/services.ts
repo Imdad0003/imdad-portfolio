@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy data file. Superseded by src/data/servicesData.ts.
+ * Preserved for reference; do not delete without approval.
+ */
 import { ServiceCategory } from "@/types";
 
 export const serviceCategories: ServiceCategory[] = [

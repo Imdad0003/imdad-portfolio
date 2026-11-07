@@ -28,6 +28,17 @@ export interface AppDocument {
   accentColor?: string;
   version?: string;
   releaseDate?: string;
+  packageName?: string;
+  latestReleaseId?: string;
+  latestVersionName?: string;
+  latestVersionCode?: number;
+  latestReleaseDate?: string;
+  latestApkSize?: string;
+  latestDownloadUrl?: string;
+  latestSha256?: string;
+  approvedCertificateFingerprint?: string;
+  supportEmail?: string;
+  privacyPolicyUrl?: string;
   createdAt: string;
   updatedAt: string;
   published: boolean;
@@ -115,8 +126,9 @@ export interface WebsitePackageDocument {
   priceMax?: number;
   unit: string;
   ctaText?: string;
-  badge?: "Recommended" | "Popular" | "Best Value" | null;
+  badge?: "Recommended" | "Popular" | "Best Value" | "Starter" | string | null;
   recommended?: boolean;
+  popular?: boolean;
   active: boolean;
   sortOrder: number;
   createdAt: string;
@@ -169,6 +181,19 @@ export interface SiteContentDocument {
     copyrightYear: number;
     studioName: string;
   };
+  title?: string;
+  section?: string;
+  metadata?: {
+    sectionOrder?: string[];
+    sectionVisibility?: Record<string, boolean>;
+    skills?: Array<{ category: string; items: string[] }>;
+    seo?: {
+      title?: string;
+      description?: string;
+      ogImage?: string;
+    };
+    [key: string]: unknown;
+  };
   published: boolean;
   updatedAt: string;
 }
@@ -197,5 +222,9 @@ export interface SettingsDocument {
   liveUrl: string;
   maintenanceMode: boolean;
   allowPublicReviews: boolean;
+  contact?: Record<string, unknown>;
+  socials?: Record<string, unknown>;
+  config?: Record<string, unknown>;
+  published?: boolean;
   updatedAt: string;
 }

@@ -8,15 +8,14 @@ import {
   Send,
   CheckCircle2,
   Clock,
-  Sparkles,
   ArrowRight,
   MessageSquare,
   ShieldCheck,
   PhoneCall,
   AlertCircle,
 } from "lucide-react";
-import Link from "next/link";
 import { siteConfig, getWhatsAppUrl } from "@/data/config";
+import { getSiteContent } from "@/lib/cms";
 
 const STUDIO_SERVICES = [
   "Website Development",
@@ -52,45 +51,71 @@ function ContactFormInner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [contactInfo, setContactInfo] = useState({
+    whatsappNumber: siteConfig.contact.whatsappNumber,
+    whatsappDisplay: siteConfig.contact.whatsappDisplay,
+    email: siteConfig.contact.email,
+    instagramHandle: siteConfig.contact.instagramHandle,
+    instagramUrl: siteConfig.contact.instagramUrl,
+  });
+
+  useEffect(() => {
+    getSiteContent()
+      .then((content) => {
+        if (content && content.contact) {
+          setContactInfo({
+            whatsappNumber: content.contact.whatsappNumber || siteConfig.contact.whatsappNumber,
+            whatsappDisplay: content.contact.whatsappDisplay || siteConfig.contact.whatsappDisplay,
+            email: content.contact.email || siteConfig.contact.email,
+            instagramHandle: content.contact.instagramHandle || siteConfig.contact.instagramHandle,
+            instagramUrl: content.contact.instagramUrl || siteConfig.contact.instagramUrl,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Sync initial state from URL query parameters (e.g. ?service=..., ?package=..., ?subject=...)
   useEffect(() => {
     const serviceParam = searchParams.get("service");
     const packageParam = searchParams.get("package");
     const subjectParam = searchParams.get("subject");
+    if (!serviceParam && !packageParam && !subjectParam) return;
 
-    setFormData((prev) => {
-      let matchedService = prev.service;
-      if (serviceParam) {
-        const lower = serviceParam.toLowerCase();
-        if (lower.includes("app dev")) matchedService = "App Development (iOS & Android)";
-        else if (lower.includes("web")) matchedService = "Website Development";
-        else if (lower.includes("ecom") || lower.includes("store")) matchedService = "E-Commerce Architecture";
-        else if (lower.includes("video")) matchedService = "High-Retention Video Editing";
-        else if (lower.includes("social")) matchedService = "Social Media & Content Systems";
-        else if (lower.includes("wish") || lower.includes("easyxo")) matchedService = "App Inquiry (WishMusic / WishTracking / EasyXo)";
-        else matchedService = serviceParam;
-      } else if (packageParam) {
-        const lower = packageParam.toLowerCase();
-        if (lower.includes("web")) matchedService = "Website Development";
-        else if (lower.includes("app")) matchedService = "App Development (iOS & Android)";
-        else if (lower.includes("video")) matchedService = "High-Retention Video Editing";
-        else if (lower.includes("social")) matchedService = "Social Media & Content Systems";
-        else if (lower.includes("ecom")) matchedService = "E-Commerce Architecture";
-      }
+    queueMicrotask(() => {
+      setFormData((prev) => {
+        let matchedService = prev.service;
+        if (serviceParam) {
+          const lower = serviceParam.toLowerCase();
+          if (lower.includes("app dev")) matchedService = "App Development (iOS & Android)";
+          else if (lower.includes("web")) matchedService = "Website Development";
+          else if (lower.includes("ecom") || lower.includes("store")) matchedService = "E-Commerce Architecture";
+          else if (lower.includes("video")) matchedService = "High-Retention Video Editing";
+          else if (lower.includes("social")) matchedService = "Social Media & Content Systems";
+          else if (lower.includes("wish") || lower.includes("easyxo")) matchedService = "App Inquiry (WishMusic / WishTracking / EasyXo)";
+          else matchedService = serviceParam;
+        } else if (packageParam) {
+          const lower = packageParam.toLowerCase();
+          if (lower.includes("web")) matchedService = "Website Development";
+          else if (lower.includes("app")) matchedService = "App Development (iOS & Android)";
+          else if (lower.includes("video")) matchedService = "High-Retention Video Editing";
+          else if (lower.includes("social")) matchedService = "Social Media & Content Systems";
+          else if (lower.includes("ecom")) matchedService = "E-Commerce Architecture";
+        }
 
-      let initialMessage = prev.message;
-      if (packageParam && !prev.message) {
-        initialMessage = `Selected Package: ${packageParam}\n\nProject details & requirements: `;
-      } else if (subjectParam && !prev.message) {
-        initialMessage = `${subjectParam}\n\nProject details: `;
-      }
+        let initialMessage = prev.message;
+        if (packageParam && !prev.message) {
+          initialMessage = `Selected Package: ${packageParam}\n\nProject details & requirements: `;
+        } else if (subjectParam && !prev.message) {
+          initialMessage = `${subjectParam}\n\nProject details: `;
+        }
 
-      return {
-        ...prev,
-        service: matchedService,
-        message: initialMessage,
-      };
+        return {
+          ...prev,
+          service: matchedService,
+          message: initialMessage,
+        };
+      });
     });
   }, [searchParams]);
 
@@ -412,7 +437,7 @@ function ContactFormInner() {
           <div className="space-y-3">
             {/* WhatsApp */}
             <a
-              href={getWhatsAppUrl("Hi Imdad, I would like to discuss a project with your studio.")}
+              href={`https://wa.me/${contactInfo.whatsappNumber.replace(/[^0-9]/g, "")}?text=${encodeURIComponent("Hi Imdad, I would like to discuss a project with your studio.")}`}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center justify-between p-4 rounded-2xl bg-[#FAF2EA] border border-[#F6DBC0] hover:border-[#935073]/40 transition-all shadow-2xs"
@@ -426,7 +451,7 @@ function ContactFormInner() {
                     WhatsApp (Fastest)
                   </div>
                   <div className="text-sm font-black text-[#180D1D] group-hover:text-[#935073] transition-colors">
-                    +91 7352608269
+                    {contactInfo.whatsappDisplay || contactInfo.whatsappNumber}
                   </div>
                 </div>
               </div>
@@ -435,7 +460,7 @@ function ContactFormInner() {
 
             {/* Instagram */}
             <a
-              href={siteConfig.links.instagram}
+              href={contactInfo.instagramUrl || siteConfig.links.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="group flex items-center justify-between p-4 rounded-2xl bg-white border border-[#502D55]/10 hover:border-[#935073]/40 transition-all shadow-2xs"
@@ -449,7 +474,7 @@ function ContactFormInner() {
                     Instagram Direct
                   </div>
                   <div className="text-sm font-bold text-[#180D1D] group-hover:text-[#935073] transition-colors">
-                    @imdad.builds
+                    {contactInfo.instagramHandle}
                   </div>
                 </div>
               </div>
@@ -458,7 +483,7 @@ function ContactFormInner() {
 
             {/* Email */}
             <a
-              href={siteConfig.links.email}
+              href={`mailto:${contactInfo.email}`}
               className="group flex items-center justify-between p-4 rounded-2xl bg-white border border-[#502D55]/10 hover:border-[#935073]/40 transition-all shadow-2xs"
             >
               <div className="flex items-center gap-3">
@@ -470,7 +495,7 @@ function ContactFormInner() {
                     Direct Email
                   </div>
                   <div className="text-sm font-bold text-[#180D1D] group-hover:text-[#935073] transition-colors">
-                    {siteConfig.contact.email}
+                    {contactInfo.email}
                   </div>
                 </div>
               </div>

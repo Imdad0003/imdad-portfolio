@@ -3,7 +3,7 @@ import { db, isFirebaseConfigured } from "@/lib/firebase";
 import { appsData } from "@/data/apps";
 import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
-import { allServices } from "@/data/pricing";
+import { allServices, corePackages } from "@/data/pricing";
 import { siteConfig } from "@/data/config";
 import type {
   AppDocument,
@@ -156,6 +156,31 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
   // 4. Migrate Website Packages
   const packagesSnap = await getDocs(query(collection(db, "websitePackages"), limit(1)));
   if (force || packagesSnap.empty) {
+    const corePkgsDocs: WebsitePackageDocument[] = corePackages.map((pkg, idx) => ({
+      id: pkg.id,
+      name: pkg.name,
+      websiteType: "Commercial Package",
+      description: pkg.tagline,
+      features: pkg.deliverables,
+      price: pkg.price,
+      priceType: "fixed",
+      unit: pkg.turnaround,
+      badge: (pkg.badge || null) as WebsitePackageDocument["badge"],
+      recommended: pkg.popular || pkg.badge === "Best Value",
+      active: true,
+      ctaText: `Book ${pkg.name}`,
+      sortOrder: idx,
+      createdAt: now,
+      updatedAt: now,
+      published: true,
+    }));
+
+    for (const pkgDoc of corePkgsDocs) {
+      const docRef = doc(db, "websitePackages", pkgDoc.id);
+      await setDoc(docRef, pkgDoc, { merge: true });
+      result.packagesCount++;
+    }
+
     const relevantServices = allServices.filter(
       (s) => s.category === "websites" || s.category === "ecommerce"
     );
@@ -175,7 +200,7 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
         badge: item.badge || null,
         recommended: item.recommended || false,
         active: true,
-        sortOrder: i,
+        sortOrder: corePkgsDocs.length + i,
         createdAt: now,
         updatedAt: now,
         published: true,
@@ -232,6 +257,53 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
       tagline: siteConfig.subTagline,
       copyrightYear: 2026,
       studioName: siteConfig.name,
+    },
+    metadata: {
+      sectionOrder: [
+        "hero",
+        "packages",
+        "apps",
+        "services",
+        "projects",
+        "about",
+        "reviews",
+        "ai-assistant",
+        "final-cta",
+      ],
+      sectionVisibility: {
+        hero: true,
+        packages: true,
+        apps: true,
+        services: true,
+        projects: true,
+        about: true,
+        reviews: true,
+        "ai-assistant": true,
+        "final-cta": true,
+      },
+      skills: [
+        {
+          category: "Mobile & App Engineering",
+          items: ["Flutter", "Dart", "iOS", "Android", "Offline-First SQLite"],
+        },
+        {
+          category: "Web & Storefronts",
+          items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay"],
+        },
+        {
+          category: "Marketplace & E-Commerce",
+          items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo"],
+        },
+        {
+          category: "AI & Media Systems",
+          items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging"],
+        },
+      ],
+      seo: {
+        title: "IMDAD.BUILDS | Independent Digital Product Studio",
+        description:
+          "Independent digital product studio building mobile apps, web applications, e-commerce systems, and conversion-engineered creative media.",
+      },
     },
     published: true,
     updatedAt: now,

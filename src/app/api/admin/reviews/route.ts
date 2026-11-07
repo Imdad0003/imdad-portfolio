@@ -1,17 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAllReviews, updateReview, deleteReview } from "@/lib/reviews";
+import { verifyAdminRequest } from "@/lib/server-auth";
 
-const ADMIN_SECRET = process.env.ADMIN_SECRET_KEY || "imdad-admin-2026";
-
-function isAuthorized(req: NextRequest): boolean {
-  const headerKey = req.headers.get("x-admin-key");
-  const queryKey = req.nextUrl.searchParams.get("key");
-  return (headerKey === ADMIN_SECRET) || (queryKey === ADMIN_SECRET);
-}
+/**
+ * Privileged Admin Review Management API
+ *
+ * Security Requirements:
+ * - Requires verified administrator authentication (Bearer Firebase ID token or configured server secret).
+ * - Query-parameter authentication (?key=) is strictly prohibited.
+ * - Insecure fallback credentials removed.
+ * - Protects GET (including private emails), PATCH (moderation status), and DELETE operations.
+ */
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+  const authResult = await verifyAdminRequest(req);
+  if (!authResult.authorized) {
+    return NextResponse.json(
+      { error: authResult.error || "Unauthorized access." },
+      { status: authResult.statusCode }
+    );
   }
 
   try {
@@ -24,8 +31,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+  const authResult = await verifyAdminRequest(req);
+  if (!authResult.authorized) {
+    return NextResponse.json(
+      { error: authResult.error || "Unauthorized access." },
+      { status: authResult.statusCode }
+    );
   }
 
   try {
@@ -66,8 +77,12 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!isAuthorized(req)) {
-    return NextResponse.json({ error: "Unauthorized access" }, { status: 401 });
+  const authResult = await verifyAdminRequest(req);
+  if (!authResult.authorized) {
+    return NextResponse.json(
+      { error: authResult.error || "Unauthorized access." },
+      { status: authResult.statusCode }
+    );
   }
 
   try {

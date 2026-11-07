@@ -13,12 +13,12 @@ interface Particle {
   colorRgb: string;
 }
 
-// Studio restrained palette: warm violet-night, muted studio rose, subtle warm taupe
+// Studio restrained palette: electric sky blue, vivid sky, deep navy, soft cyan
 const STUDIO_PALETTE = [
-  "24, 13, 29",   // Night Violet (subtle dark)
-  "80, 45, 85",   // Deep Studio Violet
-  "147, 80, 115", // Muted Studio Rose
-  "184, 104, 144",// Soft Rose Accent
+  "2, 132, 199",   // Electric Sky Blue
+  "14, 165, 233",  // Vivid Sky Blue
+  "15, 23, 42",    // Deep Slate Navy
+  "6, 182, 212",   // Soft Cyan
 ];
 
 export function ParticleField() {
@@ -132,7 +132,17 @@ export function ParticleField() {
         ctx.fill();
       }
 
-      if (!staticOnly) {
+      if (!staticOnly && !document.hidden) {
+        animationFrameId = requestAnimationFrame(() => draw(false));
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (prefersReducedMotion) return;
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrameId);
+      } else {
+        cancelAnimationFrame(animationFrameId);
         animationFrameId = requestAnimationFrame(() => draw(false));
       }
     };
@@ -143,8 +153,11 @@ export function ParticleField() {
       animationFrameId = requestAnimationFrame(() => draw(false));
     }
 
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       cancelAnimationFrame(animationFrameId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", handleScroll);
     };

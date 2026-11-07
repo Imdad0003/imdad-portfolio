@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy data file from previous site iterations.
+ * Preserved for reference; do not delete without approval.
+ */
 import { ClientType } from "@/types";
 
 export const clientTypes: ClientType[] = [

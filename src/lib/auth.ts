@@ -1,8 +1,9 @@
 import {
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged,
   sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
   User,
   IdTokenResult,
 } from "firebase/auth";
@@ -70,6 +71,31 @@ export async function adminSignIn(email: string, pass: string): Promise<User> {
   }
 
   const userCredential = await signInWithEmailAndPassword(auth, email.trim(), pass);
+  const isAuthorized = await verifyAdminStatus(userCredential.user);
+
+  if (!isAuthorized) {
+    await signOut(auth);
+    throw new Error(
+      `Access Denied: ${userCredential.user.email} is not authorized for the Studio Admin CMS.`
+    );
+  }
+
+  return userCredential.user;
+}
+
+/**
+ * Sign in as an administrator using Firebase Google Authentication.
+ * Automatically verifies admin authorization upon successful sign-in.
+ */
+export async function adminSignInWithGoogle(): Promise<User> {
+  if (!auth) {
+    throw new Error("Firebase Authentication is not initialized.");
+  }
+
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  const userCredential = await signInWithPopup(auth, provider);
   const isAuthorized = await verifyAdminStatus(userCredential.user);
 
   if (!isAuthorized) {

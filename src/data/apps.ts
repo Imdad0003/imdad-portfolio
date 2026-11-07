@@ -32,6 +32,13 @@ export interface App {
   accentColor: string;
   version?: string;
   releaseDate?: string;
+  packageName?: string;
+  supportEmail?: string;
+  latestDownloadUrl?: string;
+  latestVersionName?: string;
+  latestVersionCode?: number;
+  latestApkSize?: string;
+  latestSha256?: string;
   features: AppFeature[];
   techStack: string[];
   links: AppLinks;
@@ -56,6 +63,8 @@ export const appsData: App[] = [
     accentColor: "#935073",
     version: "v0.8.2 Alpha",
     releaseDate: "Q2 2026",
+    packageName: "com.imdad.wishmusic",
+    supportEmail: "wishmusic@imdadbuild.space",
     features: [
       {
         title: "Tactile Waveform Scrubbing",

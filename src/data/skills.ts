@@ -1,3 +1,7 @@
+/**
+ * @deprecated Legacy data file from previous site iterations.
+ * Preserved for reference; do not delete without approval.
+ */
 import { SkillGroup } from "@/types";
 
 export const skillGroups: SkillGroup[] = [

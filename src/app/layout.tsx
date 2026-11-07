@@ -154,7 +154,7 @@ const jsonLd = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F8F4E9",
+  themeColor: "#F8FAFC",
   colorScheme: "light",
   width: "device-width",
   initialScale: 1,
@@ -174,7 +174,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#F8F4E9] text-[#180D1D] selection:bg-[#935073]/20 selection:text-[#502D55]">
+      <body className="min-h-full flex flex-col bg-[#F8FAFC] text-[#0A192F] selection:bg-[#0284C7]/20 selection:text-[#0284C7]">
         <ScrollProgress />
         <LiquidBackground />
         <CursorGlow />

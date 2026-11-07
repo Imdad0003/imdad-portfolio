@@ -8,13 +8,12 @@ import {
   query,
   where,
   orderBy,
-  serverTimestamp,
 } from "firebase/firestore";
 import { db, isFirebaseConfigured } from "@/lib/firebase";
-import { appsData, App, getAppBySlug } from "@/data/apps";
-import { projectsData, Project } from "@/data/projectsData";
-import { studioServices, StudioService } from "@/data/servicesData";
-import { allServices, ServiceItem } from "@/data/pricing";
+import { appsData, getAppBySlug } from "@/data/apps";
+import { projectsData } from "@/data/projectsData";
+import { studioServices } from "@/data/servicesData";
+import { allServices, corePackages } from "@/data/pricing";
 import { siteConfig } from "@/data/config";
 import type {
   AppDocument,
@@ -24,6 +23,10 @@ import type {
   SiteContentDocument,
   SettingsDocument,
 } from "@/types/cms";
+import type {
+  AppReleaseDocument,
+  ReleaseAuditLogDocument,
+} from "@/types/releases";
 
 // ==========================================
 // 1. PUBLIC READ APIS (WITH STATIC FALLBACK)
@@ -70,6 +73,13 @@ export async function getPublishedApps(): Promise<AppDocument[]> {
     accentColor: app.accentColor,
     version: app.version,
     releaseDate: app.releaseDate,
+    packageName: app.packageName,
+    supportEmail: app.supportEmail,
+    latestDownloadUrl: app.latestDownloadUrl,
+    latestVersionName: app.latestVersionName,
+    latestVersionCode: app.latestVersionCode,
+    latestApkSize: app.latestApkSize,
+    latestSha256: app.latestSha256,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     published: true,
@@ -120,6 +130,13 @@ export async function getPublishedAppBySlug(slug: string): Promise<AppDocument |
     accentColor: staticApp.accentColor,
     version: staticApp.version,
     releaseDate: staticApp.releaseDate,
+    packageName: staticApp.packageName,
+    supportEmail: staticApp.supportEmail,
+    latestDownloadUrl: staticApp.latestDownloadUrl,
+    latestVersionName: staticApp.latestVersionName,
+    latestVersionCode: staticApp.latestVersionCode,
+    latestApkSize: staticApp.latestApkSize,
+    latestSha256: staticApp.latestSha256,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     published: true,
@@ -274,7 +291,13 @@ export async function getPublishedServiceBySlug(slug: string): Promise<ServiceDo
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
         const d = snapshot.docs[0];
-        return { id: d.id, ...d.data() } as ServiceDocument;
+        const raw = d.data();
+        return {
+          id: d.id,
+          ...raw,
+          name: raw.name || raw.title || "",
+          deliverables: raw.deliverables || [],
+        } as ServiceDocument;
       }
     } catch (err) {
       console.warn(`Firestore getPublishedServiceBySlug (${slug}) fallback:`, err);
@@ -317,29 +340,31 @@ export async function getPublishedServiceBySlug(slug: string): Promise<ServiceDo
 }
 
 export async function getPublishedPackages(): Promise<WebsitePackageDocument[]> {
-  if (db && isFirebaseConfigured) {
-    try {
-      const q = query(
-        collection(db, "websitePackages"),
-        where("published", "==", true)
-      );
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        return snapshot.docs
-          .map((d) => ({ id: d.id, ...d.data() } as WebsitePackageDocument))
-          .filter((d) => d.active !== false)
-          .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-      }
-    } catch (err) {
-      console.warn("Firestore getPublishedPackages fallback:", err);
-    }
-  }
+  const defaultCorePackages: WebsitePackageDocument[] = corePackages.map((pkg, idx) => ({
+    id: pkg.id,
+    name: pkg.name,
+    websiteType: "Commercial Package",
+    description: pkg.tagline,
+    features: pkg.deliverables,
+    price: pkg.price,
+    priceType: "fixed",
+    unit: pkg.turnaround,
+    badge: (pkg.badge || null) as WebsitePackageDocument["badge"],
+    recommended: pkg.popular || pkg.badge === "Best Value",
+    popular: pkg.popular,
+    active: true,
+    ctaText: `Book ${pkg.name}`,
+    sortOrder: idx,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    published: true,
+  }));
 
   const websiteServices = allServices.filter(
     (s) => s.category === "websites" || s.category === "ecommerce"
   );
 
-  return websiteServices.map((item, idx) => ({
+  const defaultServicePackages: WebsitePackageDocument[] = websiteServices.map((item, idx) => ({
     id: item.id,
     name: item.name,
     websiteType: item.categoryLabel,
@@ -352,20 +377,118 @@ export async function getPublishedPackages(): Promise<WebsitePackageDocument[]> 
     badge: item.badge,
     recommended: item.recommended,
     active: true,
-    sortOrder: idx,
+    sortOrder: defaultCorePackages.length + idx,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     published: true,
   }));
+
+  if (db && isFirebaseConfigured) {
+    try {
+      const q = query(
+        collection(db, "websitePackages"),
+        where("published", "==", true)
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const firestorePkgs = snapshot.docs
+          .map((d) => {
+            const data = d.data();
+            return {
+              id: d.id,
+              ...data,
+              active: data.active ?? true,
+              published: data.published ?? true,
+            } as WebsitePackageDocument;
+          })
+          .filter((d) => d.active !== false);
+
+        // Ensure commercial core packages are always available
+        const existingIds = new Set(firestorePkgs.map((p) => p.id));
+        const missingCore = defaultCorePackages.filter((cp) => !existingIds.has(cp.id));
+        const combined = [...firestorePkgs, ...missingCore];
+
+        return combined.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      }
+    } catch (err) {
+      console.warn("Firestore getPublishedPackages fallback:", err);
+    }
+  }
+
+  return [...defaultCorePackages, ...defaultServicePackages];
 }
 
 export async function getSiteContent(): Promise<SiteContentDocument> {
+  const defaultMetadata = {
+    sectionOrder: [
+      "hero",
+      "packages",
+      "apps",
+      "services",
+      "projects",
+      "about",
+      "reviews",
+      "ai-assistant",
+      "final-cta",
+    ],
+    sectionVisibility: {
+      hero: true,
+      packages: true,
+      apps: true,
+      services: true,
+      projects: true,
+      about: true,
+      reviews: true,
+      "ai-assistant": true,
+      "final-cta": true,
+    },
+    skills: [
+      {
+        category: "Mobile & App Engineering",
+        items: ["Flutter", "Dart", "iOS", "Android", "State Management", "Offline-First SQLite"],
+      },
+      {
+        category: "Web & Storefronts",
+        items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay"],
+      },
+      {
+        category: "Marketplace & E-Commerce",
+        items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo"],
+      },
+      {
+        category: "AI & Media Systems",
+        items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging"],
+      },
+    ],
+    seo: {
+      title: "IMDAD.BUILDS | Independent Digital Product Studio",
+      description:
+        "Independent digital product studio building mobile apps, web applications, e-commerce systems, and conversion-engineered creative media.",
+    },
+  };
+
   if (db && isFirebaseConfigured) {
     try {
       const docRef = doc(db, "siteContent", "main");
       const snap = await getDoc(docRef);
       if (snap.exists()) {
-        return { id: "main", ...snap.data() } as SiteContentDocument;
+        const raw = snap.data();
+        return {
+          id: "main",
+          ...raw,
+          metadata: {
+            sectionOrder: raw.metadata?.sectionOrder || defaultMetadata.sectionOrder,
+            sectionVisibility: {
+              ...defaultMetadata.sectionVisibility,
+              ...(raw.metadata?.sectionVisibility || {}),
+            },
+            skills: raw.metadata?.skills || defaultMetadata.skills,
+            seo: {
+              ...defaultMetadata.seo,
+              ...(raw.metadata?.seo || {}),
+            },
+          },
+        } as SiteContentDocument;
       }
     } catch (err) {
       console.warn("Firestore getSiteContent fallback:", err);
@@ -418,6 +541,53 @@ export async function getSiteContent(): Promise<SiteContentDocument> {
       tagline: siteConfig.subTagline,
       copyrightYear: 2026,
       studioName: siteConfig.name,
+    },
+    metadata: {
+      sectionOrder: [
+        "hero",
+        "packages",
+        "apps",
+        "services",
+        "projects",
+        "about",
+        "reviews",
+        "ai-assistant",
+        "final-cta",
+      ],
+      sectionVisibility: {
+        hero: true,
+        packages: true,
+        apps: true,
+        services: true,
+        projects: true,
+        about: true,
+        reviews: true,
+        "ai-assistant": true,
+        "final-cta": true,
+      },
+      skills: [
+        {
+          category: "Mobile & App Engineering",
+          items: ["Flutter", "Dart", "iOS", "Android", "State Management", "Offline-First SQLite"],
+        },
+        {
+          category: "Web & Storefronts",
+          items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay", "Node.js"],
+        },
+        {
+          category: "Marketplace & E-Commerce",
+          items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo Platform"],
+        },
+        {
+          category: "AI & Media Systems",
+          items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging", "Cloudflare R2"],
+        },
+      ],
+      seo: {
+        title: "IMDAD.BUILDS | Independent Digital Product Studio",
+        description:
+          "Independent digital product studio building mobile apps, web applications, e-commerce systems, and conversion-engineered creative media.",
+      },
     },
     published: true,
     updatedAt: new Date().toISOString(),
@@ -596,3 +766,75 @@ export async function saveSettingsAdmin(settings: Partial<SettingsDocument>): Pr
     { merge: true }
   );
 }
+
+// ==========================================
+// 3. APP DISTRIBUTION & RELEASES APIS
+// ==========================================
+
+export async function getPublishedReleases(appId: string): Promise<AppReleaseDocument[]> {
+  if (db && isFirebaseConfigured) {
+    try {
+      const q = query(
+        collection(db, "appReleases"),
+        where("appId", "==", appId),
+        where("status", "==", "published"),
+        orderBy("versionCode", "desc")
+      );
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as AppReleaseDocument));
+      }
+    } catch (err) {
+      console.warn(`Firestore getPublishedReleases (${appId}) fallback:`, err);
+    }
+  }
+
+  // Return empty array when no verified releases have been published to Firestore.
+  // This ensures honest pre-flight status until the production APK is uploaded.
+  return [];
+}
+
+export async function getLatestStableRelease(appId: string): Promise<AppReleaseDocument | null> {
+  const releases = await getPublishedReleases(appId);
+  if (releases.length === 0) return null;
+  return releases.find((r) => r.isLatestStable) || releases[0];
+}
+
+export async function getAllReleasesAdmin(appId?: string): Promise<AppReleaseDocument[]> {
+  if (!db) return [];
+  try {
+    let q = query(collection(db, "appReleases"), orderBy("createdAt", "desc"));
+    if (appId) {
+      q = query(
+        collection(db, "appReleases"),
+        where("appId", "==", appId),
+        orderBy("versionCode", "desc")
+      );
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as AppReleaseDocument));
+  } catch (err) {
+    console.warn("getAllReleasesAdmin query error:", err);
+    return [];
+  }
+}
+
+export async function getAllReleaseAuditLogsAdmin(appId?: string): Promise<ReleaseAuditLogDocument[]> {
+  if (!db) return [];
+  try {
+    let q = query(collection(db, "releaseAuditLogs"), orderBy("timestamp", "desc"));
+    if (appId) {
+      q = query(
+        collection(db, "releaseAuditLogs"),
+        where("appId", "==", appId),
+        orderBy("timestamp", "desc")
+      );
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as ReleaseAuditLogDocument));
+  } catch (err) {
+    console.warn("getAllReleaseAuditLogsAdmin error:", err);
+    return [];
+  }
+}
+

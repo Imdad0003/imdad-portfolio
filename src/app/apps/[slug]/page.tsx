@@ -192,22 +192,31 @@ export default async function AppDetailPage({ params }: AppDetailPageProps) {
 
               {/* Action CTAs */}
               <div className="pt-4 flex flex-wrap items-center gap-3">
-                {app.links.liveUrl && (
+                {app.id === "wishmusic" ? (
+                  <Link
+                    href="/apps/wishmusic"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs sm:text-sm transition-all shadow-sm"
+                  >
+                    <span>Download Official APK</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                ) : app.links.liveUrl ? (
                   <a
                     href={app.links.liveUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] font-bold text-xs sm:text-sm transition-all shadow-sm"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs sm:text-sm transition-all shadow-sm"
                   >
                     <span>Visit Live Store</span>
                     <ExternalLink className="w-4 h-4" />
                   </a>
-                )}
-
-                {app.links.waitlistUrl && (
+                ) : (
                   <Link
-                    href={app.links.waitlistUrl}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#180D1D] hover:bg-[#2B1435] text-[#F8F4E9] font-bold text-xs sm:text-sm transition-all shadow-sm"
+                    href={
+                      app.links.waitlistUrl ||
+                      `/contact?subject=${encodeURIComponent(`Early Beta Access: ${app.name}`)}`
+                    }
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs sm:text-sm transition-all shadow-sm"
                   >
                     <span>Request Early Beta Access</span>
                     <ArrowRight className="w-4 h-4" />
