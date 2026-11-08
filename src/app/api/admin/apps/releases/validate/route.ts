@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdminRequest } from "@/lib/server-auth";
-import { validateApk } from "@/lib/apk-parser";
+import { validateApk, validateApkInspection, ApkInspectionPayload } from "@/lib/apk-parser";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Admin APK Validation API
- * Analyzes and validates an uploaded APK binary before saving or publishing.
- * Verifies package ID, version codes, production certificate, rejects debug keys.
+ *
+ * Analyzes and validates an APK before saving or publishing.
+ * Supports:
+ * 1. JSON with inspectionPayload: Instant client-extracted manifest & signature block (~20KB, 0MB payload).
+ * 2. JSON with downloadUrl: Validates an already-staged APK in storage.
+ * 3. FormData with apkFile: Direct buffer validation (for test suites and files < 4.5 MB).
  */
 export async function POST(req: NextRequest) {
   try {
@@ -19,6 +23,61 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const contentType = req.headers.get("content-type") || "";
+
+    // MODE 1 & 2: JSON Payload (inspectionPayload or downloadUrl)
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      const {
+        inspectionPayload,
+        downloadUrl,
+        expectedPackage,
+        currentLatestVersionCode,
+        approvedFingerprint,
+      } = body;
+
+      if (inspectionPayload) {
+        const validation = validateApkInspection(inspectionPayload as ApkInspectionPayload, {
+          expectedPackage: expectedPackage || undefined,
+          currentLatestVersionCode: typeof currentLatestVersionCode === "number"
+            ? currentLatestVersionCode
+            : undefined,
+          approvedFingerprint: approvedFingerprint || undefined,
+        });
+
+        return NextResponse.json(validation, { status: 200 });
+      }
+
+      if (downloadUrl) {
+        // Download from storage
+        const fetchRes = await fetch(downloadUrl);
+        if (!fetchRes.ok) {
+          return NextResponse.json(
+            { valid: false, errors: [`Failed to retrieve APK from storage (${fetchRes.status})`] },
+            { status: 400 }
+          );
+        }
+        const arrayBuf = await fetchRes.arrayBuffer();
+        const buffer = Buffer.from(arrayBuf);
+        const validation = validateApk(buffer, {
+          expectedPackage: expectedPackage || undefined,
+          currentLatestVersionCode: typeof currentLatestVersionCode === "number"
+            ? currentLatestVersionCode
+            : undefined,
+          approvedFingerprint: approvedFingerprint || undefined,
+          fileName: body.fileName || "release.apk",
+        });
+
+        return NextResponse.json(validation, { status: 200 });
+      }
+
+      return NextResponse.json(
+        { valid: false, errors: ["Missing inspectionPayload or downloadUrl in JSON body."] },
+        { status: 400 }
+      );
+    }
+
+    // MODE 3: Multipart Form Data (for automated tests and small binaries)
     const formData = await req.formData();
     const file = formData.get("apkFile") as File | null;
     const expectedPackage = (formData.get("expectedPackage") as string) || undefined;

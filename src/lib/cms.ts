@@ -153,7 +153,14 @@ export async function getPublishedProjects(): Promise<ProjectDocument[]> {
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
         return snapshot.docs
-          .map((d) => ({ id: d.id, ...d.data() } as ProjectDocument))
+          .map((d) => {
+            const data = d.data();
+            return {
+              id: d.id,
+              ...data,
+              technologies: data.technologies || data.tools || [],
+            } as ProjectDocument;
+          })
           .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       }
     } catch (err) {
@@ -196,7 +203,12 @@ export async function getPublishedProjectBySlug(slug: string): Promise<ProjectDo
       const snapshot = await getDocs(q);
       if (!snapshot.empty) {
         const d = snapshot.docs[0];
-        return { id: d.id, ...d.data() } as ProjectDocument;
+        const data = d.data();
+        return {
+          id: d.id,
+          ...data,
+          technologies: data.technologies || data.tools || [],
+        } as ProjectDocument;
       }
     } catch (err) {
       console.warn(`Firestore getPublishedProjectBySlug (${slug}) fallback:`, err);
@@ -659,21 +671,34 @@ export async function getAllProjectsAdmin(): Promise<ProjectDocument[]> {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as ProjectDocument));
 }
 
+function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+  const cleaned: Record<string, any> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined) {
+      if (Array.isArray(v)) {
+        cleaned[k] = v.map((item) =>
+          typeof item === "object" && item !== null ? cleanUndefined(item) : item
+        );
+      } else {
+        cleaned[k] = v;
+      }
+    }
+  }
+  return cleaned as Partial<T>;
+}
+
 export async function saveProjectAdmin(
   project: Partial<ProjectDocument> & { id: string }
 ): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   const docRef = doc(db, "projects", project.id);
   const now = new Date().toISOString();
-  await setDoc(
-    docRef,
-    {
-      ...project,
-      updatedAt: now,
-      createdAt: project.createdAt || now,
-    },
-    { merge: true }
-  );
+  const payload = cleanUndefined({
+    ...project,
+    updatedAt: now,
+    createdAt: project.createdAt || now,
+  });
+  await setDoc(docRef, payload, { merge: true });
 }
 
 export async function deleteProjectAdmin(id: string): Promise<void> {

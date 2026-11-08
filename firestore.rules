@@ -56,12 +56,22 @@ service cloud.firestore {
     //   - tools: list (optional, <= 30 items)
     //   - technologies: list (optional, <= 50 items)
     //   - status: string (optional, 1-50 chars)
+    //   - publishingStatus: string (optional, 'draft' | 'published' | 'archived')
     //   - featured: bool (optional)
     //   - highlight: string (optional, 1-100 chars)
     //   - url: string (optional, 1-500 chars)
+    //   - githubUrl: string (optional, max 1000 chars)
+    //   - completionDate: string (optional, max 100 chars)
+    //   - seoTitle: string (optional, max 200 chars)
+    //   - seoDescription: string (optional, max 1000 chars)
     //   - accentColor: string (optional, 1-30 chars)
+    //   - logo: string (optional, max 1000 chars)
     //   - coverImage: string (optional, max 1000 chars)
     //   - gallery: list (optional, <= 50 items)
+    //   - galleryItems: list (optional, <= 100 items)
+    //   - screenshots: list (optional, <= 50 items)
+    //   - videoUrl: string (optional, max 1000 chars)
+    //   - videos: list (optional, <= 20 items)
     //   - metrics: list (optional, <= 20 items)
     //   - deliverables: list (optional, <= 30 items)
     //   - sortOrder: number (optional)
@@ -307,7 +317,9 @@ service cloud.firestore {
         'shortDescription', 'scope', 'tools', 'technologies', 'status',
         'featured', 'highlight', 'url', 'accentColor', 'coverImage',
         'gallery', 'metrics', 'deliverables', 'sortOrder', 'published',
-        'createdAt', 'updatedAt'
+        'createdAt', 'updatedAt', 'logo', 'githubUrl', 'completionDate',
+        'seoTitle', 'seoDescription', 'galleryItems', 'screenshots',
+        'videoUrl', 'videos', 'publishingStatus'
       ];
       return data.keys().hasOnly(allowedFields) &&
         data.keys().hasAll(['name', 'slug', 'category', 'tagline', 'description', 'published']) &&
@@ -320,12 +332,22 @@ service cloud.firestore {
         (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
         (!('shortDescription' in data) || (data.shortDescription is string && data.shortDescription.size() <= 2000)) &&
         (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+        (!('publishingStatus' in data) || (data.publishingStatus is string && data.publishingStatus in ['draft', 'published', 'archived'])) &&
         (!('featured' in data) || data.featured is bool) &&
         (!('highlight' in data) || (data.highlight is string && data.highlight.size() <= 100)) &&
         (!('url' in data) || (data.url is string && data.url.size() <= 500)) &&
+        (!('githubUrl' in data) || (data.githubUrl is string && data.githubUrl.size() <= 1000)) &&
+        (!('completionDate' in data) || (data.completionDate is string && data.completionDate.size() <= 100)) &&
+        (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 200)) &&
+        (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 1000)) &&
         (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
+        (!('logo' in data) || (data.logo is string && data.logo.size() <= 1000)) &&
         (!('coverImage' in data) || (data.coverImage is string && data.coverImage.size() <= 1000)) &&
         (!('gallery' in data) || (data.gallery is list && data.gallery.size() <= 50)) &&
+        (!('galleryItems' in data) || (data.galleryItems is list && data.galleryItems.size() <= 100)) &&
+        (!('screenshots' in data) || (data.screenshots is list && data.screenshots.size() <= 50)) &&
+        (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 1000)) &&
+        (!('videos' in data) || (data.videos is list && data.videos.size() <= 20)) &&
         (!('scope' in data) || (data.scope is list && data.scope.size() <= 20)) &&
         (!('tools' in data) || (data.tools is list && data.tools.size() <= 30)) &&
         (!('technologies' in data) || (data.technologies is list && data.technologies.size() <= 50)) &&

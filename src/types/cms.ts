@@ -49,6 +49,19 @@ export interface ProjectMetricItem {
   value: string;
 }
 
+export interface GalleryItem {
+  id: string;
+  url: string;
+  caption?: string;
+  sortOrder: number;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
+  isCover?: boolean;
+}
+
+export type ProjectPublishStatus = "draft" | "published" | "archived";
+
 export interface ProjectDocument {
   id: string;
   name: string;
@@ -58,17 +71,27 @@ export interface ProjectDocument {
   description: string;
   category: string;
   coverImage?: string;
+  logo?: string;
   gallery?: string[];
+  galleryItems?: GalleryItem[];
+  screenshots?: string[];
   technologies: string[];
   scope: string[];
   deliverables: string[];
   metrics?: ProjectMetricItem[];
   url?: string;
+  githubUrl?: string;
+  completionDate?: string;
   featured: boolean;
   sortOrder: number;
   highlight?: string;
   accentColor?: string;
-  status: "Active Brand" | "Completed" | "Live Store" | "In Production";
+  videoUrl?: string;
+  videos?: string[];
+  seoTitle?: string;
+  seoDescription?: string;
+  status: "Active Brand" | "Completed" | "Live Store" | "In Production" | "Draft" | "Published" | "Archived" | string;
+  publishingStatus?: ProjectPublishStatus;
   createdAt: string;
   updatedAt: string;
   published: boolean;

@@ -38,7 +38,7 @@ export default function ProjectsPage() {
             description: d.description,
             scope: d.scope || [],
             tools: d.technologies || [],
-            status: d.status,
+            status: (["Active Brand", "Completed", "Live Store", "In Production"].includes(d.status) ? d.status : "Completed") as Project["status"],
             featured: d.featured,
             highlight: d.highlight,
             url: d.url,
@@ -164,13 +164,20 @@ export default function ProjectsPage() {
                     </div>
 
                     <div className="pt-4 flex items-center gap-3">
+                      <Link
+                        href={`/projects/${flagshipProject.slug}`}
+                        className="px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs cursor-pointer focus-ring"
+                      >
+                        <span>View Full Case Study</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </Link>
                       <a
                         href="https://easyxo.in"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="px-6 py-3 rounded-xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs cursor-pointer focus-ring"
+                        className="px-5 py-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-[#0A192F] font-bold text-xs sm:text-sm flex items-center gap-2 transition-all shadow-xs cursor-pointer"
                       >
-                        <span>Visit Live Store (easyxo.in)</span>
+                        <span>Visit Live Store</span>
                         <ExternalLink className="w-4 h-4" />
                       </a>
                     </div>
@@ -267,25 +274,26 @@ export default function ProjectsPage() {
                         ))}
                       </div>
 
-                      {project.url ? (
-                        <a
-                          href={project.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
-                        >
-                          <span>Live Site</span>
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      ) : (
+                      <div className="flex items-center gap-3">
                         <Link
-                          href={`/contact?subject=${encodeURIComponent(`Case study inquiry: ${project.name}`)}`}
+                          href={`/projects/${project.slug}`}
                           className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
                         >
-                          <span>Inquire Scope</span>
+                          <span>Case Study</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
-                      )}
+                        {project.url && (
+                          <a
+                            href={project.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-slate-400 hover:text-slate-600"
+                            title="Live Site"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -329,10 +337,10 @@ export default function ProjectsPage() {
                       </div>
 
                       <Link
-                        href={`/contact?subject=${encodeURIComponent(`Case study inquiry: ${project.name}`)}`}
+                        href={`/projects/${project.slug}`}
                         className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-xs font-bold text-[#0A192F] hover:text-[#0284C7] flex items-center gap-1.5 transition-colors shadow-2xs"
                       >
-                        <span>Inquire</span>
+                        <span>Case Study</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
                     </div>
@@ -388,25 +396,26 @@ export default function ProjectsPage() {
                     <span className="studio-tag text-[9px] text-slate-500 font-mono">
                       {project.tools[0]}
                     </span>
-                    {project.url ? (
-                      <a
-                        href={project.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
-                      >
-                        <span>Live Site</span>
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    ) : (
+                    <div className="flex items-center gap-3">
                       <Link
-                        href={`/contact?subject=${encodeURIComponent(`Case study inquiry: ${project.name}`)}`}
+                        href={`/projects/${project.slug}`}
                         className="font-bold text-[#0284C7] hover:text-[#0369A1] flex items-center gap-1"
                       >
-                        <span>Inquire</span>
+                        <span>Case Study</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Link>
-                    )}
+                      {project.url && (
+                        <a
+                          href={project.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-slate-400 hover:text-slate-600"
+                          title="Live Site"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

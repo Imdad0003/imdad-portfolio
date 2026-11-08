@@ -7,6 +7,7 @@ import { getFeaturedProjects, Project, normalizeProjectCategory } from "@/data/p
 import { getPublishedProjects } from "@/lib/cms";
 import {
   ArrowRight,
+  ArrowUpRight,
   ExternalLink,
   ShoppingBag,
   Globe,
@@ -47,7 +48,7 @@ export function FeaturedProjectsSection() {
               description: d.description,
               scope: d.scope || [],
               tools: d.technologies || [],
-              status: d.status,
+              status: (["Active Brand", "Completed", "Live Store", "In Production"].includes(d.status) ? d.status : "Completed") as Project["status"],
               featured: d.featured,
               highlight: d.highlight,
               url: d.url,
@@ -174,25 +175,26 @@ export function FeaturedProjectsSection() {
                     ))}
                   </div>
 
-                  {project.url ? (
-                    <a
-                      href={project.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284C7] hover:text-[#0369A1] group/link"
-                    >
-                      <span>Live Site</span>
-                      <ExternalLink className="w-3.5 h-3.5 group-link-hover:translate-x-0.5 transition-transform" />
-                    </a>
-                  ) : (
+                  <div className="flex items-center gap-3">
                     <Link
-                      href="/projects"
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0284C7] hover:text-[#0369A1] group/link"
+                      href={`/projects/${project.slug}`}
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[#0284C7] hover:text-[#0369A1]"
                     >
-                      <span>Case Details</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-link-hover:translate-x-0.5 transition-transform" />
+                      <span>Case Study</span>
+                      <ArrowUpRight className="w-3.5 h-3.5" />
                     </Link>
-                  )}
+                    {project.url && (
+                      <a
+                        href={project.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-slate-400 hover:text-slate-600"
+                        title="Live Site"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             );

@@ -8,18 +8,30 @@ service firebase.storage {
       );
     }
 
-    function isImage() {
-      return request.resource.contentType.matches('image/.*');
+    function isAllowedMedia() {
+      return request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType.matches('video/.*');
     }
 
     function isReasonableSize() {
-      return request.resource.size < 10 * 1024 * 1024; // 10MB max
+      return (request.resource.contentType.matches('image/.*') && request.resource.size < 15 * 1024 * 1024) ||
+             (request.resource.contentType.matches('video/.*') && request.resource.size < 50 * 1024 * 1024);
+    }
+
+    // Secure APK Staging: Admin write, read, and delete only; max 150MB
+    match /staging/apk/{appId}/{fileName} {
+      allow read, delete: if isAdmin();
+      allow write: if isAdmin() &&
+                      request.resource.size <= 150 * 1024 * 1024 &&
+                      (request.resource.contentType == 'application/vnd.android.package-archive' ||
+                       request.resource.contentType == 'application/octet-stream' ||
+                       request.resource.contentType == '');
     }
 
     // Public read for studio assets, admin write only
     match /{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && isImage() && isReasonableSize();
+      allow write: if isAdmin() && isAllowedMedia() && isReasonableSize();
     }
   }
 }

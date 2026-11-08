@@ -9,7 +9,8 @@ import {
   createGitHubRelease,
   uploadGitHubReleaseAsset,
 } from "@/lib/github-releases";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
+import { ref, deleteObject } from "firebase/storage";
 import {
   doc,
   setDoc,
@@ -37,22 +38,70 @@ export async function POST(req: NextRequest) {
 
     const adminEmail = authResult.user?.email || "admin@imdadbuild.space";
 
-    // 2. Parse multipart form data
-    const formData = await req.formData();
-    const file = formData.get("apkFile") as File | null;
-    const appId = (formData.get("appId") as string) || "wishmusic";
-    const appName = (formData.get("appName") as string) || "WishMusic";
-    const releaseTitle = (formData.get("releaseTitle") as string) || "";
-    const releaseNotes = (formData.get("releaseNotes") as string) || "Initial production release.";
-    const channel = ((formData.get("channel") as string) || "stable") as "stable" | "beta";
-    const status = ((formData.get("status") as string) || "published") as "published" | "draft";
-    const customDownloadUrl = (formData.get("customDownloadUrl") as string) || "";
+    const contentType = req.headers.get("content-type") || "";
 
-    if (!file) {
-      return NextResponse.json(
-        { success: false, errors: ["APK file is required."] },
-        { status: 400 }
-      );
+    let fileBuffer: Buffer;
+    let fileName: string = "release.apk";
+    let appId: string = "wishmusic";
+    let appName: string = "WishMusic";
+    let releaseTitle: string = "";
+    let releaseNotes: string = "Initial production release.";
+    let channel: "stable" | "beta" = "stable";
+    let status: "published" | "draft" = "published";
+    let customDownloadUrl: string = "";
+    let stagingPath: string | undefined;
+
+    if (contentType.includes("application/json")) {
+      const body = await req.json();
+      appId = body.appId || "wishmusic";
+      appName = body.appName || "WishMusic";
+      releaseTitle = body.releaseTitle || "";
+      releaseNotes = body.releaseNotes || "Initial production release.";
+      channel = (body.channel || "stable") as "stable" | "beta";
+      status = (body.status || "published") as "published" | "draft";
+      customDownloadUrl = body.customDownloadUrl || "";
+      stagingPath = body.stagingPath;
+
+      if (!body.downloadUrl) {
+        return NextResponse.json(
+          { success: false, errors: ["Missing downloadUrl or APK binary source."] },
+          { status: 400 }
+        );
+      }
+
+      // Download binary from storage
+      const storageRes = await fetch(body.downloadUrl);
+      if (!storageRes.ok) {
+        return NextResponse.json(
+          { success: false, errors: [`Failed to retrieve APK from storage (${storageRes.status})`] },
+          { status: 400 }
+        );
+      }
+      const arrayBuf = await storageRes.arrayBuffer();
+      fileBuffer = Buffer.from(arrayBuf);
+      fileName = body.fileName || (stagingPath ? path.basename(stagingPath).replace(/^\d+_[a-f0-9]+_/, "") : "release.apk");
+    } else {
+      // Parse multipart form data
+      const formData = await req.formData();
+      const file = formData.get("apkFile") as File | null;
+      appId = (formData.get("appId") as string) || "wishmusic";
+      appName = (formData.get("appName") as string) || "WishMusic";
+      releaseTitle = (formData.get("releaseTitle") as string) || "";
+      releaseNotes = (formData.get("releaseNotes") as string) || "Initial production release.";
+      channel = ((formData.get("channel") as string) || "stable") as "stable" | "beta";
+      status = ((formData.get("status") as string) || "published") as "published" | "draft";
+      customDownloadUrl = (formData.get("customDownloadUrl") as string) || "";
+
+      if (!file) {
+        return NextResponse.json(
+          { success: false, errors: ["APK file is required."] },
+          { status: 400 }
+        );
+      }
+
+      const arrayBuffer = await file.arrayBuffer();
+      fileBuffer = Buffer.from(arrayBuffer);
+      fileName = file.name;
     }
 
     // 3. Inspect existing app record and releases for validation constraints
@@ -109,14 +158,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Validate APK
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
-
     const validation = validateApk(fileBuffer, {
       expectedPackage,
       currentLatestVersionCode: highestVersionCode > 0 ? highestVersionCode : undefined,
       approvedFingerprint,
-      fileName: file.name,
+      fileName,
     });
 
     if (!validation.valid || !validation.metadata) {
@@ -181,7 +227,7 @@ export async function POST(req: NextRequest) {
         // Upload asset
         const asset = await uploadGitHubReleaseAsset({
           uploadUrl: release.uploadUrl,
-          fileName: file.name,
+          fileName,
           fileBuffer,
           releaseId: release.id,
         });
@@ -243,7 +289,7 @@ export async function POST(req: NextRequest) {
       channel,
       status,
       isLatestStable,
-      fileName: file.name,
+      fileName,
       fileSize: meta.fileSize,
       fileSizeFormatted: meta.fileSizeFormatted,
       sha256: meta.sha256,
@@ -357,6 +403,15 @@ export async function POST(req: NextRequest) {
           },
           { status: 500 }
         );
+      }
+    }
+
+    // Clean up temporary staging asset from storage if present
+    if (stagingPath && storage) {
+      try {
+        await deleteObject(ref(storage, stagingPath));
+      } catch (cleanErr) {
+        console.warn("Staging asset cleanup notice:", cleanErr);
       }
     }
 

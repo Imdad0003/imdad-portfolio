@@ -1,7 +1,29 @@
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  ref,
+  uploadBytes,
+  uploadBytesResumable,
+  getDownloadURL,
+  deleteObject,
+  UploadTask,
+} from "firebase/storage";
 import { storage } from "@/lib/firebase";
+import { validateMediaFile, sanitizeFileName } from "@/lib/asset-sanitizer";
 
 export type AssetCategory = "apps" | "projects" | "services" | "general";
+
+export interface UploadProgressInfo {
+  bytesTransferred: number;
+  totalBytes: number;
+  percentage: number;
+}
+
+export interface ResumableUploadHandle {
+  promise: Promise<string>;
+  cancel: () => void;
+  pause: () => void;
+  resume: () => void;
+  task: UploadTask;
+}
 
 /**
  * Checks if Firebase Storage instance is initialized and available.
@@ -11,8 +33,96 @@ export function isStorageAvailable(): boolean {
 }
 
 /**
- * Upload an image asset to Firebase Storage under the appropriate category path.
- * Enforces size (< 10MB) and image MIME type constraints matching storage.rules.
+ * Upload an asset to Firebase Storage with progress tracking, pause/cancel support,
+ * and security sanitization.
+ *
+ * @param file - The HTML File object to upload
+ * @param category - Category folder ("apps" | "projects" | "services" | "general")
+ * @param options - Additional options (custom subfolder, progress callback, allowVideo)
+ */
+export function uploadStudioAssetResumable(
+  file: File,
+  category: AssetCategory = "general",
+  options?: {
+    subfolder?: string;
+    onProgress?: (progress: UploadProgressInfo) => void;
+    allowVideo?: boolean;
+  }
+): ResumableUploadHandle {
+  if (!storage) {
+    throw new Error(
+      "Firebase Storage is not initialized. Please verify storageBucket in your Firebase configuration."
+    );
+  }
+
+  const sub = options?.subfolder ? `${options.subfolder.replace(/^\/+|\/+$/g, "")}/` : "";
+  const sanitizedName = sanitizeFileName(file.name);
+  const filePath = `studio-assets/${category}/${sub}${Date.now()}_${sanitizedName}`;
+  const storageRef = ref(storage, filePath);
+
+  const uploadTask = uploadBytesResumable(storageRef, file, {
+    contentType: file.type || "application/octet-stream",
+    customMetadata: {
+      originalName: file.name,
+      uploadedAt: new Date().toISOString(),
+      category,
+    },
+  });
+
+  const promise = new Promise<string>((resolve, reject) => {
+    // Perform pre-upload validation asynchronously
+    validateMediaFile(file, { allowVideo: options?.allowVideo ?? true })
+      .then((valResult) => {
+        if (!valResult.valid) {
+          uploadTask.cancel();
+          reject(new Error(valResult.error || "File validation failed."));
+          return;
+        }
+
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {
+            const percentage = snapshot.totalBytes > 0
+              ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
+              : 0;
+            if (options?.onProgress) {
+              options.onProgress({
+                bytesTransferred: snapshot.bytesTransferred,
+                totalBytes: snapshot.totalBytes,
+                percentage,
+              });
+            }
+          },
+          (error) => {
+            reject(error);
+          },
+          async () => {
+            try {
+              const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve(downloadUrl);
+            } catch (err) {
+              reject(err);
+            }
+          }
+        );
+      })
+      .catch((err) => {
+        uploadTask.cancel();
+        reject(err);
+      });
+  });
+
+  return {
+    promise,
+    cancel: () => uploadTask.cancel(),
+    pause: () => uploadTask.pause(),
+    resume: () => uploadTask.resume(),
+    task: uploadTask,
+  };
+}
+
+/**
+ * Standard upload asset wrapper for backwards compatibility.
  *
  * @param file - The HTML File object to upload
  * @param category - Category folder ("apps" | "projects" | "services" | "general")
@@ -22,35 +132,34 @@ export async function uploadStudioAsset(
   file: File,
   category: AssetCategory = "general"
 ): Promise<string> {
+  const handle = uploadStudioAssetResumable(file, category);
+  return handle.promise;
+}
+
+/**
+ * Deletes an uploaded asset from Firebase Storage.
+ * Accepts either a full download URL (extracts path) or a relative storage path.
+ */
+export async function deleteStudioAsset(urlOrPath: string): Promise<void> {
   if (!storage) {
-    throw new Error(
-      "Firebase Storage is not initialized. Please verify storageBucket in your Firebase configuration."
-    );
+    throw new Error("Firebase Storage is not initialized.");
   }
 
-  // Validate image type
-  if (!file.type.startsWith("image/")) {
-    throw new Error("Invalid file type. Only image files (JPEG, PNG, WebP, SVG) are allowed.");
+  try {
+    let storagePath = urlOrPath;
+
+    // If it's a full Firebase Storage download URL, extract the object path
+    if (urlOrPath.includes("firebasestorage.googleapis.com")) {
+      const match = urlOrPath.match(/\/o\/([^?]+)/);
+      if (match && match[1]) {
+        storagePath = decodeURIComponent(match[1]);
+      }
+    }
+
+    const fileRef = ref(storage, storagePath);
+    await deleteObject(fileRef);
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    console.warn("Storage delete error (asset may already be removed):", errorMsg);
   }
-
-  // Validate size (10MB limit matching storage.rules)
-  const MAX_SIZE = 10 * 1024 * 1024;
-  if (file.size > MAX_SIZE) {
-    throw new Error("File size exceeds 10MB limit. Please upload an optimized image.");
-  }
-
-  const sanitizedName = file.name.replace(/[^a-zA-Z0-9_.-]/g, "_");
-  const filePath = `studio-assets/${category}/${Date.now()}_${sanitizedName}`;
-  const storageRef = ref(storage, filePath);
-
-  const snapshot = await uploadBytes(storageRef, file, {
-    contentType: file.type,
-    customMetadata: {
-      uploadedAt: new Date().toISOString(),
-      category,
-    },
-  });
-
-  const downloadUrl = await getDownloadURL(snapshot.ref);
-  return downloadUrl;
 }

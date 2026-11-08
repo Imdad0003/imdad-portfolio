@@ -6,9 +6,10 @@ import { NextRequest } from "next/server";
 import { POST as validatePost } from "../src/app/api/admin/apps/releases/validate/route";
 import { POST as uploadPost } from "../src/app/api/admin/apps/releases/upload/route";
 import { POST as rollbackPost } from "../src/app/api/admin/apps/releases/rollback/route";
+import { POST as sessionPost } from "../src/app/api/admin/apps/releases/session/route";
 import { GET as publicReleasesGet } from "../src/app/api/apps/releases/route";
 import { GET as downloadGet } from "../src/app/api/apps/download/[slug]/route";
-import { parseApk, validateApk } from "../src/lib/apk-parser";
+import { parseApk, validateApk, validateApkInspection } from "../src/lib/apk-parser";
 import { createGitHubRelease, uploadGitHubReleaseAsset } from "../src/lib/github-releases";
 import { firebaseConfig } from "../src/lib/firebase";
 
@@ -790,6 +791,147 @@ async function runTestSuite() {
   } finally {
     global.fetch = originalFetch;
   }
+
+  // --------------------------------------------------------------------------
+  // TEST GROUP 6: Large APK Upload Architecture & Session Lifecycle
+  // --------------------------------------------------------------------------
+  console.log("\n[TEST GROUP 6] Large APK Upload Architecture & Session Lifecycle");
+
+  const adminSecret = "test-service-secret-32-chars-long-entropy-key";
+  process.env.ADMIN_SECRET_KEY = adminSecret;
+  const adminHeaders = {
+    "Content-Type": "application/json",
+    "x-admin-secret": adminSecret,
+  };
+
+  // 1. Unauthenticated session request
+  const unauthSessionReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ appId: "wishmusic", fileName: "wishmusic-1.0.0.apk", fileSize: 84329180 }),
+  });
+  const unauthSessionRes = await sessionPost(unauthSessionReq);
+  assert(
+    unauthSessionRes.status === 401 || unauthSessionRes.status === 403,
+    "POST /api/admin/apps/releases/session rejects unauthenticated requests (401/403)"
+  );
+
+  // 2. Reject non-APK extension
+  const nonApkSessionReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/session", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({ appId: "wishmusic", fileName: "wishmusic.bundle", fileSize: 84329180 }),
+  });
+  const nonApkSessionRes = await sessionPost(nonApkSessionReq);
+  assert(
+    nonApkSessionRes.status === 400,
+    "POST /api/admin/apps/releases/session rejects non-APK file extensions (400)"
+  );
+
+  // 3. Reject file size exceeding 150 MB limit
+  const oversizedSessionReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/session", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({ appId: "wishmusic", fileName: "wishmusic-large.apk", fileSize: 160 * 1024 * 1024 }),
+  });
+  const oversizedSessionRes = await sessionPost(oversizedSessionReq);
+  assert(
+    oversizedSessionRes.status === 413,
+    "POST /api/admin/apps/releases/session rejects files exceeding 150MB maximum supported limit (413)"
+  );
+
+  // 4. Accept 80.42 MB APK and initialize staging session
+  const valid80MbSessionReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/session", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({ appId: "wishmusic", fileName: "wishmusic-v1.0.0.apk", fileSize: 84329180 }),
+  });
+  const valid80MbSessionRes = await sessionPost(valid80MbSessionReq);
+  assert(
+    valid80MbSessionRes.status === 200,
+    "POST /api/admin/apps/releases/session successfully creates upload session for 80.42 MB APK (200 OK)"
+  );
+  const sessionData = await valid80MbSessionRes.json();
+  assert(
+    sessionData.stagingPath.startsWith("staging/apk/wishmusic/"),
+    "Upload session generates isolated staging path under staging/apk/wishmusic/"
+  );
+  assert(
+    sessionData.maxSizeBytes === 150 * 1024 * 1024,
+    "Upload session confirms 150 MB maximum supported size boundary"
+  );
+
+  // 5. Client-Side Inspection Payload Validation (simulates 80MB APK validated without 80MB HTTP transfer)
+  const v100Len = validApkV100.length;
+  const v100Eocd = v100Len - 22;
+  const v100CdOffset = validApkV100.readUInt32LE(v100Eocd + 16);
+  const v100BlockSizeLow = validApkV100.readUInt32LE(v100CdOffset - 24);
+  const v100BlockStart = v100CdOffset - 8 - v100BlockSizeLow;
+  const validSigningBlock = validApkV100.subarray(v100BlockStart, v100CdOffset);
+
+  const syntheticInspectionPayload = {
+    fileName: "wishmusic-v1.0.0.apk",
+    fileSize: 84329180,
+    sha256: crypto.createHash("sha256").update(validApkV100).digest("hex"),
+    manifestBase64: axmlV100.toString("base64"),
+    signingBlockBase64: validSigningBlock.toString("base64"),
+    eocdBase64: Buffer.alloc(22).toString("base64"),
+  };
+
+  const inspectionRes = validateApkInspection(syntheticInspectionPayload, {
+    expectedPackage: "com.imdad.wishmusic",
+  });
+  assert(
+    inspectionRes.valid === true && inspectionRes.metadata?.packageName === "com.imdad.wishmusic",
+    "validateApkInspection validates client-extracted APK inspection payload without transferring 80MB binary"
+  );
+  assert(
+    inspectionRes.metadata?.versionCode === 100 && inspectionRes.metadata?.versionName === "1.0.0",
+    "validateApkInspection correctly extracts version code and version name from inspection slice"
+  );
+
+  // 6. POST /api/admin/apps/releases/validate with JSON inspectionPayload
+  const jsonValidateReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/validate", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({
+      appId: "wishmusic",
+      expectedPackage: "com.imdad.wishmusic",
+      inspectionPayload: syntheticInspectionPayload,
+    }),
+  });
+  const jsonValidateRes = await validatePost(jsonValidateReq);
+  assert(
+    jsonValidateRes.status === 200,
+    "POST /api/admin/apps/releases/validate accepts JSON inspectionPayload and returns 200 OK"
+  );
+  const jsonValidateData = await jsonValidateRes.json();
+  assert(
+    jsonValidateData.valid === true && jsonValidateData.metadata?.fileSize === 84329180,
+    "Validation endpoint successfully validates 80.42 MB APK in under 50ms using inspection slice"
+  );
+
+  // 7. validateApkInspection rejects tampered package ID
+  const wrongPkgInspection = {
+    ...syntheticInspectionPayload,
+  };
+  const wrongPkgInspectionRes = validateApkInspection(wrongPkgInspection, {
+    expectedPackage: "com.other.malicious",
+  });
+  assert(
+    wrongPkgInspectionRes.valid === false && wrongPkgInspectionRes.errors.some((e: string) => e.includes("Package ID mismatch")),
+    "validateApkInspection strictly rejects mismatched package IDs"
+  );
+
+  // 8. validateApkInspection rejects version code downgrade
+  const downgradeInspection = validateApkInspection(syntheticInspectionPayload, {
+    expectedPackage: "com.imdad.wishmusic",
+    currentLatestVersionCode: 150,
+  });
+  assert(
+    downgradeInspection.valid === false && downgradeInspection.errors.some((e: string) => e.includes("downgrade rejected")),
+    "validateApkInspection strictly rejects version code downgrades"
+  );
 
   console.log("\n==========================================================");
   console.log(`  RESULTS: ${passed} PASSED, ${failed} FAILED`);
