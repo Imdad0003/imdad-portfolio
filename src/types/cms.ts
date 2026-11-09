@@ -53,12 +53,16 @@ export interface GalleryItem {
   id: string;
   url: string;
   caption?: string;
-  sortOrder: number;
+  sortOrder?: number;
+  order?: number;
   fileName?: string;
   fileSize?: number;
   fileType?: string;
   isCover?: boolean;
 }
+
+export type ProjectGalleryItem = GalleryItem;
+export type Project = ProjectDocument;
 
 export type ProjectPublishStatus = "draft" | "published" | "archived";
 
@@ -76,6 +80,7 @@ export interface ProjectDocument {
   galleryItems?: GalleryItem[];
   screenshots?: string[];
   technologies: string[];
+  tools?: string[];
   scope: string[];
   deliverables: string[];
   metrics?: ProjectMetricItem[];
@@ -92,8 +97,8 @@ export interface ProjectDocument {
   seoDescription?: string;
   status: "Active Brand" | "Completed" | "Live Store" | "In Production" | "Draft" | "Published" | "Archived" | string;
   publishingStatus?: ProjectPublishStatus;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
   published: boolean;
 }
 

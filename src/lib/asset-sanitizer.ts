@@ -41,18 +41,44 @@ export function sanitizeFileName(name: string): string {
 }
 
 /**
+ * Decodes XML / HTML character entity references to detect obfuscated XSS payloads.
+ */
+function decodeXmlEntities(input: string): string {
+  return input
+    .replace(/&#x([0-9a-fA-F]+);?/g, (_, hex) => {
+      try {
+        return String.fromCharCode(parseInt(hex, 16));
+      } catch {
+        return "";
+      }
+    })
+    .replace(/&#([0-9]+);?/g, (_, dec) => {
+      try {
+        return String.fromCharCode(parseInt(dec, 10));
+      } catch {
+        return "";
+      }
+    })
+    .replace(/&colon;/gi, ":")
+    .replace(/&tab;/gi, "\t")
+    .replace(/&newline;/gi, "\n");
+}
+
+/**
  * Validates SVG content against active content vectors (XSS, scripts, foreign objects).
  */
 export function validateSvgContent(svgText: string): { safe: boolean; reason?: string } {
-  // Lowercase for checking
-  const lower = svgText.toLowerCase();
+  // Check both raw text and decoded text to defeat entity-encoded obfuscation
+  const decoded = decodeXmlEntities(svgText);
+  const lowerRaw = svgText.toLowerCase();
+  const lowerDecoded = decoded.toLowerCase();
 
   // Basic check that it looks like XML / SVG
-  if (!lower.includes("<svg")) {
+  if (!lowerRaw.includes("<svg") && !lowerDecoded.includes("<svg")) {
     return { safe: false, reason: "File does not contain a valid <svg> element." };
   }
 
-  // Check for dangerous tags
+  // Check for dangerous tags (in raw or decoded content)
   const dangerousTags = [
     "<script",
     "<iframe",
@@ -62,9 +88,11 @@ export function validateSvgContent(svgText: string): { safe: boolean; reason?: s
     "<applet",
     "<meta",
     "<link",
+    "<form",
+    "<base",
   ];
   for (const tag of dangerousTags) {
-    if (lower.includes(tag)) {
+    if (lowerRaw.includes(tag) || lowerDecoded.includes(tag)) {
       return {
         safe: false,
         reason: `SVG contains unsafe tag '${tag.replace("<", "")}'. Only clean vector graphics are permitted.`,
@@ -74,7 +102,7 @@ export function validateSvgContent(svgText: string): { safe: boolean; reason?: s
 
   // Check for inline event handlers (e.g. onload, onerror, onclick)
   const eventHandlerPattern = /\bon[a-z]{3,}\s*=/i;
-  if (eventHandlerPattern.test(svgText)) {
+  if (eventHandlerPattern.test(svgText) || eventHandlerPattern.test(decoded)) {
     return {
       safe: false,
       reason: "SVG contains inline JavaScript event handlers (e.g. onload/onerror).",
@@ -83,11 +111,27 @@ export function validateSvgContent(svgText: string): { safe: boolean; reason?: s
 
   // Check for javascript: or vbscript: or data:text/html URIs in attributes
   const dangerousUriPattern = /(javascript|vbscript|data\s*:\s*text\/html)\s*:/i;
-  if (dangerousUriPattern.test(svgText)) {
+  // Strip whitespace inside URI strings to catch 'j a v a s c r i p t :'
+  const collapsed = lowerDecoded.replace(/[\s\r\n\t]/g, "");
+  if (dangerousUriPattern.test(svgText) || dangerousUriPattern.test(decoded) || dangerousUriPattern.test(collapsed)) {
     return {
       safe: false,
       reason: "SVG contains executable URI scheme (javascript: or data:text/html).",
     };
+  }
+
+  // Check <style> contents for @import or expressions or javascript:
+  if (lowerDecoded.includes("<style")) {
+    if (
+      lowerDecoded.includes("@import") ||
+      lowerDecoded.includes("expression(") ||
+      lowerDecoded.includes("javascript:")
+    ) {
+      return {
+        safe: false,
+        reason: "SVG contains unsafe CSS rules (@import, expression, or javascript in <style>).",
+      };
+    }
   }
 
   return { safe: true };

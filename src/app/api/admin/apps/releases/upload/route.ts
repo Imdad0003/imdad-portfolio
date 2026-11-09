@@ -166,6 +166,13 @@ export async function POST(req: NextRequest) {
     });
 
     if (!validation.valid || !validation.metadata) {
+      if (stagingPath && storage) {
+        try {
+          await deleteObject(ref(storage, stagingPath));
+        } catch (cleanErr) {
+          console.warn("Staging asset cleanup notice on validation failure:", cleanErr);
+        }
+      }
       return NextResponse.json(
         {
           success: false,
@@ -249,7 +256,22 @@ export async function POST(req: NextRequest) {
         );
       }
     } else if (!downloadUrl) {
-      // Local server fallback: save to public/downloads/releases
+      // In production or on Vercel, ephemeral filesystem storage cannot be used.
+      // A persistent hosting provider (GitHub Releases CDN or an explicit CDN customDownloadUrl) is required.
+      const isEphemeralEnv = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+      if (isEphemeralEnv && process.env.ALLOW_LOCAL_RELEASE_STORAGE !== "true") {
+        return NextResponse.json(
+          {
+            success: false,
+            errors: [
+              "Production storage unconfigured: GITHUB_TOKEN is not configured and no persistent CDN download URL was provided. Vercel serverless filesystem cannot be used for production binary distribution because it is ephemeral.",
+            ],
+          },
+          { status: 400 }
+        );
+      }
+
+      // Local development / non-production fallback only
       try {
         const publicDir = path.resolve(process.cwd(), "public/downloads/releases");
         if (!fs.existsSync(publicDir)) {

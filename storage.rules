@@ -4,34 +4,61 @@ service firebase.storage {
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.admin == true ||
-        request.auth.token.email == 'imdad.builds@gmail.com'
+        (request.auth.token.email == 'imdad.builds@gmail.com' && request.auth.token.email_verified == true)
       );
     }
 
-    function isAllowedMedia() {
-      return request.resource.contentType.matches('image/.*') ||
-             request.resource.contentType.matches('video/.*');
+    function isAllowedImage() {
+      return request.resource.contentType in [
+        'image/jpeg',
+        'image/png',
+        'image/webp',
+        'image/svg+xml'
+      ] || request.resource.contentType.matches('image/(jpeg|png|webp|svg\\+xml)');
+    }
+
+    function isAllowedVideo() {
+      return request.resource.contentType in [
+        'video/mp4',
+        'video/webm'
+      ] || request.resource.contentType.matches('video/(mp4|webm)');
     }
 
     function isReasonableSize() {
-      return (request.resource.contentType.matches('image/.*') && request.resource.size < 15 * 1024 * 1024) ||
-             (request.resource.contentType.matches('video/.*') && request.resource.size < 50 * 1024 * 1024);
+      return (isAllowedImage() && request.resource.size > 0 && request.resource.size <= 15 * 1024 * 1024) ||
+             (isAllowedVideo() && request.resource.size > 0 && request.resource.size <= 50 * 1024 * 1024);
     }
 
-    // Secure APK Staging: Admin write, read, and delete only; max 150MB
+    function isAllowedApk() {
+      return request.resource.contentType in [
+        'application/vnd.android.package-archive',
+        'application/octet-stream'
+      ] || request.resource.contentType == '';
+    }
+
+    // 1. Staging APK binaries: Private to authenticated administrators only
+    // Public visitors are strictly DENIED read/write/delete access.
     match /staging/apk/{appId}/{fileName} {
-      allow read, delete: if isAdmin();
-      allow write: if isAdmin() &&
-                      request.resource.size <= 150 * 1024 * 1024 &&
-                      (request.resource.contentType == 'application/vnd.android.package-archive' ||
-                       request.resource.contentType == 'application/octet-stream' ||
-                       request.resource.contentType == '');
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() &&
+                            request.resource.size > 0 &&
+                            request.resource.size <= 150 * 1024 * 1024 &&
+                            isAllowedApk();
+      allow delete: if isAdmin();
     }
 
-    // Public read for studio assets, admin write only
-    match /{allPaths=**} {
+    // 2. Studio Public Assets (portfolio, covers, screenshots, branding)
+    // Public read allowed for published studio assets.
+    // Admin-only write; separates create/update from delete so request.resource == null on delete is safe.
+    match /studio-assets/{allPaths=**} {
       allow read: if true;
-      allow write: if isAdmin() && isAllowedMedia() && isReasonableSize();
+      allow create, update: if isAdmin() && isReasonableSize();
+      allow delete: if isAdmin();
+    }
+
+    // 3. Fallback / Default Deny for any other path in the storage bucket
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

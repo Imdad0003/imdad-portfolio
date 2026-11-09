@@ -233,3 +233,61 @@ export async function uploadGitHubReleaseAsset(
     createdAt: data.created_at,
   };
 }
+
+/**
+ * Verifies repository accessibility and token permissions for APK distribution.
+ */
+export async function verifyGitHubRepositoryAccess(): Promise<{
+  ok: boolean;
+  status: number;
+  message: string;
+  repo?: string;
+}> {
+  const config = getGitHubConfig();
+  if (!config.isConfigured || !config.token) {
+    return {
+      ok: false,
+      status: 401,
+      message: "GITHUB_TOKEN is not configured in server environment variables.",
+    };
+  }
+
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${config.owner}/${config.repo}`,
+      {
+        headers: {
+          Authorization: `Bearer ${config.token}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "User-Agent": "IMDAD-BUILDS-App-Release-Manager",
+        },
+      }
+    );
+
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        ok: true,
+        status: res.status,
+        message: `Repository ${config.owner}/${config.repo} verified and accessible.`,
+        repo: data.full_name,
+      };
+    }
+
+    const err = await res.text();
+    return {
+      ok: false,
+      status: res.status,
+      message: `GitHub repository check failed (${res.status}): ${err}`,
+    };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      status: 500,
+      message: `Network failure connecting to GitHub API: ${msg}`,
+    };
+  }
+}
+

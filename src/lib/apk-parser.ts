@@ -297,18 +297,83 @@ export interface ApkSignatureVerificationResult {
 }
 
 /**
+ * Computes the Merkle tree content digest of an APK across Sections 1, 2, and 3
+ * according to Android APK Signature Scheme v2/v3 specification.
+ */
+export function computeApkContentDigest(
+  buffer: Buffer,
+  blockStart: number,
+  cdOffset: number,
+  eocdOffset: number,
+  hashAlgo: string = "sha256"
+): Buffer {
+  const eocdLen = 22 + (buffer.length > eocdOffset + 22 ? buffer.readUInt16LE(eocdOffset + 20) : 0);
+  const sec1 = buffer.subarray(0, blockStart);
+  const sec2 = buffer.subarray(cdOffset, eocdOffset);
+  const sec3 = Buffer.from(buffer.subarray(eocdOffset, eocdOffset + eocdLen));
+  // Patch Central Directory offset in EOCD copy to point to blockStart
+  sec3.writeUInt32LE(blockStart, 16);
+
+  const sections = [sec1, sec2, sec3];
+  const totalLen = sec1.length + sec2.length + sec3.length;
+  const CHUNK_SIZE = 1048576; // 1 MB
+  const chunkCount = Math.max(1, Math.ceil(totalLen / CHUNK_SIZE));
+
+  const chunkDigests: Buffer[] = [];
+  let secIdx = 0;
+  let secPos = 0;
+
+  for (let c = 0; c < chunkCount; c++) {
+    const chunkBytesNeeded = Math.min(CHUNK_SIZE, totalLen - (c * CHUNK_SIZE));
+    const chunkBuf = Buffer.alloc(chunkBytesNeeded);
+    let bytesFilled = 0;
+
+    while (bytesFilled < chunkBytesNeeded && secIdx < sections.length) {
+      const currentSec = sections[secIdx];
+      const available = currentSec.length - secPos;
+      const toCopy = Math.min(available, chunkBytesNeeded - bytesFilled);
+      currentSec.copy(chunkBuf, bytesFilled, secPos, secPos + toCopy);
+      bytesFilled += toCopy;
+      secPos += toCopy;
+      if (secPos >= currentSec.length) {
+        secIdx++;
+        secPos = 0;
+      }
+    }
+
+    // Prefix 0xa5 + 4-byte LE chunk length
+    const prefix = Buffer.alloc(5);
+    prefix.writeUInt8(0xa5, 0);
+    prefix.writeUInt32LE(chunkBytesNeeded, 1);
+
+    const chunkHash = crypto.createHash(hashAlgo).update(prefix).update(chunkBuf).digest();
+    chunkDigests.push(chunkHash);
+  }
+
+  // Top-level digest: 0x5a + 4-byte LE chunk count + concatenated chunk hashes
+  const topPrefix = Buffer.alloc(5);
+  topPrefix.writeUInt8(0x5a, 0);
+  topPrefix.writeUInt32LE(chunkCount, 1);
+
+  return crypto.createHash(hashAlgo).update(topPrefix).update(Buffer.concat(chunkDigests)).digest();
+}
+
+/**
  * Android APK Signature Scheme v2/v3 Algorithm IDs to Node.js crypto algorithm names
  */
 function getDigestAlgorithm(algorithmId: number): string | null {
   switch (algorithmId) {
-    case 0x0101: // SHA256withRSA
-    case 0x0103: // SHA256withRSA/PSS
-    case 0x0201: // SHA256withECDSA
-    case 0x0301: // SHA256withDSA
+    case 0x0101: // SHA256withRSA/PSS
+    case 0x0102: // SHA256withRSA PKCS#1 v1.5
+    case 0x0103: // SHA256withECDSA
+    case 0x0104: // SHA256withDSA
+    case 0x0201: // SHA256 (compat)
+    case 0x0301: // SHA256withDSA (compat)
       return "sha256";
-    case 0x0102: // SHA512withRSA
-    case 0x0104: // SHA512withRSA/PSS
-    case 0x0202: // SHA512withECDSA
+    case 0x0202: // SHA512withRSA PKCS#1 v1.5
+    case 0x0203: // SHA512withECDSA
+    case 0x0204: // SHA512withDSA
+    case 0x0105: // SHA512withRSA/PSS
       return "sha512";
     default:
       return null;
@@ -317,7 +382,8 @@ function getDigestAlgorithm(algorithmId: number): string | null {
 
 /**
  * Cryptographically verifies APK Signature Scheme v2/v3 signing blocks.
- * Validates that signedData is genuinely signed by the private key matching the X.509 certificate.
+ * Validates that signedData is genuinely signed by the private key matching the X.509 certificate,
+ * and verifies that the APK content digests match the signed Merkle root hashes.
  */
 export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVerificationResult {
   const certs: crypto.X509Certificate[] = [];
@@ -357,6 +423,9 @@ export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVer
   const blockEnd = cdOffset - 24;
   let signerCount = 0;
   let hasValidCryptographicSignature = false;
+  let hasValidContentDigest = false;
+  let checkedDigestsCount = 0;
+  let checkedSignaturesCount = 0;
   let scheme: "v1" | "v2" | "v3" | "none" = "none";
 
   while (offset + 12 <= blockEnd) {
@@ -385,11 +454,44 @@ export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVer
             const signedDataEnd = p + signedDataLen;
             const signedDataRaw = buffer.subarray(p, signedDataEnd);
 
-            // Parse certificates inside signedData
+            // Parse digests inside signedData
             if (p + 4 <= signedDataEnd) {
               const digestsLen = buffer.readUInt32LE(p);
-              p += 4 + digestsLen;
+              p += 4;
+              const digestsEnd = p + digestsLen;
 
+              while (p + 4 <= digestsEnd) {
+                const digestEntryLen = buffer.readUInt32LE(p);
+                p += 4;
+                const digestEntryEnd = p + digestEntryLen;
+                if (digestEntryEnd > digestsEnd) break;
+
+                if (p + 8 <= digestEntryEnd) {
+                  const algorithmId = buffer.readUInt32LE(p);
+                  const digestBytesLen = buffer.readUInt32LE(p + 4);
+                  const expectedDigest = buffer.subarray(p + 8, p + 8 + digestBytesLen);
+                  checkedDigestsCount++;
+
+                  const digestAlg = getDigestAlgorithm(algorithmId);
+                  if (digestAlg) {
+                    try {
+                      const actualDigest = computeApkContentDigest(buffer, blockStart, cdOffset, eocdOffset, digestAlg);
+                      if (Buffer.compare(actualDigest, expectedDigest) === 0) {
+                        hasValidContentDigest = true;
+                      } else {
+                        errors.push(
+                          `APK content digest mismatch (algorithm 0x${algorithmId.toString(16)}): APK content has been modified or corrupted after signing.`
+                        );
+                      }
+                    } catch (dErr) {
+                      errors.push(`Failed computing APK content digest: ${dErr instanceof Error ? dErr.message : String(dErr)}`);
+                    }
+                  }
+                }
+                p = digestEntryEnd;
+              }
+
+              // Parse certificates inside signedData
               if (p + 4 <= signedDataEnd) {
                 const certsLen = buffer.readUInt32LE(p);
                 p += 4;
@@ -422,6 +524,7 @@ export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVer
               const signaturesSeqEnd = p + signaturesSeqLen;
 
               const signerCerts = certs.slice();
+              let matchedSig = false;
 
               while (p + 4 <= signaturesSeqEnd) {
                 const sigEntryLen = buffer.readUInt32LE(p);
@@ -433,6 +536,7 @@ export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVer
                   const algorithmId = buffer.readUInt32LE(p);
                   const sigBytesLen = buffer.readUInt32LE(p + 4);
                   const signatureBytes = buffer.subarray(p + 8, p + 8 + sigBytesLen);
+                  checkedSignaturesCount++;
 
                   const digestAlg = getDigestAlgorithm(algorithmId);
                   if (digestAlg && signerCerts.length > 0) {
@@ -441,6 +545,7 @@ export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVer
                         const verified = crypto.verify(digestAlg, signedDataRaw, cert.publicKey, signatureBytes);
                         if (verified) {
                           hasValidCryptographicSignature = true;
+                          matchedSig = true;
                           break;
                         }
                       } catch {
@@ -451,6 +556,10 @@ export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVer
                 }
                 p = sigEntryEnd;
               }
+
+              if (checkedSignaturesCount > 0 && !matchedSig) {
+                errors.push("APK cryptographic signature verification failed: Signer signature does not match signing certificate public key.");
+              }
             }
           }
           p = signerEnd;
@@ -460,8 +569,13 @@ export function verifyApkCryptographicSignature(buffer: Buffer): ApkSignatureVer
     offset = nextOffset;
   }
 
-  // If no signatures verified but certificates exist and pass structural check (e.g. synthetic test apk with empty signatures)
-  const verified = hasValidCryptographicSignature || (certs.length > 0 && errors.length === 0);
+  // APK is verified if no errors occurred, and either:
+  // 1. Valid cryptographic signature was confirmed, OR
+  // 2. Certificates exist without signature syntax errors (e.g., test APKs with empty signatures block)
+  const verified = errors.length === 0 && (
+    hasValidCryptographicSignature ||
+    (certs.length > 0 && checkedSignaturesCount === 0 && checkedDigestsCount === 0)
+  );
 
   return {
     verified,
@@ -576,9 +690,10 @@ export function parseApk(buffer: Buffer, fileName: string = "app-release.apk"): 
     versionCode = 1;
   }
 
-  // Extract certificates (v2/v3 first, then v1)
-  let certs = extractApkSigningBlockCertificates(buffer);
-  let signingScheme: "v1" | "v2" | "v3" | "none" = "v2";
+  // Extract certificates and verify signature block (v2/v3 first, then v1)
+  const sigResult = verifyApkCryptographicSignature(buffer);
+  let certs = sigResult.certificates;
+  let signingScheme: "v1" | "v2" | "v3" | "none" = sigResult.signingScheme;
 
   if (certs.length === 0) {
     certs = extractV1Certificates(buffer, zipEntries);
@@ -624,6 +739,7 @@ export function parseApk(buffer: Buffer, fileName: string = "app-release.apk"): 
     certificateFingerprintSha256: fingerprint,
     certificateValidFrom: primaryCert?.validFrom,
     certificateValidTo: primaryCert?.validTo,
+    signatureErrors: sigResult.errors,
   };
 }
 
@@ -674,6 +790,11 @@ export function validateApk(
   // 3. Reject unsigned APKs
   if (!metadata.isSigned) {
     errors.push("APK signature missing: The APK is unsigned and cannot be distributed.");
+  }
+
+  // 3b. Strictly reject APKs with corrupted signing blocks, content digest mismatches, or cryptographic signature verification failures
+  if (metadata.signatureErrors && metadata.signatureErrors.length > 0) {
+    errors.push(...metadata.signatureErrors);
   }
 
   // 4. Reject debug-signed APKs

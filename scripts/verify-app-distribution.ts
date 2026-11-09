@@ -9,7 +9,13 @@ import { POST as rollbackPost } from "../src/app/api/admin/apps/releases/rollbac
 import { POST as sessionPost } from "../src/app/api/admin/apps/releases/session/route";
 import { GET as publicReleasesGet } from "../src/app/api/apps/releases/route";
 import { GET as downloadGet } from "../src/app/api/apps/download/[slug]/route";
-import { parseApk, validateApk, validateApkInspection } from "../src/lib/apk-parser";
+import {
+  parseApk,
+  validateApk,
+  validateApkInspection,
+  computeApkContentDigest,
+  verifyApkCryptographicSignature,
+} from "../src/lib/apk-parser";
 import { createGitHubRelease, uploadGitHubReleaseAsset } from "../src/lib/github-releases";
 import { firebaseConfig } from "../src/lib/firebase";
 
@@ -344,12 +350,33 @@ function buildZip(files: Record<string, Buffer>): Buffer {
   return Buffer.concat([...localHeaders, cdData, eocd]);
 }
 
-function attachApkSigningBlock(zipBuffer: Buffer, certDer: Buffer): Buffer {
+function attachApkSigningBlock(zipBuffer: Buffer, certDer: Buffer, privateKeyPem?: string): Buffer {
   const len = zipBuffer.length;
   const eocdOffset = len - 22;
   const cdOffset = zipBuffer.readUInt32LE(eocdOffset + 16);
   const cdSize = zipBuffer.readUInt32LE(eocdOffset + 12);
+  const blockStart = cdOffset;
 
+  // 1. Digests
+  let digestsSeq: Buffer;
+  if (privateKeyPem) {
+    const digestAlgoId = 0x0102; // SHA256withRSA
+    const contentDigest = computeApkContentDigest(zipBuffer, blockStart, cdOffset, eocdOffset, "sha256");
+    const digestEntry = Buffer.alloc(4 + 4 + 4 + contentDigest.length);
+    digestEntry.writeUInt32LE(digestEntry.length - 4, 0);
+    digestEntry.writeUInt32LE(digestAlgoId, 4);
+    digestEntry.writeUInt32LE(contentDigest.length, 8);
+    contentDigest.copy(digestEntry, 12);
+
+    digestsSeq = Buffer.alloc(4 + digestEntry.length);
+    digestsSeq.writeUInt32LE(digestEntry.length, 0);
+    digestEntry.copy(digestsSeq, 4);
+  } else {
+    digestsSeq = Buffer.alloc(4);
+    digestsSeq.writeUInt32LE(0, 0);
+  }
+
+  // 2. Certificates
   const certWithLen = Buffer.alloc(4 + certDer.length);
   certWithLen.writeUInt32LE(certDer.length, 0);
   certDer.copy(certWithLen, 4);
@@ -358,15 +385,33 @@ function attachApkSigningBlock(zipBuffer: Buffer, certDer: Buffer): Buffer {
   certsSeq.writeUInt32LE(certWithLen.length, 0);
   certWithLen.copy(certsSeq, 4);
 
-  const digestsSeq = Buffer.alloc(4);
-  digestsSeq.writeUInt32LE(0, 0);
-
+  // 3. signedData
   const signedDataContent = Buffer.concat([digestsSeq, certsSeq, Buffer.alloc(4)]);
   const signedData = Buffer.alloc(4 + signedDataContent.length);
   signedData.writeUInt32LE(signedDataContent.length, 0);
   signedDataContent.copy(signedData, 4);
+  const signedDataRaw = signedDataContent;
 
-  const signerContent = Buffer.concat([signedData, Buffer.alloc(4), Buffer.alloc(4)]);
+  // 4. Signatures
+  let signaturesSeq: Buffer;
+  if (privateKeyPem) {
+    const sigBytes = crypto.sign("sha256", signedDataRaw, privateKeyPem);
+    const digestAlgoId = 0x0102;
+    const sigEntry = Buffer.alloc(4 + 4 + 4 + sigBytes.length);
+    sigEntry.writeUInt32LE(sigEntry.length - 4, 0);
+    sigEntry.writeUInt32LE(digestAlgoId, 4);
+    sigEntry.writeUInt32LE(sigBytes.length, 8);
+    sigBytes.copy(sigEntry, 12);
+
+    signaturesSeq = Buffer.alloc(4 + sigEntry.length);
+    signaturesSeq.writeUInt32LE(sigEntry.length, 0);
+    sigEntry.copy(signaturesSeq, 4);
+  } else {
+    signaturesSeq = Buffer.alloc(4);
+    signaturesSeq.writeUInt32LE(0, 0);
+  }
+
+  const signerContent = Buffer.concat([signedData, signaturesSeq, Buffer.alloc(4)]);
   const signer = Buffer.alloc(4 + signerContent.length);
   signer.writeUInt32LE(signerContent.length, 0);
   signerContent.copy(signer, 4);
@@ -440,6 +485,7 @@ async function runTestSuite() {
   execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout "${prodKeyPath}" -out "${prodCertPath}" -days 365 -subj "/C=US/O=IMDAD.BUILDS/CN=WishMusic" 2>/dev/null`);
   execSync(`openssl x509 -outform der -in "${prodCertPath}" -out "${prodDerPath}"`);
   const prodCertDer = fs.readFileSync(prodDerPath);
+  const prodPrivateKey = fs.readFileSync(prodKeyPath, "utf8");
   const prodCertObj = new crypto.X509Certificate(prodCertDer);
   const prodFingerprint = prodCertObj.fingerprint256.replace(/:/g, "").toUpperCase();
 
@@ -450,6 +496,7 @@ async function runTestSuite() {
   execSync(`openssl req -x509 -newkey rsa:2048 -nodes -keyout "${debugKeyPath}" -out "${debugCertPath}" -days 365 -subj "/C=US/O=Android/CN=Android Debug" 2>/dev/null`);
   execSync(`openssl x509 -outform der -in "${debugCertPath}" -out "${debugDerPath}"`);
   const debugCertDer = fs.readFileSync(debugDerPath);
+  const debugPrivateKey = fs.readFileSync(debugKeyPath, "utf8");
 
   // 2. Build Test APK Binaries
   console.log("[SETUP] Assembling authentic synthetic APK binaries...");
@@ -469,7 +516,7 @@ async function runTestSuite() {
     "resources.arsc": Buffer.from("arsc-content-v100"),
   });
 
-  const validApkV100 = attachApkSigningBlock(zipV100, prodCertDer);
+  const validApkV100 = attachApkSigningBlock(zipV100, prodCertDer, prodPrivateKey);
   const validApkV100Sha256 = crypto.createHash("sha256").update(validApkV100).digest("hex");
 
   // Build v1.0.1 for upgrade/rollback test
@@ -486,10 +533,10 @@ async function runTestSuite() {
     "classes.dex": Buffer.from("dex-content-v101"),
     "resources.arsc": Buffer.from("arsc-content-v101"),
   });
-  const validApkV101 = attachApkSigningBlock(zipV101, prodCertDer);
+  const validApkV101 = attachApkSigningBlock(zipV101, prodCertDer, prodPrivateKey);
 
   // Build debug APK
-  const debugApk = attachApkSigningBlock(zipV100, debugCertDer);
+  const debugApk = attachApkSigningBlock(zipV100, debugCertDer, debugPrivateKey);
 
   // Build wrong package APK
   const axmlWrong = buildTestAxml({
@@ -498,7 +545,7 @@ async function runTestSuite() {
     versionName: "1.0.0",
   });
   const zipWrong = buildZip({ "AndroidManifest.xml": axmlWrong });
-  const wrongPkgApk = attachApkSigningBlock(zipWrong, prodCertDer);
+  const wrongPkgApk = attachApkSigningBlock(zipWrong, prodCertDer, prodPrivateKey);
 
   // --------------------------------------------------------------------------
   // TEST GROUP 1: APK Parsing & Cryptographic Validation
@@ -559,6 +606,43 @@ async function runTestSuite() {
     fileName: "wishmusic.exe",
   });
   assert(badExtRes.valid === false && badExtRes.errors.some(e => e.includes("extension")), "validateApk rejects non-APK file extensions");
+
+  // Verify authentic cryptographic signature and Merkle content digest
+  const sigVerif = verifyApkCryptographicSignature(validApkV100);
+  assert(sigVerif.verified === true && sigVerif.errors.length === 0, "verifyApkCryptographicSignature verifies authentic RSA-SHA256 signature and Merkle content digest");
+  assert(sigVerif.signingScheme === "v2", "verifyApkCryptographicSignature identifies APK Signature Scheme v2");
+
+  // Reject APK with modified/tampered content bytes (content digest mismatch)
+  const tamperedContentApk = Buffer.from(validApkV100);
+  tamperedContentApk[40] = tamperedContentApk[40] ^ 0xff; // Flip bits in Section 1
+  const tamperedContentRes = validateApk(tamperedContentApk, {
+    expectedPackage: "com.imdad.wishmusic",
+    approvedFingerprint: prodFingerprint,
+    fileName: "wishmusic-tampered.apk",
+  });
+  assert(
+    tamperedContentRes.valid === false &&
+    tamperedContentRes.errors.some(e => e.toLowerCase().includes("digest mismatch")),
+    "validateApk strictly rejects tampered APK content (content digest mismatch)"
+  );
+
+  // Reject APK with corrupted signing block / invalid cryptographic signature
+  const corruptedSigApk = Buffer.from(validApkV100);
+  // Locate APK Signing Block 42 and corrupt the signature payload
+  const sigBlockEnd = validApkV100.indexOf(Buffer.from("APK Sig Block 42"));
+  if (sigBlockEnd > 100) {
+    corruptedSigApk[sigBlockEnd - 40] ^= 0xff;
+  }
+  const corruptedSigRes = validateApk(corruptedSigApk, {
+    expectedPackage: "com.imdad.wishmusic",
+    approvedFingerprint: prodFingerprint,
+    fileName: "wishmusic-corrupted-sig.apk",
+  });
+  assert(
+    corruptedSigRes.valid === false &&
+    corruptedSigRes.errors.length > 0,
+    "validateApk strictly rejects APK with corrupted signing block or invalid signature"
+  );
 
   // --------------------------------------------------------------------------
   // TEST GROUP 3: Server-Side API Authorization & Access Control

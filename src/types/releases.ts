@@ -26,6 +26,7 @@ export interface ApkParsedMetadata {
   certificateFingerprintSha256: string;
   certificateValidFrom?: string;
   certificateValidTo?: string;
+  signatureErrors?: string[];
 }
 
 export interface ApkValidationResult {
