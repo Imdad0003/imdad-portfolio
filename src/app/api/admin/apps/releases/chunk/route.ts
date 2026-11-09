@@ -3,6 +3,7 @@ import { verifyAdminRequest } from "@/lib/server-auth";
 import { getStagingSession, saveStagingChunk } from "@/lib/staging-chunks";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * Admin APK Chunk Upload API
@@ -59,8 +60,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const idToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || undefined;
+
     // Verify session exists
-    const session = await getStagingSession(sessionId);
+    const session = await getStagingSession(sessionId, idToken);
     if (!session) {
       return NextResponse.json(
         { error: `Upload session '${sessionId}' not found or expired.` },
@@ -69,12 +72,16 @@ export async function POST(req: NextRequest) {
     }
 
     // Save chunk document
-    await saveStagingChunk(sessionId, {
-      index: chunkIndex,
-      data: chunkBase64,
-      size: chunkSize,
-      receivedAt: Date.now(),
-    });
+    await saveStagingChunk(
+      sessionId,
+      {
+        index: chunkIndex,
+        data: chunkBase64,
+        size: chunkSize,
+        receivedAt: Date.now(),
+      },
+      idToken
+    );
 
     return NextResponse.json(
       {

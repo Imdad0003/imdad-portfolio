@@ -26,9 +26,11 @@ import {
   getStagingChunks,
   deleteStagingSession,
 } from "@/lib/staging-chunks";
+import { firestoreRestPatch, firestoreRestGet, firestoreRestList } from "@/lib/firestore-rest";
 import { AppReleaseDocument, ReleaseAuditLogDocument } from "@/types/releases";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
   try {
@@ -42,6 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     const adminEmail = authResult.user?.email || "admin@imdadbuild.space";
+    const idToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || undefined;
 
     const contentType = req.headers.get("content-type") || "";
 
@@ -58,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     const cleanupStagingSession = async () => {
       if (sessionId) {
-        await deleteStagingSession(sessionId);
+        await deleteStagingSession(sessionId, idToken);
       }
     };
 
@@ -74,7 +77,7 @@ export async function POST(req: NextRequest) {
       sessionId = body.sessionId;
 
       if (sessionId) {
-        const sessionData = await getStagingSession(sessionId);
+        const sessionData = await getStagingSession(sessionId, idToken);
         if (!sessionData) {
           return NextResponse.json(
             { success: false, errors: [`Upload session '${sessionId}' not found or expired.`] },
@@ -84,7 +87,7 @@ export async function POST(req: NextRequest) {
         fileName = body.fileName || sessionData.fileName || "release.apk";
 
         // Query all chunks
-        const chunkDocs = await getStagingChunks(sessionId);
+        const chunkDocs = await getStagingChunks(sessionId, idToken);
         if (chunkDocs.length === 0) {
           return NextResponse.json(
             { success: false, errors: ["No upload chunks found for this session."] },
@@ -386,22 +389,80 @@ export async function POST(req: NextRequest) {
     };
 
     // 6. Persist to Firestore
-    if (db) {
-      try {
+    try {
+      const auditLog: ReleaseAuditLogDocument = {
+        id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        appId,
+        releaseId,
+        action: status === "published" ? "publish" : "upload",
+        performedBy: adminEmail,
+        details: {
+          versionName: meta.versionName,
+          versionCode: meta.versionCode,
+          sha256: meta.sha256,
+          hostingProvider,
+          channel,
+          status,
+        },
+        timestamp: now,
+      };
+
+      const appUpdateData: Record<string, unknown> = {
+        version: `v${meta.versionName}`,
+        packageName: meta.packageName,
+        latestReleaseId: releaseId,
+        latestVersionName: meta.versionName,
+        latestVersionCode: meta.versionCode,
+        latestApkSize: meta.fileSizeFormatted,
+        latestSha256: meta.sha256,
+        latestDownloadUrl: downloadUrl,
+        latestReleaseDate: now,
+        approvedCertificateFingerprint: approvedFingerprint,
+        updatedAt: now,
+      };
+
+      let restPersisted = false;
+
+      // 6a. Authenticated REST persistence using admin ID token (bypasses unauthenticated serverless SDK boundary)
+      if (idToken) {
+        const releaseSaved = await firestoreRestPatch(
+          `appReleases/${releaseId}`,
+          releaseDoc as unknown as Record<string, unknown>,
+          idToken
+        );
+        if (releaseSaved) {
+          if (isLatestStable) {
+            await firestoreRestPatch(`apps/${appId}`, appUpdateData, idToken);
+          }
+          await firestoreRestPatch(
+            `releaseAuditLogs/${auditLog.id}`,
+            auditLog as unknown as Record<string, unknown>,
+            idToken
+          );
+          restPersisted = true;
+        }
+      }
+
+      // 6b. Firestore SDK fallback/secondary persistence (for local tests with mock credentials)
+      if (!restPersisted && db) {
         // If this is published as latest stable, mark previous stable releases as not latest
         if (isLatestStable) {
-          const prevStableSnap = await getDocs(
-            query(
-              collection(db, "appReleases"),
-              where("appId", "==", appId),
-              where("isLatestStable", "==", true)
-            )
-          );
-          for (const prevDoc of prevStableSnap.docs) {
-            await updateDoc(doc(db, "appReleases", prevDoc.id), {
-              isLatestStable: false,
-              updatedAt: now,
-            });
+          try {
+            const prevStableSnap = await getDocs(
+              query(
+                collection(db, "appReleases"),
+                where("appId", "==", appId),
+                where("isLatestStable", "==", true)
+              )
+            );
+            for (const prevDoc of prevStableSnap.docs) {
+              await updateDoc(doc(db, "appReleases", prevDoc.id), {
+                isLatestStable: false,
+                updatedAt: now,
+              });
+            }
+          } catch (prevErr) {
+            console.warn("Notice: could not update previous stable releases:", prevErr);
           }
         }
 
@@ -410,44 +471,13 @@ export async function POST(req: NextRequest) {
 
         // Update App document with latest stable release details
         if (isLatestStable) {
-          await setDoc(
-            doc(db, "apps", appId),
-            {
-              version: `v${meta.versionName}`,
-              packageName: meta.packageName,
-              latestReleaseId: releaseId,
-              latestVersionName: meta.versionName,
-              latestVersionCode: meta.versionCode,
-              latestApkSize: meta.fileSizeFormatted,
-              latestSha256: meta.sha256,
-              latestDownloadUrl: downloadUrl,
-              latestReleaseDate: now,
-              approvedCertificateFingerprint: approvedFingerprint,
-              updatedAt: now,
-            },
-            { merge: true }
-          );
+          await setDoc(doc(db, "apps", appId), appUpdateData, { merge: true });
         }
 
         // Audit log
-        const auditLog: ReleaseAuditLogDocument = {
-          id: `log_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          appId,
-          releaseId,
-          action: status === "published" ? "publish" : "upload",
-          performedBy: adminEmail,
-          details: {
-            versionName: meta.versionName,
-            versionCode: meta.versionCode,
-            sha256: meta.sha256,
-            hostingProvider,
-            channel,
-            status,
-          },
-          timestamp: now,
-        };
         await setDoc(doc(db, "releaseAuditLogs", auditLog.id), auditLog);
-      } catch (err) {
+      }
+    } catch (err) {
         console.error("Firestore persistence error during release upload:", err);
         const errDetail = err instanceof Error ? err.message : String(err);
         return NextResponse.json(
@@ -477,9 +507,8 @@ export async function POST(req: NextRequest) {
           { status: 500 }
         );
       }
-    }
 
-    // Clean up temporary staging chunks from Firestore if present
+    // Clean up temporary staging chunks from ephemeral storage
     await cleanupStagingSession();
 
     return NextResponse.json(

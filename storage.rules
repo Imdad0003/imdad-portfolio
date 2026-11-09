@@ -38,6 +38,15 @@ service firebase.storage {
       allow delete: if isAdmin();
     }
 
+    // 2. APK Staging (if ever utilized, strictly private to admin with 150MB cap)
+    match /staging/apk/{appId}/{fileName} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() &&
+                            request.resource.size > 0 &&
+                            request.resource.size <= 150 * 1024 * 1024;
+      allow delete: if isAdmin();
+    }
+
     // 3. Fallback / Default Deny for any other path in the storage bucket
     match /{allPaths=**} {
       allow read, write: if false;

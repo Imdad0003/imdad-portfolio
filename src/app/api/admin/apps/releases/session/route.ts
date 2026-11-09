@@ -5,9 +5,10 @@ import { sanitizeFileName } from "@/lib/asset-sanitizer";
 import { saveStagingSession } from "@/lib/staging-chunks";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const MAX_APK_SIZE_BYTES = 150 * 1024 * 1024; // 150 MB
-const CHUNK_SIZE_BYTES = 700 * 1024; // 700 KB per chunk (fits comfortably under 1 MB Firestore limit and 4.5 MB Vercel limit)
+const CHUNK_SIZE_BYTES = 700 * 1024; // 700 KB per chunk (fits comfortably under Firestore 1MB document limit and Vercel 4.5 MB request limit)
 
 /**
  * Admin APK Upload Session API
@@ -59,19 +60,24 @@ export async function POST(req: NextRequest) {
     const totalChunks = Math.ceil(fileSize / CHUNK_SIZE_BYTES);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
+    const idToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || undefined;
+
     // Persist session metadata
-    await saveStagingSession({
-      sessionId,
-      appId,
-      fileName: sanitizedName,
-      fileSize,
-      chunkSize: CHUNK_SIZE_BYTES,
-      totalChunks,
-      adminEmail: authResult.user?.email || "admin",
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 60 * 60 * 1000,
-      status: "active",
-    });
+    await saveStagingSession(
+      {
+        sessionId,
+        appId,
+        fileName: sanitizedName,
+        fileSize,
+        chunkSize: CHUNK_SIZE_BYTES,
+        totalChunks,
+        adminEmail: authResult.user?.email || "admin",
+        createdAt: Date.now(),
+        expiresAt: Date.now() + 60 * 60 * 1000,
+        status: "active",
+      },
+      idToken
+    );
 
     return NextResponse.json(
       {

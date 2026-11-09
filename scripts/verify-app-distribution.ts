@@ -1,6 +1,8 @@
 import crypto from "crypto";
 import fs from "fs";
 import path from "path";
+import https from "node:https";
+import { EventEmitter } from "node:events";
 import { execSync } from "child_process";
 import { NextRequest } from "next/server";
 import { POST as validatePost } from "../src/app/api/admin/apps/releases/validate/route";
@@ -832,15 +834,27 @@ async function runTestSuite() {
   }
 
   // 5. GitHub Release Asset Deduplication on Retry (uploadGitHubReleaseAsset recovers on HTTP 422 asset exists)
+  const originalHttpsRequest5 = https.request;
   try {
+    (https as any).request = (opts: any, cb: any) => {
+      const mockReq = new EventEmitter() as any;
+      mockReq.write = () => true;
+      mockReq.end = () => {
+        const mockRes = new EventEmitter() as any;
+        mockRes.statusCode = 422;
+        cb(mockRes);
+        process.nextTick(() => {
+          mockRes.emit("data", JSON.stringify({ message: "Validation Failed", errors: [{ code: "already_exists" }] }));
+          mockRes.emit("end");
+        });
+        return mockReq;
+      };
+      mockReq.destroy = () => {};
+      return mockReq;
+    };
+
     global.fetch = async (url: any, opts: any) => {
       const urlStr = String(url);
-      if (urlStr.includes("/assets?") && opts?.method === "POST") {
-        return new Response(
-          JSON.stringify({ message: "Validation Failed", errors: [{ code: "already_exists" }] }),
-          { status: 422 }
-        );
-      }
       if (urlStr.includes("/releases/8888/assets")) {
         return new Response(
           JSON.stringify([
@@ -874,6 +888,7 @@ async function runTestSuite() {
       "uploadGitHubReleaseAsset preserves browser_download_url for safe recovery"
     );
   } finally {
+    https.request = originalHttpsRequest5;
     global.fetch = originalFetch;
   }
 
@@ -946,8 +961,8 @@ async function runTestSuite() {
     "Upload session confirms 150 MB maximum supported size boundary"
   );
   assert(
-    sessionData.totalChunks === Math.ceil(84329180 / (700 * 1024)),
-    "Upload session computes exact 700 KB chunk breakdown for 80.42 MB binary"
+    sessionData.totalChunks === Math.ceil(84329180 / sessionData.chunkSize),
+    `Upload session computes exact ${sessionData.chunkSize / 1024} KB chunk breakdown for 80.42 MB binary`
   );
 
   // 4b. POST /api/admin/apps/releases/chunk authorization and chunk storage
@@ -1011,7 +1026,42 @@ async function runTestSuite() {
   // Intercept GitHub upload to confirm server reassembles chunks and passes APK validation
   let serverReassembledBuffer: Buffer | null = null;
   const originalFetchE2e = global.fetch;
+  const originalHttpsRequestE2e = https.request;
   try {
+    (https as any).request = (opts: any, cb: any) => {
+      const mockReq = new EventEmitter() as any;
+      const chunks: Buffer[] = [];
+      mockReq.write = (chunk: Buffer) => {
+        chunks.push(chunk);
+        return true;
+      };
+      mockReq.end = (chunk?: Buffer) => {
+        if (chunk && Buffer.isBuffer(chunk)) {
+          chunks.push(chunk);
+        }
+        serverReassembledBuffer = Buffer.concat(chunks);
+        const mockRes = new EventEmitter() as any;
+        mockRes.statusCode = 201;
+        cb(mockRes);
+        process.nextTick(() => {
+          mockRes.emit(
+            "data",
+            JSON.stringify({
+              id: 8888,
+              name: "wishmusic-v1.0.0.apk",
+              size: validApkV100.length,
+              browser_download_url: "https://github.com/imdad/releases/download/wishmusic-v1.0.0/wishmusic-v1.0.0.apk",
+              created_at: new Date().toISOString(),
+            })
+          );
+          mockRes.emit("end");
+        });
+        return mockReq;
+      };
+      mockReq.destroy = () => {};
+      return mockReq;
+    };
+
     global.fetch = async (url: any, opts: any) => {
       const urlStr = String(url);
       if (urlStr.includes("/releases") && opts?.method === "POST" && !urlStr.includes("/assets")) {
@@ -1022,19 +1072,6 @@ async function runTestSuite() {
             name: "WishMusic v1.0.0",
             upload_url: "https://uploads.github.com/repos/imdad/releases/7777/assets{?name,label}",
             draft: false,
-            created_at: new Date().toISOString(),
-          }),
-          { status: 201 }
-        );
-      }
-      if (urlStr.includes("/assets?") && opts?.method === "POST") {
-        serverReassembledBuffer = Buffer.from(opts.body);
-        return new Response(
-          JSON.stringify({
-            id: 8888,
-            name: "wishmusic-v1.0.0.apk",
-            size: validApkV100.length,
-            browser_download_url: "https://github.com/imdad/releases/download/wishmusic-v1.0.0/wishmusic-v1.0.0.apk",
             created_at: new Date().toISOString(),
           }),
           { status: 201 }
@@ -1067,6 +1104,7 @@ async function runTestSuite() {
       "Reassembled binary on server is 100% byte-identical to original APK"
     );
   } finally {
+    https.request = originalHttpsRequestE2e;
     global.fetch = originalFetchE2e;
   }
 

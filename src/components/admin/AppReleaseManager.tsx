@@ -21,9 +21,16 @@ import {
   Clock,
 } from "lucide-react";
 import { User } from "firebase/auth";
+import { db } from "@/lib/firebase";
+import { doc, setDoc } from "firebase/firestore";
 import { AppDocument } from "@/types/cms";
 import { ApkParsedMetadata, AppReleaseDocument } from "@/types/releases";
-import { parseApkClient, formatBytes, ApkInspectionPayload } from "@/lib/apk-parser-client";
+import {
+  parseApkClient,
+  formatBytes,
+  ApkInspectionPayload,
+  bufferToBase64,
+} from "@/lib/apk-parser-client";
 
 export type WorkflowState =
   | "idle"
@@ -118,11 +125,11 @@ export function AppReleaseManager({
     setPublishSuccess(null);
     setPublishError(null);
 
-    // Timeout safety: Force state transition out of validating if it exceeds 15 seconds
+    // Timeout safety: Force state transition out of validating if it exceeds 30 seconds
     const timeoutHandle = setTimeout(() => {
       setWorkflowState("failed");
       setValidationErrors(["Validation timed out. Please verify your connection and try again."]);
-    }, 15000);
+    }, 30000);
 
     try {
       if (!currentUser) {
@@ -182,7 +189,13 @@ export function AppReleaseManager({
       } else {
         const resolvedMeta = data.metadata || fallbackMeta;
         setApkMeta(resolvedMeta);
-        setValidationWarnings(data.warnings || []);
+        const combinedWarnings = [...(data.warnings || [])];
+        if (!approvedFingerprint) {
+          combinedWarnings.push(
+            "Security Notice: No production certificate fingerprint is pinned for this app. Configure the pinned fingerprint in App Directory if Trust-On-First-Upload is disabled."
+          );
+        }
+        setValidationWarnings(combinedWarnings);
         setWorkflowState("validated");
 
         // Auto-fill title if empty
@@ -291,7 +304,7 @@ export function AppReleaseManager({
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
 
-      // 2. Upload chunks directly to server staging with real-time speed & progress
+      // 2. Upload chunks directly with real-time speed & progress
       let uploadedBytes = 0;
       for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
         if (abortController.signal.aborted) {
@@ -302,24 +315,76 @@ export function AppReleaseManager({
         const end = Math.min(start + chunkSize, file.size);
         const chunkBlob = file.slice(start, end);
 
-        const formData = new FormData();
-        formData.append("sessionId", sessionId);
-        formData.append("chunkIndex", String(chunkIndex));
-        formData.append("totalChunks", String(totalChunks));
-        formData.append("chunk", chunkBlob, `chunk_${chunkIndex}.bin`);
+        let attempt = 0;
+        let success = false;
+        let lastError = "";
 
-        const chunkRes = await fetch("/api/admin/apps/releases/chunk", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-          signal: abortController.signal,
-        });
+        while (attempt < 3 && !success) {
+          if (abortController.signal.aborted) {
+            throw new Error("Upload was cancelled by administrator.");
+          }
 
-        if (!chunkRes.ok) {
-          const errData = await chunkRes.json().catch(() => ({}));
-          throw new Error(errData.error || `Failed uploading chunk ${chunkIndex + 1}/${totalChunks}.`);
+          // Primary path: Direct authenticated write to Firestore from browser
+          if (db) {
+            try {
+              const chunkArrayBuf = await chunkBlob.arrayBuffer();
+              const chunkBase64 = bufferToBase64(new Uint8Array(chunkArrayBuf));
+              await setDoc(
+                doc(db, "stagingReleaseSessions", sessionId, "chunks", String(chunkIndex)),
+                {
+                  index: chunkIndex,
+                  data: chunkBase64,
+                  size: chunkBlob.size,
+                  receivedAt: Date.now(),
+                }
+              );
+              success = true;
+              break;
+            } catch (directErr) {
+              lastError = directErr instanceof Error ? directErr.message : String(directErr);
+            }
+          }
+
+          // Secondary path: Upload via server endpoint
+          try {
+            const formData = new FormData();
+            formData.append("sessionId", sessionId);
+            formData.append("chunkIndex", String(chunkIndex));
+            formData.append("totalChunks", String(totalChunks));
+            formData.append("chunk", chunkBlob, `chunk_${chunkIndex}.bin`);
+
+            const chunkRes = await fetch("/api/admin/apps/releases/chunk", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              body: formData,
+              signal: abortController.signal,
+            });
+
+            if (chunkRes.ok) {
+              success = true;
+            } else {
+              const errData = await chunkRes.json().catch(() => ({}));
+              lastError = errData.error || `HTTP ${chunkRes.status}`;
+              attempt++;
+              if (attempt < 3) {
+                await new Promise((r) => setTimeout(r, 1000 * attempt));
+              }
+            }
+          } catch (fetchErr: unknown) {
+            if (abortController.signal.aborted) throw fetchErr;
+            const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+            lastError = msg;
+            attempt++;
+            if (attempt < 3) {
+              await new Promise((r) => setTimeout(r, 1000 * attempt));
+            }
+          }
+        }
+
+        if (!success) {
+          throw new Error(`Failed uploading chunk ${chunkIndex + 1}/${totalChunks} after 3 attempts: ${lastError}`);
         }
 
         uploadedBytes += (end - start);
@@ -341,11 +406,14 @@ export function AppReleaseManager({
       setUploadProgress((prev) => ({ ...prev, percentage: 100 }));
       setWorkflowState("publishing");
 
+      // Obtain fresh token for release publication
+      const uploadToken = await currentUser.getIdToken();
+
       const publishRes = await fetch("/api/admin/apps/releases/upload", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${uploadToken}`,
         },
         body: JSON.stringify({
           appId: selectedAppId,

@@ -3,6 +3,7 @@ import { verifyAdminRequest } from "@/lib/server-auth";
 import { validateApk, validateApkInspection, ApkInspectionPayload } from "@/lib/apk-parser";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 /**
  * Admin APK Validation API

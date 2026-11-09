@@ -30,6 +30,7 @@ const suites = [
   { name: "App Distribution & Binary Verification", script: "scripts/verify-app-distribution.ts" },
   { name: "Live APK Flow & Release Hardening", script: "scripts/verify-live-apk-flow.ts" },
   { name: "API Security & Administrative Auth", script: "scripts/verify-security-endpoints.ts" },
+  { name: "Real GitHub Releases CDN & Download", script: "scripts/verify-real-github-release.ts" },
 ];
 
 console.log(`${colors.bold}${colors.cyan}======================================================================`);
@@ -43,7 +44,7 @@ for (const suite of suites) {
   const start = Date.now();
   process.stdout.write(`Running: ${colors.bold}${suite.name}${colors.reset} ... `);
   try {
-    const output = execSync(`npx --yes tsx ${suite.script}`, {
+    const output = execSync(`npx --yes tsx --env-file=.env.local ${suite.script}`, {
       stdio: ["pipe", "pipe", "pipe"],
       encoding: "utf8",
     });
