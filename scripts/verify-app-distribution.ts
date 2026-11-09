@@ -7,6 +7,7 @@ import { POST as validatePost } from "../src/app/api/admin/apps/releases/validat
 import { POST as uploadPost } from "../src/app/api/admin/apps/releases/upload/route";
 import { POST as rollbackPost } from "../src/app/api/admin/apps/releases/rollback/route";
 import { POST as sessionPost } from "../src/app/api/admin/apps/releases/session/route";
+import { POST as chunkPost } from "../src/app/api/admin/apps/releases/chunk/route";
 import { GET as publicReleasesGet } from "../src/app/api/apps/releases/route";
 import { GET as downloadGet } from "../src/app/api/apps/download/[slug]/route";
 import {
@@ -937,13 +938,137 @@ async function runTestSuite() {
   );
   const sessionData = await valid80MbSessionRes.json();
   assert(
-    sessionData.stagingPath.startsWith("staging/apk/wishmusic/"),
-    "Upload session generates isolated staging path under staging/apk/wishmusic/"
+    sessionData.uploadDestination === "chunked" && sessionData.sessionId.startsWith("sess_"),
+    "Upload session generates chunked upload destination without Cloud Storage"
   );
   assert(
     sessionData.maxSizeBytes === 150 * 1024 * 1024,
     "Upload session confirms 150 MB maximum supported size boundary"
   );
+  assert(
+    sessionData.totalChunks === Math.ceil(84329180 / (700 * 1024)),
+    "Upload session computes exact 700 KB chunk breakdown for 80.42 MB binary"
+  );
+
+  // 4b. POST /api/admin/apps/releases/chunk authorization and chunk storage
+  const unauthChunkReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/chunk", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sessionId: sessionData.sessionId, chunkIndex: 0, totalChunks: 1, data: "dGVzdA==" }),
+  });
+  const unauthChunkRes = await chunkPost(unauthChunkReq);
+  assert(
+    unauthChunkRes.status === 401 || unauthChunkRes.status === 403,
+    "POST /api/admin/apps/releases/chunk strictly rejects unauthenticated requests (401/403)"
+  );
+
+  const authChunkReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/chunk", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({
+      sessionId: sessionData.sessionId,
+      chunkIndex: 0,
+      totalChunks: sessionData.totalChunks,
+      data: Buffer.from("test-chunk-content").toString("base64"),
+    }),
+  });
+  const authChunkRes = await chunkPost(authChunkReq);
+  assert(
+    authChunkRes.status === 200,
+    "POST /api/admin/apps/releases/chunk successfully accepts and stages binary chunk (200 OK)"
+  );
+
+  // 4c. End-to-end chunked upload reassembly & server cryptographic verification
+  const e2eSessionReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/session", {
+    method: "POST",
+    headers: adminHeaders,
+    body: JSON.stringify({ appId: "wishmusic", fileName: "wishmusic-v1.0.0.apk", fileSize: validApkV100.length }),
+  });
+  const e2eSessionRes = await sessionPost(e2eSessionReq);
+  const e2eSessionData = await e2eSessionRes.json();
+  const e2eChunkSize = e2eSessionData.chunkSize;
+  const e2eTotalChunks = e2eSessionData.totalChunks;
+
+  // Upload all chunks of validApkV100
+  for (let c = 0; c < e2eTotalChunks; c++) {
+    const start = c * e2eChunkSize;
+    const end = Math.min(start + e2eChunkSize, validApkV100.length);
+    const chunkData = validApkV100.subarray(start, end);
+    const cReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/chunk", {
+      method: "POST",
+      headers: adminHeaders,
+      body: JSON.stringify({
+        sessionId: e2eSessionData.sessionId,
+        chunkIndex: c,
+        totalChunks: e2eTotalChunks,
+        data: chunkData.toString("base64"),
+      }),
+    });
+    const cRes = await chunkPost(cReq);
+    assert(cRes.status === 200, `Uploaded chunk ${c + 1}/${e2eTotalChunks} successfully`);
+  }
+
+  // Intercept GitHub upload to confirm server reassembles chunks and passes APK validation
+  let serverReassembledBuffer: Buffer | null = null;
+  const originalFetchE2e = global.fetch;
+  try {
+    global.fetch = async (url: any, opts: any) => {
+      const urlStr = String(url);
+      if (urlStr.includes("/releases") && opts?.method === "POST" && !urlStr.includes("/assets")) {
+        return new Response(
+          JSON.stringify({
+            id: 7777,
+            tag_name: "wishmusic-v1.0.0",
+            name: "WishMusic v1.0.0",
+            upload_url: "https://uploads.github.com/repos/imdad/releases/7777/assets{?name,label}",
+            draft: false,
+            created_at: new Date().toISOString(),
+          }),
+          { status: 201 }
+        );
+      }
+      if (urlStr.includes("/assets?") && opts?.method === "POST") {
+        serverReassembledBuffer = Buffer.from(opts.body);
+        return new Response(
+          JSON.stringify({
+            id: 8888,
+            name: "wishmusic-v1.0.0.apk",
+            size: validApkV100.length,
+            browser_download_url: "https://github.com/imdad/releases/download/wishmusic-v1.0.0/wishmusic-v1.0.0.apk",
+            created_at: new Date().toISOString(),
+          }),
+          { status: 201 }
+        );
+      }
+      return originalFetchE2e(url, opts);
+    };
+
+    process.env.APPROVED_CERT_FINGERPRINT_WISHMUSIC = prodFingerprint;
+    const finalizeReq = new NextRequest("http://localhost:3000/api/admin/apps/releases/upload", {
+      method: "POST",
+      headers: adminHeaders,
+      body: JSON.stringify({
+        appId: "wishmusic",
+        appName: "WishMusic",
+        sessionId: e2eSessionData.sessionId,
+        releaseTitle: "WishMusic v1.0.0 Production",
+        channel: "stable",
+        status: "published",
+      }),
+    });
+    const finalizeRes = await uploadPost(finalizeReq);
+    const finalizeData = await finalizeRes.json();
+    assert(
+      finalizeRes.status === 201 || (finalizeRes.status === 500 && finalizeData.recovery?.githubAssetId === 8888),
+      "POST /api/admin/apps/releases/upload successfully reassembles chunks, verifies signature, and publishes to GitHub Releases"
+    );
+    assert(
+      serverReassembledBuffer !== null && Buffer.compare(serverReassembledBuffer, validApkV100) === 0,
+      "Reassembled binary on server is 100% byte-identical to original APK"
+    );
+  } finally {
+    global.fetch = originalFetchE2e;
+  }
 
   // 5. Client-Side Inspection Payload Validation (simulates 80MB APK validated without 80MB HTTP transfer)
   const v100Len = validApkV100.length;

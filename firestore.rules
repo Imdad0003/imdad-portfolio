@@ -645,6 +645,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Staging Release Sessions & Chunks: Admin only; for chunked large binary uploads
+    match /stagingReleaseSessions/{sessionId} {
+      allow read, write: if isAdmin();
+      match /chunks/{chunkId} {
+        allow read, write: if isAdmin();
+      }
+    }
+
     // Default Deny for all other collections and unmatched paths
     match /{document=**} {
       allow read, write: if false;

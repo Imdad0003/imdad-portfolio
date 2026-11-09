@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { verifyAdminRequest } from "@/lib/server-auth";
 import { sanitizeFileName } from "@/lib/asset-sanitizer";
+import { saveStagingSession } from "@/lib/staging-chunks";
 
 export const dynamic = "force-dynamic";
 
 const MAX_APK_SIZE_BYTES = 150 * 1024 * 1024; // 150 MB
+const CHUNK_SIZE_BYTES = 700 * 1024; // 700 KB per chunk (fits comfortably under 1 MB Firestore limit and 4.5 MB Vercel limit)
 
 /**
  * Admin APK Upload Session API
  *
  * Authorizes the administrator and initializes a short-lived, authenticated upload session.
- * Generates an isolated staging path in storage for large APK binaries (up to 150 MB).
+ * Configures a chunked upload pipeline that bypasses Vercel's 4.5 MB body limit and
+ * eliminates the need for Firebase Cloud Storage or Blaze billing.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -51,22 +54,35 @@ export async function POST(req: NextRequest) {
     }
 
     const sanitizedName = sanitizeFileName(fileName);
-    const randomSuffix = crypto.randomBytes(4).toString("hex");
-    const stagingPath = `staging/apk/${appId}/${Date.now()}_${randomSuffix}_${sanitizedName}`;
-    const sessionId = `session_${Date.now()}_${randomSuffix}`;
+    const randomSuffix = crypto.randomBytes(6).toString("hex");
+    const sessionId = `sess_${Date.now()}_${randomSuffix}`;
+    const totalChunks = Math.ceil(fileSize / CHUNK_SIZE_BYTES);
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
 
-    const storageBucket =
-      process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-      "imdadbuilds-ead39.firebasestorage.app";
+    // Persist session metadata
+    await saveStagingSession({
+      sessionId,
+      appId,
+      fileName: sanitizedName,
+      fileSize,
+      chunkSize: CHUNK_SIZE_BYTES,
+      totalChunks,
+      adminEmail: authResult.user?.email || "admin",
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 60 * 60 * 1000,
+      status: "active",
+    });
 
     return NextResponse.json(
       {
+        success: true,
         sessionId,
         appId,
         fileName: sanitizedName,
-        stagingPath,
-        storageBucket,
+        fileSize,
+        chunkSize: CHUNK_SIZE_BYTES,
+        totalChunks,
+        uploadDestination: "chunked",
         maxSizeBytes: MAX_APK_SIZE_BYTES,
         expiresAt,
       },

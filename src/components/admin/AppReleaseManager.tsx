@@ -24,8 +24,6 @@ import { User } from "firebase/auth";
 import { AppDocument } from "@/types/cms";
 import { ApkParsedMetadata, AppReleaseDocument } from "@/types/releases";
 import { parseApkClient, formatBytes, ApkInspectionPayload } from "@/lib/apk-parser-client";
-import { storage } from "@/lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL, UploadTask } from "firebase/storage";
 
 export type WorkflowState =
   | "idle"
@@ -42,6 +40,9 @@ export interface UploadProgress {
   bytesTransferred: number;
   totalBytes: number;
   percentage: number;
+  speed?: string;
+  currentChunk?: number;
+  totalChunks?: number;
 }
 
 interface AppReleaseManagerProps {
@@ -85,7 +86,7 @@ export function AppReleaseManager({
   const [publishError, setPublishError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const currentUploadTaskRef = useRef<UploadTask | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const selectedApp = apps.find((a) => a.id === selectedAppId);
 
@@ -197,9 +198,9 @@ export function AppReleaseManager({
   };
 
   const handleCancelUpload = () => {
-    if (currentUploadTaskRef.current) {
-      currentUploadTaskRef.current.cancel();
-      currentUploadTaskRef.current = null;
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
     setWorkflowState("validated");
     setUploadProgress({ bytesTransferred: 0, totalBytes: 0, percentage: 0 });
@@ -262,8 +263,10 @@ export function AppReleaseManager({
         return;
       }
 
-      // CASE B: Standard Distribution — Authenticated Upload Session & Storage Pipeline
+      // CASE B: Standard Distribution — Authenticated Chunked Staging & GitHub Publication Pipeline
+      // Completely eliminates Firebase Storage and Blaze billing dependency
       setWorkflowState("uploading");
+      const startTime = Date.now();
 
       // 1. Request upload session
       const sessionRes = await fetch("/api/admin/apps/releases/session", {
@@ -284,63 +287,59 @@ export function AppReleaseManager({
         throw new Error(sessionData.error || "Failed to initialize upload session.");
       }
 
-      if (!storage) {
-        throw new Error(
-          "Firebase Storage is not initialized on this website. Please verify storageBucket configuration."
-        );
+      const { sessionId, chunkSize, totalChunks } = sessionData;
+      const abortController = new AbortController();
+      abortControllerRef.current = abortController;
+
+      // 2. Upload chunks directly to server staging with real-time speed & progress
+      let uploadedBytes = 0;
+      for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+        if (abortController.signal.aborted) {
+          throw new Error("Upload was cancelled by administrator.");
+        }
+
+        const start = chunkIndex * chunkSize;
+        const end = Math.min(start + chunkSize, file.size);
+        const chunkBlob = file.slice(start, end);
+
+        const formData = new FormData();
+        formData.append("sessionId", sessionId);
+        formData.append("chunkIndex", String(chunkIndex));
+        formData.append("totalChunks", String(totalChunks));
+        formData.append("chunk", chunkBlob, `chunk_${chunkIndex}.bin`);
+
+        const chunkRes = await fetch("/api/admin/apps/releases/chunk", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+          signal: abortController.signal,
+        });
+
+        if (!chunkRes.ok) {
+          const errData = await chunkRes.json().catch(() => ({}));
+          throw new Error(errData.error || `Failed uploading chunk ${chunkIndex + 1}/${totalChunks}.`);
+        }
+
+        uploadedBytes += (end - start);
+        const elapsedSec = (Date.now() - startTime) / 1000;
+        const speedMBps = elapsedSec > 0 ? (uploadedBytes / (1024 * 1024)) / elapsedSec : 0;
+        const pct = Math.min(99, Math.round((uploadedBytes / file.size) * 100));
+
+        setUploadProgress({
+          bytesTransferred: uploadedBytes,
+          totalBytes: file.size,
+          percentage: pct,
+          speed: `${speedMBps.toFixed(2)} MB/s`,
+          currentChunk: chunkIndex + 1,
+          totalChunks,
+        });
       }
 
-      // 2. Direct browser upload to Firebase Storage staging with real-time progress
-      const storageRef = ref(storage, sessionData.stagingPath);
-      const uploadTask = uploadBytesResumable(storageRef, file, {
-        contentType: "application/vnd.android.package-archive",
-        customMetadata: {
-          uploadedBy: currentUser.email || "admin",
-          appId: selectedAppId,
-          versionName: apkMeta.versionName,
-          versionCode: String(apkMeta.versionCode),
-          sha256: apkMeta.sha256,
-        },
-      });
-
-      currentUploadTaskRef.current = uploadTask;
-
-      await new Promise<void>((resolve, reject) => {
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const pct = snapshot.totalBytes > 0
-              ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
-              : 0;
-            setUploadProgress({
-              bytesTransferred: snapshot.bytesTransferred,
-              totalBytes: snapshot.totalBytes,
-              percentage: pct,
-            });
-          },
-          (uploadErr) => {
-            currentUploadTaskRef.current = null;
-            if (uploadErr.code === "storage/bucket-not-found" || uploadErr.message?.includes("bucket")) {
-              reject(
-                new Error(
-                  `Firebase Storage bucket '${sessionData.storageBucket}' is not yet provisioned. Go to https://console.firebase.google.com/project/imdadbuilds-ead39/storage and click 'Get Started' to enable large binary uploads.`
-                )
-              );
-            } else {
-              reject(uploadErr);
-            }
-          },
-          () => {
-            currentUploadTaskRef.current = null;
-            setWorkflowState("uploaded");
-            resolve();
-          }
-        );
-      });
-
-      // 3. Staging complete, publish release to GitHub Releases & Firestore
+      // 3. Chunks complete; publish and cryptographically verify on server
+      setUploadProgress((prev) => ({ ...prev, percentage: 100 }));
       setWorkflowState("publishing");
-      const stagingDownloadUrl = await getDownloadURL(storageRef);
 
       const publishRes = await fetch("/api/admin/apps/releases/upload", {
         method: "POST",
@@ -351,8 +350,7 @@ export function AppReleaseManager({
         body: JSON.stringify({
           appId: selectedAppId,
           appName: selectedApp?.name || "WishMusic",
-          stagingPath: sessionData.stagingPath,
-          downloadUrl: stagingDownloadUrl,
+          sessionId,
           fileName: file.name,
           releaseTitle: releaseTitle || `${selectedApp?.name} v${apkMeta.versionName}`,
           releaseNotes: releaseNotes || "Standard production release.",
@@ -367,7 +365,7 @@ export function AppReleaseManager({
       }
 
       setPublishSuccess(
-        `Release v${publishData.release.versionName} successfully ${publishStatus === "published" ? "published" : "saved as draft"}! Download portal updated.`
+        `Release v${publishData.release.versionName} successfully ${publishStatus === "published" ? "published" : "saved as draft"}! Asset securely published to GitHub Releases.`
       );
       setWorkflowState("published");
       if (onReleaseCreated) onReleaseCreated(publishData.release);
@@ -601,9 +599,12 @@ export function AppReleaseManager({
                   <div className="flex items-center justify-between text-xs font-mono font-bold text-sky-900">
                     <span className="flex items-center gap-1.5">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      Uploading binary to secure release staging:
+                      Uploading binary chunks to secure staging:
                     </span>
-                    <span>{uploadProgress.percentage}%</span>
+                    <span className="flex items-center gap-2">
+                      {uploadProgress.speed && <span className="text-[10px] text-sky-700 font-normal">[{uploadProgress.speed}]</span>}
+                      <span>{uploadProgress.percentage}%</span>
+                    </span>
                   </div>
                   <div className="w-full bg-sky-200 rounded-full h-2.5 overflow-hidden">
                     <div
@@ -614,6 +615,11 @@ export function AppReleaseManager({
                   <div className="flex items-center justify-between text-[11px] font-mono text-sky-800 pt-1">
                     <span>
                       {formatBytes(uploadProgress.bytesTransferred)} of {formatBytes(uploadProgress.totalBytes)}
+                      {uploadProgress.currentChunk && uploadProgress.totalChunks && (
+                        <span className="text-sky-600 ml-1.5">
+                          (Chunk {uploadProgress.currentChunk}/{uploadProgress.totalChunks})
+                        </span>
+                      )}
                     </span>
                     <button
                       type="button"
@@ -623,6 +629,19 @@ export function AppReleaseManager({
                       Cancel Upload
                     </button>
                   </div>
+                </div>
+              )}
+
+              {/* Server Publishing & Verification State */}
+              {workflowState === "publishing" && (
+                <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 space-y-2 animate-fade-in">
+                  <div className="flex items-center gap-2 text-xs font-mono font-bold text-purple-900">
+                    <Loader2 className="w-4 h-4 text-purple-700 animate-spin shrink-0" />
+                    <span>Verifying and Publishing Release to GitHub...</span>
+                  </div>
+                  <p className="text-[11px] text-purple-800 font-mono">
+                    Server is reassembling chunks, cryptographically verifying APK signature and Merkle content digests, and creating the GitHub Release asset.
+                  </p>
                 </div>
               )}
 

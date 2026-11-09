@@ -29,25 +29,7 @@ service firebase.storage {
              (isAllowedVideo() && request.resource.size > 0 && request.resource.size <= 50 * 1024 * 1024);
     }
 
-    function isAllowedApk() {
-      return request.resource.contentType in [
-        'application/vnd.android.package-archive',
-        'application/octet-stream'
-      ] || request.resource.contentType == '';
-    }
-
-    // 1. Staging APK binaries: Private to authenticated administrators only
-    // Public visitors are strictly DENIED read/write/delete access.
-    match /staging/apk/{appId}/{fileName} {
-      allow read: if isAdmin();
-      allow create, update: if isAdmin() &&
-                            request.resource.size > 0 &&
-                            request.resource.size <= 150 * 1024 * 1024 &&
-                            isAllowedApk();
-      allow delete: if isAdmin();
-    }
-
-    // 2. Studio Public Assets (portfolio, covers, screenshots, branding)
+    // 1. Studio Public Assets (portfolio, covers, screenshots, branding)
     // Public read allowed for published studio assets.
     // Admin-only write; separates create/update from delete so request.resource == null on delete is safe.
     match /studio-assets/{allPaths=**} {

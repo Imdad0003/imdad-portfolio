@@ -9,18 +9,23 @@ import {
   createGitHubRelease,
   uploadGitHubReleaseAsset,
 } from "@/lib/github-releases";
-import { db, storage } from "@/lib/firebase";
-import { ref, deleteObject } from "firebase/storage";
+import { db } from "@/lib/firebase";
 import {
   doc,
   setDoc,
   getDoc,
   getDocs,
+  deleteDoc,
   collection,
   query,
   where,
   updateDoc,
 } from "firebase/firestore";
+import {
+  getStagingSession,
+  getStagingChunks,
+  deleteStagingSession,
+} from "@/lib/staging-chunks";
 import { AppReleaseDocument, ReleaseAuditLogDocument } from "@/types/releases";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +54,13 @@ export async function POST(req: NextRequest) {
     let channel: "stable" | "beta" = "stable";
     let status: "published" | "draft" = "published";
     let customDownloadUrl: string = "";
-    let stagingPath: string | undefined;
+    let sessionId: string | undefined;
+
+    const cleanupStagingSession = async () => {
+      if (sessionId) {
+        await deleteStagingSession(sessionId);
+      }
+    };
 
     if (contentType.includes("application/json")) {
       const body = await req.json();
@@ -60,26 +71,72 @@ export async function POST(req: NextRequest) {
       channel = (body.channel || "stable") as "stable" | "beta";
       status = (body.status || "published") as "published" | "draft";
       customDownloadUrl = body.customDownloadUrl || "";
-      stagingPath = body.stagingPath;
+      sessionId = body.sessionId;
 
-      if (!body.downloadUrl) {
+      if (sessionId) {
+        const sessionData = await getStagingSession(sessionId);
+        if (!sessionData) {
+          return NextResponse.json(
+            { success: false, errors: [`Upload session '${sessionId}' not found or expired.`] },
+            { status: 404 }
+          );
+        }
+        fileName = body.fileName || sessionData.fileName || "release.apk";
+
+        // Query all chunks
+        const chunkDocs = await getStagingChunks(sessionId);
+        if (chunkDocs.length === 0) {
+          return NextResponse.json(
+            { success: false, errors: ["No upload chunks found for this session."] },
+            { status: 400 }
+          );
+        }
+
+        chunkDocs.sort((a, b) => a.index - b.index);
+
+        if (sessionData.totalChunks && chunkDocs.length !== sessionData.totalChunks) {
+          return NextResponse.json(
+            {
+              success: false,
+              errors: [
+                `Incomplete upload: received ${chunkDocs.length} of ${sessionData.totalChunks} chunks. Please retry uploading missing chunks.`,
+              ],
+            },
+            { status: 400 }
+          );
+        }
+
+        // Reassemble full file buffer
+        const chunkBuffers: Buffer[] = [];
+        for (const c of chunkDocs) {
+          if (typeof c.data === "string") {
+            chunkBuffers.push(Buffer.from(c.data, "base64"));
+          } else {
+            return NextResponse.json(
+              { success: false, errors: [`Corrupted chunk ${c.index}: unrecognized data format.`] },
+              { status: 400 }
+            );
+          }
+        }
+        fileBuffer = Buffer.concat(chunkBuffers);
+      } else if (body.downloadUrl) {
+        // Download binary from external source
+        const storageRes = await fetch(body.downloadUrl);
+        if (!storageRes.ok) {
+          return NextResponse.json(
+            { success: false, errors: [`Failed to retrieve APK from source (${storageRes.status})`] },
+            { status: 400 }
+          );
+        }
+        const arrayBuf = await storageRes.arrayBuffer();
+        fileBuffer = Buffer.from(arrayBuf);
+        fileName = body.fileName || "release.apk";
+      } else {
         return NextResponse.json(
-          { success: false, errors: ["Missing downloadUrl or APK binary source."] },
+          { success: false, errors: ["Missing sessionId or downloadUrl for APK binary."] },
           { status: 400 }
         );
       }
-
-      // Download binary from storage
-      const storageRes = await fetch(body.downloadUrl);
-      if (!storageRes.ok) {
-        return NextResponse.json(
-          { success: false, errors: [`Failed to retrieve APK from storage (${storageRes.status})`] },
-          { status: 400 }
-        );
-      }
-      const arrayBuf = await storageRes.arrayBuffer();
-      fileBuffer = Buffer.from(arrayBuf);
-      fileName = body.fileName || (stagingPath ? path.basename(stagingPath).replace(/^\d+_[a-f0-9]+_/, "") : "release.apk");
     } else {
       // Parse multipart form data
       const formData = await req.formData();
@@ -166,13 +223,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!validation.valid || !validation.metadata) {
-      if (stagingPath && storage) {
-        try {
-          await deleteObject(ref(storage, stagingPath));
-        } catch (cleanErr) {
-          console.warn("Staging asset cleanup notice on validation failure:", cleanErr);
-        }
-      }
+      await cleanupStagingSession();
       return NextResponse.json(
         {
           success: false,
@@ -428,14 +479,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Clean up temporary staging asset from storage if present
-    if (stagingPath && storage) {
-      try {
-        await deleteObject(ref(storage, stagingPath));
-      } catch (cleanErr) {
-        console.warn("Staging asset cleanup notice:", cleanErr);
-      }
-    }
+    // Clean up temporary staging chunks from Firestore if present
+    await cleanupStagingSession();
 
     return NextResponse.json(
       {
