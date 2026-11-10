@@ -58,6 +58,7 @@ export async function POST(req: NextRequest) {
     let status: "published" | "draft" = "published";
     let customDownloadUrl: string = "";
     let sessionId: string | undefined;
+    let incomingAppMetadata: Record<string, unknown> | null = null;
 
     const cleanupStagingSession = async () => {
       if (sessionId) {
@@ -73,6 +74,21 @@ export async function POST(req: NextRequest) {
       releaseNotes = body.releaseNotes || "Initial production release.";
       channel = (body.channel || "stable") as "stable" | "beta";
       status = (body.status || "published") as "published" | "draft";
+
+      if (body.appMetadata && typeof body.appMetadata === "object") {
+        incomingAppMetadata = body.appMetadata;
+      } else if (body.logo || body.screenshots || body.description || body.tagline || body.category || body.features) {
+        incomingAppMetadata = {
+          name: body.appName || body.name,
+          tagline: body.tagline,
+          shortDescription: body.shortDescription || body.tagline,
+          description: body.description,
+          category: body.category,
+          logo: body.logo,
+          screenshots: body.screenshots,
+          features: body.features,
+        };
+      }
       customDownloadUrl = body.customDownloadUrl || "";
       sessionId = body.sessionId;
 
@@ -420,6 +436,55 @@ export async function POST(req: NextRequest) {
         approvedCertificateFingerprint: approvedFingerprint,
         updatedAt: now,
       };
+
+      if (incomingAppMetadata) {
+        if (incomingAppMetadata.name) appUpdateData.name = incomingAppMetadata.name;
+        if (incomingAppMetadata.tagline) appUpdateData.tagline = incomingAppMetadata.tagline;
+        if (incomingAppMetadata.shortDescription) appUpdateData.shortDescription = incomingAppMetadata.shortDescription;
+        if (incomingAppMetadata.description) appUpdateData.description = incomingAppMetadata.description;
+        if (incomingAppMetadata.category) appUpdateData.category = incomingAppMetadata.category;
+        if (incomingAppMetadata.logo) appUpdateData.logo = incomingAppMetadata.logo;
+        if (Array.isArray(incomingAppMetadata.screenshots)) appUpdateData.screenshots = incomingAppMetadata.screenshots;
+        if (Array.isArray(incomingAppMetadata.features)) appUpdateData.features = incomingAppMetadata.features;
+      }
+
+      // Sync visual showcase content for wishmusic
+      if (appId === "wishmusic" && incomingAppMetadata && db) {
+        try {
+          const visSnap = await getDoc(doc(db, "appVisualContent", "wishmusic"));
+          const currentVis = visSnap.exists() ? visSnap.data() : {};
+          const currentPub = (currentVis.published || currentVis.draft || {}) as Record<string, any>;
+          const updatedVis: Record<string, unknown> = {
+            ...currentPub,
+            hero: {
+              ...(currentPub.hero || {}),
+              ...(incomingAppMetadata.logo ? { mockupImage: { url: incomingAppMetadata.logo, title: "WishMusic Logo" } } : {}),
+              ...(incomingAppMetadata.tagline ? { headline: incomingAppMetadata.tagline } : {}),
+              ...(incomingAppMetadata.description ? { subheadline: incomingAppMetadata.description } : {}),
+            },
+            screenshots: Array.isArray(incomingAppMetadata.screenshots) && incomingAppMetadata.screenshots.length > 0
+              ? incomingAppMetadata.screenshots.map((url: string, idx: number) => ({
+                  id: `scr_${idx}_${Date.now()}`,
+                  title: `WishMusic Interface #${idx + 1}`,
+                  caption: `Official in-app screenshot ${idx + 1}`,
+                  image: { url, title: `WishMusic Interface #${idx + 1}` },
+                  enabled: true,
+                  category: "screenshot",
+                }))
+              : (currentPub.screenshots || []),
+            updatedAt: now,
+          };
+
+          await setDoc(doc(db, "appVisualContent", "wishmusic"), {
+            id: "wishmusic",
+            draft: updatedVis,
+            published: updatedVis,
+            updatedAt: now,
+          }, { merge: true });
+        } catch (visErr) {
+          console.warn("Could not sync appVisualContent for wishmusic:", visErr);
+        }
+      }
 
       let restPersisted = false;
 

@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Cpu,
   FileCheck,
+  MessageSquare,
 } from "lucide-react";
 
 const categoryIcons: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -102,6 +103,29 @@ export default function ServicesPage() {
     );
   };
 
+  const getServiceTargetUrl = (service: ServiceItem): string => {
+    if (
+      service.id.includes("amazon") ||
+      service.id.includes("creative") ||
+      service.id.includes("listing")
+    ) {
+      return "/services/amazon-listing";
+    }
+    if (service.category === "ecommerce") {
+      return "/services/ecommerce";
+    }
+    if (service.category === "websites") {
+      return "/services/website-development";
+    }
+    if (service.category === "video") {
+      return "/services/video-editing";
+    }
+    if (service.category === "social") {
+      return "/services/social-media";
+    }
+    return `/contact?service=${encodeURIComponent(service.name)}`;
+  };
+
   return (
     <div className="py-16 sm:py-24">
       <Container>
@@ -166,6 +190,25 @@ export default function ServicesPage() {
                 </div>
               </Link>
             ))}
+
+            <div className="p-5 rounded-2xl bg-amber-50/80 border border-amber-200 flex flex-col justify-between">
+              <div>
+                <span className="studio-tag text-[10px] text-amber-900 font-mono font-bold block mb-1 uppercase tracking-wider">
+                  SHOWCASE PORTFOLIO // 10+ SAMPLES
+                </span>
+                <h3 className="font-bold text-base text-[#0A192F]">Amazon Listing &amp; A+ Content</h3>
+                <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
+                  Explore 10+ variation sample decks (7–9 images each), stacked A+ module banners, and transparent packages.
+                </p>
+              </div>
+              <Link
+                href="/services/amazon-listing"
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-amber-900 hover:underline"
+              >
+                <span>View Dedicated Showcase</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
 
             <div className="p-5 rounded-2xl bg-sky-50/70 border border-sky-200 flex flex-col justify-between">
               <div>
@@ -280,14 +323,22 @@ export default function ServicesPage() {
                       </div>
 
                       {/* CTA */}
-                      <div className="mt-6 pt-4 border-t border-slate-100">
+                      <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2">
+                        <Link
+                          href={getServiceTargetUrl(service)}
+                          className="flex-1 py-3 px-4 min-h-[44px] rounded-xl text-xs font-bold bg-white hover:bg-[#0A192F] hover:text-white text-[#0A192F] border border-slate-200 hover:border-[#0A192F] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs focus-ring text-center"
+                        >
+                          <span>{service.id.includes("amazon") || service.id.includes("creative") || service.id.includes("listing") ? "Explore Showcase" : "View Service Scope"}</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
                         <button
                           type="button"
                           onClick={() => handleGetStarted(service)}
-                          className="w-full py-3 px-4 min-h-[44px] rounded-xl text-xs font-bold bg-white hover:bg-[#0A192F] hover:text-white text-[#0A192F] border border-slate-200 hover:border-[#0A192F] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-2xs focus-ring"
+                          className="p-3 min-h-[44px] min-w-[44px] rounded-xl border border-slate-200 text-slate-500 hover:text-[#0284C7] hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer shrink-0"
+                          title="Ask AI Assistant about this service"
+                          aria-label="Ask AI Assistant about this service"
                         >
-                          <span>Get Started</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <MessageSquare className="w-4 h-4" />
                         </button>
                       </div>
                     </div>

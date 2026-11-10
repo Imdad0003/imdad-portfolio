@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { corePackages, CorePackage } from "@/data/pricing";
 import { getPublishedPackages } from "@/lib/cms";
-import { Check, Sparkles, Clock, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { Check, Sparkles, Clock, ArrowRight, MessageSquare } from "lucide-react";
 
 interface CorePackagesSectionProps {
   title?: string;
@@ -151,18 +152,26 @@ export function CorePackagesSection({
               </div>
 
               {/* Order / Inquire Button */}
-              <div className="mt-8 pt-4 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => handleSelectPackage(pkg)}
-                  className={`w-full py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-ring shadow-xs ${
+              <div className="mt-8 pt-4 border-t border-slate-100 flex items-center gap-2">
+                <Link
+                  href="/services/amazon-listing#packages"
+                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-ring shadow-xs text-center ${
                     isFeatured
                       ? "bg-[#0284C7] hover:bg-[#0369A1] text-white active:scale-[0.98]"
                       : "bg-[#0A192F] hover:bg-[#1E293B] text-white active:scale-[0.98]"
                   }`}
                 >
-                  <span>Select Package</span>
+                  <span>Explore &amp; Select</span>
                   <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleSelectPackage(pkg)}
+                  className="p-3 rounded-xl border border-slate-200 text-slate-500 hover:text-[#0284C7] hover:bg-slate-50 transition-colors cursor-pointer"
+                  title="Ask AI Assistant about this package"
+                  aria-label="Ask AI Assistant about this package"
+                >
+                  <MessageSquare className="w-4 h-4" />
                 </button>
               </div>
             </div>

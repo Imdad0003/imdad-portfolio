@@ -21,6 +21,10 @@ import {
   Terminal,
   FileJson,
   CheckCircle,
+  Image as ImageIcon,
+  Trash2,
+  Plus,
+  Info,
   Zap,
   Activity,
   Pause,
@@ -28,6 +32,8 @@ import {
 } from "lucide-react";
 import { User } from "firebase/auth";
 import { db } from "@/lib/firebase";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { uploadStudioAsset } from "@/lib/storage";
 import { AppDocument } from "@/types/cms";
 import {
   ApkParsedMetadata,
@@ -94,6 +100,42 @@ export function AppReleaseManager({
     apps.find((a) => a.id === "wishmusic")?.id || apps[0]?.id || "wishmusic"
   );
   const selectedApp = apps.find((a) => a.id === selectedAppId);
+
+  // UNIFIED APP INFO, LOGO & SCREENSHOTS STATE
+  const [appName, setAppName] = useState(selectedApp?.name || "");
+  const [appTagline, setAppTagline] = useState(selectedApp?.tagline || selectedApp?.shortDescription || "");
+  const [appCategory, setAppCategory] = useState(selectedApp?.category || "Audio & Media");
+  const [appDescription, setAppDescription] = useState(selectedApp?.description || "");
+  const [appFeaturesText, setAppFeaturesText] = useState(
+    (selectedApp?.features || []).map((f) => (f.description ? `${f.title}: ${f.description}` : f.title)).join("\n")
+  );
+  const [appLogoUrl, setAppLogoUrl] = useState(selectedApp?.logo || "");
+  const [appScreenshots, setAppScreenshots] = useState<string[]>(selectedApp?.screenshots || []);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingScreenshots, setUploadingScreenshots] = useState(false);
+  const [savingAppInfo, setSavingAppInfo] = useState(false);
+  const [appInfoNotice, setAppInfoNotice] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [newScreenshotUrl, setNewScreenshotUrl] = useState("");
+  const [showMetadataCard, setShowMetadataCard] = useState(true);
+
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const screenshotsInputRef = useRef<HTMLInputElement>(null);
+
+  // Sync state whenever selected app changes or apps update
+  useEffect(() => {
+    const cur = apps.find((a) => a.id === selectedAppId);
+    if (cur) {
+      setAppName(cur.name || "");
+      setAppTagline(cur.tagline || cur.shortDescription || "");
+      setAppCategory(cur.category || "Audio & Media");
+      setAppDescription(cur.description || "");
+      setAppFeaturesText(
+        (cur.features || []).map((f) => (f.description ? `${f.title}: ${f.description}` : f.title)).join("\n")
+      );
+      setAppLogoUrl(cur.logo || "");
+      setAppScreenshots(cur.screenshots || []);
+    }
+  }, [selectedAppId, apps]);
 
   // Form states
   const [releaseTitle, setReleaseTitle] = useState("");
@@ -166,6 +208,200 @@ export function AppReleaseManager({
   }, []);
 
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // UNIFIED APP INFO, LOGO & SCREENSHOTS HANDLERS
+  // ---------------------------------------------------------------------------
+  const parseFeaturesList = (text: string) => {
+    return text
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const parts = line.split(":");
+        if (parts.length > 1) {
+          return { title: parts[0].trim(), description: parts.slice(1).join(":").trim() };
+        }
+        return { title: line, description: "" };
+      });
+  };
+
+  const handleLogoFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    setAppInfoNotice(null);
+    try {
+      let url = "";
+      try {
+        url = await uploadStudioAsset(file, "apps");
+      } catch (storageErr) {
+        console.warn("Storage upload notice, attempting visual API fallback:", storageErr);
+      }
+
+      if (!url && currentUser) {
+        const token = await currentUser.getIdToken();
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("section", "hero");
+        formData.append("title", `${appName || "App"} Logo`);
+        const res = await fetch("/api/admin/apps/wishmusic/visuals/upload", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.asset?.url) url = data.asset.url;
+      }
+
+      if (url) {
+        setAppLogoUrl(url);
+        setAppInfoNotice({ type: "success", text: "App logo uploaded successfully!" });
+      } else {
+        throw new Error("Could not obtain URL for uploaded logo.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setAppInfoNotice({ type: "error", text: `Logo upload failed: ${msg}` });
+    } finally {
+      setUploadingLogo(false);
+      if (logoInputRef.current) logoInputRef.current.value = "";
+    }
+  };
+
+  const handleScreenshotsFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploadingScreenshots(true);
+    setAppInfoNotice(null);
+    try {
+      const uploaded: string[] = [];
+      const token = currentUser ? await currentUser.getIdToken() : "";
+
+      for (let i = 0; i < files.length; i++) {
+        const f = files[i];
+        let url = "";
+        try {
+          url = await uploadStudioAsset(f, "apps");
+        } catch (err) {
+          console.warn("Storage upload notice, attempting visual API fallback:", err);
+        }
+
+        if (!url && token) {
+          const formData = new FormData();
+          formData.append("file", f);
+          formData.append("section", "screenshot");
+          formData.append("title", `${appName || "App"} Screenshot ${i + 1}`);
+          const res = await fetch("/api/admin/apps/wishmusic/visuals/upload", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: formData,
+          });
+          const data = await res.json();
+          if (data.asset?.url) url = data.asset.url;
+        }
+
+        if (url) uploaded.push(url);
+      }
+
+      if (uploaded.length > 0) {
+        setAppScreenshots((prev) => [...prev, ...uploaded]);
+        setAppInfoNotice({
+          type: "success",
+          text: `Successfully uploaded ${uploaded.length} screenshot(s)!`,
+        });
+      } else {
+        throw new Error("No screenshots were uploaded.");
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setAppInfoNotice({ type: "error", text: `Screenshots upload failed: ${msg}` });
+    } finally {
+      setUploadingScreenshots(false);
+      if (screenshotsInputRef.current) screenshotsInputRef.current.value = "";
+    }
+  };
+
+  const handleAddManualScreenshot = () => {
+    if (!newScreenshotUrl.trim()) return;
+    setAppScreenshots((prev) => [...prev, newScreenshotUrl.trim()]);
+    setNewScreenshotUrl("");
+  };
+
+  const handleRemoveScreenshot = (index: number) => {
+    setAppScreenshots((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveAppInfoOnly = async () => {
+    if (!db || !selectedAppId) return;
+    setSavingAppInfo(true);
+    setAppInfoNotice(null);
+    try {
+      const now = new Date().toISOString();
+      const features = parseFeaturesList(appFeaturesText);
+      const payload: Record<string, unknown> = {
+        name: appName.trim() || selectedApp?.name || "App",
+        tagline: appTagline.trim(),
+        shortDescription: appTagline.trim() || appDescription.trim().substring(0, 150),
+        description: appDescription.trim(),
+        category: appCategory.trim() || "Audio & Media",
+        features,
+        updatedAt: now,
+      };
+
+      if (appLogoUrl.trim()) payload.logo = appLogoUrl.trim();
+      if (appScreenshots.length > 0) payload.screenshots = appScreenshots;
+
+      await setDoc(doc(db, "apps", selectedAppId), payload, { merge: true });
+
+      // If wishmusic, also sync to appVisualContent/wishmusic
+      if (selectedAppId === "wishmusic") {
+        try {
+          const visSnap = await getDoc(doc(db, "appVisualContent", "wishmusic"));
+          const currentVis = visSnap.exists() ? visSnap.data() : {};
+          const currentPub = (currentVis.published || currentVis.draft || {}) as Record<string, any>;
+          const updatedVis = {
+            ...currentPub,
+            hero: {
+              ...(currentPub.hero || {}),
+              ...(appLogoUrl ? { mockupImage: { url: appLogoUrl, title: "WishMusic Logo" } } : {}),
+              ...(appTagline ? { headline: appTagline } : {}),
+              ...(appDescription ? { subheadline: appDescription } : {}),
+            },
+            screenshots: appScreenshots.length > 0
+              ? appScreenshots.map((url, idx) => ({
+                  id: `scr_${idx}_${Date.now()}`,
+                  title: `WishMusic Interface #${idx + 1}`,
+                  caption: `In-app preview screenshot ${idx + 1}`,
+                  image: { url, title: `WishMusic #${idx + 1}` },
+                  enabled: true,
+                  category: "screenshot",
+                }))
+              : (currentPub.screenshots || []),
+            updatedAt: now,
+          };
+          await setDoc(doc(db, "appVisualContent", "wishmusic"), {
+            id: "wishmusic",
+            draft: updatedVis,
+            published: updatedVis,
+            updatedAt: now,
+          }, { merge: true });
+        } catch (visErr) {
+          console.warn("Notice: appVisualContent sync:", visErr);
+        }
+      }
+
+      setAppInfoNotice({
+        type: "success",
+        text: `✓ App info, logo, and ${appScreenshots.length} screenshot(s) saved to Firestore!`,
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setAppInfoNotice({ type: "error", text: `Failed to save app info: ${msg}` });
+    } finally {
+      setSavingAppInfo(false);
+    }
+  };
+
   // 1. FILE SELECTION & PRE-FLIGHT VALIDATION
   // ---------------------------------------------------------------------------
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -440,13 +676,23 @@ export function AppReleaseManager({
         },
         body: JSON.stringify({
           appId: selectedAppId,
-          appName: selectedApp?.name || "WishMusic",
+          appName: appName.trim() || selectedApp?.name || "WishMusic",
           sessionId,
           fileName: file.name,
-          releaseTitle: releaseTitle || `${selectedApp?.name} v${apkMeta.versionName}`,
+          releaseTitle: releaseTitle || `${appName.trim() || selectedApp?.name} v${apkMeta.versionName}`,
           releaseNotes: releaseNotes || "Standard production release.",
           channel,
           status: publishStatus,
+          appMetadata: {
+            name: appName.trim() || selectedApp?.name || "WishMusic",
+            tagline: appTagline.trim(),
+            shortDescription: appTagline.trim() || appDescription.trim().substring(0, 150),
+            description: appDescription.trim(),
+            category: appCategory.trim() || "Audio & Media",
+            logo: appLogoUrl.trim() || undefined,
+            screenshots: appScreenshots.length > 0 ? appScreenshots : undefined,
+            features: parseFeaturesList(appFeaturesText),
+          },
         }),
         signal: abortController.signal,
       });
@@ -462,6 +708,13 @@ export function AppReleaseManager({
       );
       setWorkflowState("published");
       if (onReleaseCreated) onReleaseCreated(publishData.release);
+
+      // Also persist app info, logo, and screenshots client-side
+      try {
+        await handleSaveAppInfoOnly();
+      } catch (syncErr) {
+        console.warn("Client app info sync notice:", syncErr);
+      }
 
       // Clean up session state
       setActiveSessionId(null);
@@ -732,6 +985,285 @@ export function AppReleaseManager({
                 Current Active Version Code: #{selectedApp.latestVersionCode}
               </span>
             )}
+          </div>
+        )}
+      </div>
+
+      {/* =================================================================== */}
+      {/* UNIFIED APP IDENTITY, LOGO & SCREENSHOTS ASSET STUDIO                */}
+      {/* =================================================================== */}
+      <div className="p-5 sm:p-6 rounded-2xl bg-white border border-[#502D55]/12 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#502D55]/10 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#FAF4F9] border border-[#502D55]/12 flex items-center justify-center text-[#935073] shrink-0">
+              <ImageIcon className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-[#180D1D]">
+                  App Identity, Visual Assets & Metadata
+                </h3>
+                <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-[#FAF2EA] text-[#7A3F26]">
+                  {selectedAppId}
+                </span>
+              </div>
+              <p className="text-[11px] text-[#56475C] mt-0.5">
+                Upload App Logo, Screenshots gallery, and product description in one unified flow.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowMetadataCard(!showMetadataCard)}
+              className="px-3 py-1.5 rounded-xl border border-[#502D55]/15 text-xs text-[#56475C] hover:bg-[#FAF4F9] transition-all cursor-pointer"
+            >
+              {showMetadataCard ? "Minimize" : "Configure Info & Media"}
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveAppInfoOnly}
+              disabled={savingAppInfo}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#180D1D] hover:bg-[#2B1435] text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              {savingAppInfo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+              <span>{savingAppInfo ? "Saving..." : "Save App Info & Media"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Notice Toast */}
+        {appInfoNotice && (
+          <div
+            className={`p-3 rounded-xl text-xs flex items-center gap-2 animate-fade-in ${
+              appInfoNotice.type === "success"
+                ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                : "bg-rose-50 text-rose-800 border border-rose-200"
+            }`}
+          >
+            {appInfoNotice.type === "success" ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span>{appInfoNotice.text}</span>
+          </div>
+        )}
+
+        {showMetadataCard && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-1">
+            {/* Left 6 cols: Metadata Copy */}
+            <div className="lg:col-span-6 space-y-3.5">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1 font-bold">
+                    App Display Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={appName}
+                    onChange={(e) => setAppName(e.target.value)}
+                    placeholder="e.g. WishMusic"
+                    className="w-full px-3 py-2 rounded-xl border border-[#502D55]/20 bg-[#FAF4F9] text-xs font-medium text-[#180D1D] focus:outline-none focus:border-[#935073]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono text-[#56475C] mb-1 font-bold">
+                    Category
+                  </label>
+                  <input
+                    type="text"
+                    value={appCategory}
+                    onChange={(e) => setAppCategory(e.target.value)}
+                    placeholder="e.g. Audio & Media"
+                    className="w-full px-3 py-2 rounded-xl border border-[#502D55]/20 bg-[#FAF4F9] text-xs font-medium text-[#180D1D] focus:outline-none focus:border-[#935073]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-[#56475C] mb-1 font-bold">
+                  Tagline / Short Pitch
+                </label>
+                <input
+                  type="text"
+                  value={appTagline}
+                  onChange={(e) => setAppTagline(e.target.value)}
+                  placeholder="e.g. Distraction-free high-fidelity audio player"
+                  className="w-full px-3 py-2 rounded-xl border border-[#502D55]/20 bg-[#FAF4F9] text-xs font-medium text-[#180D1D] focus:outline-none focus:border-[#935073]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-[#56475C] mb-1 font-bold">
+                  Full Description
+                </label>
+                <textarea
+                  rows={3}
+                  value={appDescription}
+                  onChange={(e) => setAppDescription(e.target.value)}
+                  placeholder="Comprehensive description of the application architecture, capabilities, and user experience..."
+                  className="w-full px-3 py-2 rounded-xl border border-[#502D55]/20 bg-[#FAF4F9] text-xs font-medium text-[#180D1D] focus:outline-none focus:border-[#935073] leading-relaxed"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-mono text-[#56475C] mb-1 font-bold">
+                  App Features (Title: Description, one per line)
+                </label>
+                <textarea
+                  rows={4}
+                  value={appFeaturesText}
+                  onChange={(e) => setAppFeaturesText(e.target.value)}
+                  placeholder="Lossless FLAC Engine: 24-bit bit-perfect playback\nDynamic Album Tinting: Adaptive color palette extraction\nZero Telemetry: Strict privacy with local SQLite database"
+                  className="w-full px-3 py-2 rounded-xl border border-[#502D55]/20 bg-[#FAF4F9] text-xs font-mono text-[#180D1D] focus:outline-none focus:border-[#935073] leading-relaxed"
+                />
+              </div>
+            </div>
+
+            {/* Right 6 cols: Logo & Multiple Screenshots */}
+            <div className="lg:col-span-6 space-y-4">
+              {/* App Logo */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF4F9]/70 border border-[#502D55]/12 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono font-bold text-[#180D1D] flex items-center gap-1.5">
+                    <Smartphone className="w-3.5 h-3.5 text-[#935073]" />
+                    <span>App Logo / App Icon</span>
+                  </label>
+                  {appLogoUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setAppLogoUrl("")}
+                      className="text-[10px] text-rose-600 hover:underline cursor-pointer"
+                    >
+                      Remove Logo
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-2xl bg-white border border-[#502D55]/15 flex items-center justify-center overflow-hidden shrink-0 shadow-xs relative">
+                    {appLogoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={appLogoUrl} alt="App Logo" className="w-full h-full object-cover" />
+                    ) : (
+                      <Smartphone className="w-6 h-6 text-[#7A6880]" />
+                    )}
+                    {uploadingLogo && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 text-white animate-spin" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-1.5">
+                    <input
+                      type="text"
+                      value={appLogoUrl}
+                      onChange={(e) => setAppLogoUrl(e.target.value)}
+                      placeholder="https://... or upload image"
+                      className="w-full px-3 py-1.5 rounded-xl border border-[#502D55]/20 bg-white text-xs font-mono text-[#180D1D] focus:outline-none focus:border-[#935073]"
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={uploadingLogo}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#502D55]/15 hover:bg-[#FAF4F9] text-xs font-bold text-[#180D1D] cursor-pointer shadow-2xs disabled:opacity-50"
+                      >
+                        <Upload className="w-3 h-3 text-[#935073]" />
+                        <span>{uploadingLogo ? "Uploading..." : "Upload Logo Image"}</span>
+                      </button>
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleLogoFileSelect}
+                        className="hidden"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* App Screenshots (Multi-file & Batch) */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF4F9]/70 border border-[#502D55]/12 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-mono font-bold text-[#180D1D] flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-[#935073]" />
+                    <span>App Screenshots / Photos ({appScreenshots.length})</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => screenshotsInputRef.current?.click()}
+                    disabled={uploadingScreenshots}
+                    className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-[#FAF2EA] text-[#7A3F26] border border-[#F6DBC0] hover:bg-[#F3E5D8] text-[11px] font-bold cursor-pointer transition-colors shadow-2xs disabled:opacity-50"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>{uploadingScreenshots ? "Uploading..." : "Upload Screenshots (Batch)"}</span>
+                  </button>
+                  <input
+                    ref={screenshotsInputRef}
+                    type="file"
+                    multiple
+                    accept="image/png,image/jpeg,image/webp"
+                    onChange={handleScreenshotsFileSelect}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Manual URL Add Row */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newScreenshotUrl}
+                    onChange={(e) => setNewScreenshotUrl(e.target.value)}
+                    placeholder="Paste image URL (https://...)"
+                    className="flex-1 px-3 py-1.5 rounded-xl border border-[#502D55]/20 bg-white text-xs font-mono text-[#180D1D] focus:outline-none focus:border-[#935073]"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleAddManualScreenshot}
+                    className="px-3 py-1.5 rounded-xl bg-white border border-[#502D55]/15 hover:bg-[#FAF4F9] text-xs font-bold text-[#180D1D] cursor-pointer"
+                  >
+                    Add URL
+                  </button>
+                </div>
+
+                {/* Screenshots Thumbnails Grid */}
+                {appScreenshots.length === 0 ? (
+                  <div className="p-4 rounded-xl border border-dashed border-[#502D55]/20 text-center text-xs text-[#7A6880]">
+                    No screenshots configured yet. Upload images above or enter URLs.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-56 overflow-y-auto p-1">
+                    {appScreenshots.map((url, idx) => (
+                      <div
+                        key={idx}
+                        className="group relative aspect-[9/16] rounded-xl overflow-hidden bg-black/5 border border-[#502D55]/15 shadow-2xs"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={`Screenshot ${idx + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5 p-1">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveScreenshot(idx)}
+                            className="p-1 rounded bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                            title="Remove screenshot"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <span className="absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-mono bg-black/60 text-white font-bold">
+                          #{idx + 1}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

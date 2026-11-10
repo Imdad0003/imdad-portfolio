@@ -47,3 +47,6 @@ firebase-adminsdk*.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# task artifacts
+artifacts/

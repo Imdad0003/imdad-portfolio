@@ -94,6 +94,22 @@ export function WishMusicShowcaseClient({
 
   const { visibility, hero, screenshots, features, about, gallery } = visuals;
 
+  // Merge screenshots from both visual content and app document
+  const effectiveScreenshots = [
+    ...(screenshots || []),
+    ...((app.screenshots || []).map((url, i) => ({
+      id: `app_sc_${i}`,
+      title: `${app.name || "WishMusic"} Interface #${i + 1}`,
+      caption: `In-app preview screenshot ${i + 1}`,
+      image: { url, fileName: `screenshot_${i + 1}.png`, title: `${app.name} #${i + 1}` },
+      enabled: true,
+      category: "screenshot",
+    }))),
+  ].filter(
+    (item, idx, self) =>
+      item.image?.url && self.findIndex((s) => s.image?.url === item.image?.url) === idx
+  );
+
   const filteredGallery = gallery.filter((item) => {
     if (!item.enabled) return false;
     if (galleryFilter === "all") return true;
@@ -137,24 +153,33 @@ export function WishMusicShowcaseClient({
               {/* Logo & Headline */}
               <div className="space-y-3">
                 <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-[#935073] to-[#E0A8FF] flex items-center justify-center text-white shadow-lg border border-white/20 shrink-0">
-                    <Music className="w-8 h-8" />
-                  </div>
+                  {app.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={app.logo}
+                      alt={app.name || "WishMusic"}
+                      className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover shadow-lg border border-white/20 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-[#935073] to-[#E0A8FF] flex items-center justify-center text-white shadow-lg border border-white/20 shrink-0">
+                      <Music className="w-8 h-8" />
+                    </div>
+                  )}
                   <div>
                     <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
-                      WishMusic
+                      {app.name || "WishMusic"}
                     </h1>
                     <p className="text-xs sm:text-sm font-semibold text-[#D8829D] font-mono tracking-wide">
-                      HIGH-FIDELITY FLAC AUDIO LAB
+                      {app.category?.toUpperCase() || "HIGH-FIDELITY FLAC AUDIO LAB"}
                     </p>
                   </div>
                 </div>
 
                 <h2 className="text-xl sm:text-2xl font-bold text-white/90 leading-snug">
-                  {hero.headline}
+                  {hero.headline || app.tagline || "Distraction-Free Audio Engine & Waveform Scrubber"}
                 </h2>
                 <p className="text-sm sm:text-base text-[#d8cfc4] leading-relaxed max-w-2xl">
-                  {hero.subheadline}
+                  {hero.subheadline || app.shortDescription || app.description}
                 </p>
               </div>
 
@@ -254,7 +279,7 @@ export function WishMusicShowcaseClient({
       {/* =================================================================== */}
       {/* 2. APP SCREENSHOTS SHOWCASE (8–9 IMAGES)                             */}
       {/* =================================================================== */}
-      {visibility.screenshots && screenshots.length > 0 && (
+      {(visibility.screenshots || effectiveScreenshots.length > 0) && effectiveScreenshots.length > 0 && (
         <section id="screenshots" className="space-y-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div>
@@ -272,7 +297,7 @@ export function WishMusicShowcaseClient({
 
           {/* Screenshots Grid / Carousel */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6">
-            {screenshots.map((s) => (
+            {effectiveScreenshots.map((s) => (
               <div
                 key={s.id}
                 onClick={() =>

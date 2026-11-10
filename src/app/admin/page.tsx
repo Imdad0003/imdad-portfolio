@@ -24,6 +24,7 @@ import {
 import { uploadStudioAsset } from "@/lib/storage";
 import { AppReleaseManager } from "@/components/admin/AppReleaseManager";
 import { ReleaseHistoryView } from "@/components/admin/ReleaseHistoryView";
+import { AmazonPortfolioManager } from "@/components/admin/AmazonPortfolioManager";
 import { appsData } from "@/data/apps";
 import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
@@ -95,6 +96,7 @@ export default function AdminPortalPage() {
   // Tab & data state
   const [activeTab, setActiveTab] = useState<
     | "dashboard"
+    | "amazon-portfolio"
     | "apps"
     | "app-releases"
     | "release-history"
@@ -1021,6 +1023,7 @@ export default function AdminPortalPage() {
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/70 border border-[#502D55]/10 backdrop-blur-md mb-8 overflow-x-auto">
           {[
             { id: "dashboard", label: "Dashboard", icon: Layers },
+            { id: "amazon-portfolio", label: "Amazon & A+ Portfolio", icon: ShoppingBag },
             { id: "apps", label: `App Directory (${apps.length})`, icon: Smartphone },
             { id: "app-releases", label: "Release Manager", icon: Upload },
             { id: "release-history", label: "Release History", icon: History },
@@ -1063,7 +1066,7 @@ export default function AdminPortalPage() {
                 </span>
                 <span className="text-[11px] text-[#56475C]">Instant serverless sync &bull; Zero redeploy</span>
               </div>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
                 <Link
                   href="/admin/projects"
                   className="p-3 rounded-2xl bg-[#FAF4F9] border border-[#502D55]/15 hover:border-[#935073] hover:bg-[#FAF4F9]/80 transition-all flex flex-col items-center justify-center text-center gap-1.5 group"
@@ -1071,13 +1074,14 @@ export default function AdminPortalPage() {
                   <Plus className="w-4 h-4 text-[#935073] group-hover:scale-110 transition-transform" />
                   <span className="text-xs font-bold text-[#180D1D]">New Project</span>
                 </Link>
-                <Link
-                  href="/admin/projects"
-                  className="p-3 rounded-2xl bg-[#FAF4F9] border border-[#502D55]/15 hover:border-[#935073] hover:bg-[#FAF4F9]/80 transition-all flex flex-col items-center justify-center text-center gap-1.5 group"
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("amazon-portfolio")}
+                  className="p-3 rounded-2xl bg-[#FAF4F9] border border-[#502D55]/15 hover:border-[#935073] hover:bg-[#FAF4F9]/80 transition-all flex flex-col items-center justify-center text-center gap-1.5 group cursor-pointer"
                 >
-                  <FolderUp className="w-4 h-4 text-[#7A3F26] group-hover:scale-110 transition-transform" />
-                  <span className="text-xs font-bold text-[#180D1D]">Upload Folder</span>
-                </Link>
+                  <ShoppingBag className="w-4 h-4 text-[#d97746] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold text-[#180D1D]">Amazon & A+</span>
+                </button>
                 <Link
                   href="/admin/apps"
                   className="p-3 rounded-2xl bg-[#FAF4F9] border border-[#502D55]/15 hover:border-[#935073] hover:bg-[#FAF4F9]/80 transition-all flex flex-col items-center justify-center text-center gap-1.5 group"
@@ -1091,6 +1095,13 @@ export default function AdminPortalPage() {
                 >
                   <Smartphone className="w-4 h-4 text-blue-700 group-hover:scale-110 transition-transform" />
                   <span className="text-xs font-bold text-[#180D1D]">Manage Apps</span>
+                </Link>
+                <Link
+                  href="/admin/projects"
+                  className="p-3 rounded-2xl bg-[#FAF4F9] border border-[#502D55]/15 hover:border-[#935073] hover:bg-[#FAF4F9]/80 transition-all flex flex-col items-center justify-center text-center gap-1.5 group"
+                >
+                  <FolderUp className="w-4 h-4 text-[#7A3F26] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold text-[#180D1D]">Upload Folder</span>
                 </Link>
                 <Link
                   href="/admin/projects"
@@ -1228,6 +1239,13 @@ export default function AdminPortalPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB: AMAZON LISTING & A+ CONTENT CMS                     */}
+        {/* ======================================================== */}
+        {activeTab === "amazon-portfolio" && (
+          <AmazonPortfolioManager currentUser={currentUser} />
         )}
 
         {/* ======================================================== */}
