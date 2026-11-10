@@ -178,7 +178,7 @@ export async function POST(req: NextRequest) {
         if (appSnap.exists()) {
           const appData = appSnap.data();
           if (appData.packageName) expectedPackage = appData.packageName;
-          if (appData.approvedCertificateFingerprint) {
+          if (!approvedFingerprint && appData.approvedCertificateFingerprint) {
             approvedFingerprint = appData.approvedCertificateFingerprint;
           }
         }
