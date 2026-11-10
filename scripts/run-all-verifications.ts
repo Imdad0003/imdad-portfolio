@@ -31,6 +31,7 @@ const suites = [
   { name: "Live APK Flow & Release Hardening", script: "scripts/verify-live-apk-flow.ts" },
   { name: "API Security & Administrative Auth", script: "scripts/verify-security-endpoints.ts" },
   { name: "Real GitHub Releases CDN & Download", script: "scripts/verify-real-github-release.ts" },
+  { name: "Concurrent Upload Throughput & Reassembly", script: "scripts/verify-concurrent-upload-throughput.ts" },
 ];
 
 console.log(`${colors.bold}${colors.cyan}======================================================================`);

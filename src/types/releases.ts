@@ -77,6 +77,35 @@ export interface AppReleaseDocument {
   createdAt: string;
   publishedAt?: string;
   updatedAt: string;
+  verificationTrust?: string;
+  verifiedAt?: string;
+}
+
+export interface StructuredReleaseManifest {
+  appId: string;
+  appName: string;
+  githubReleaseId: number;
+  releaseTag: string;
+  releaseName: string;
+  assetId: number;
+  assetFileName: string;
+  assetDownloadUrl: string;
+  assetSize: number;
+  assetSizeFormatted: string;
+  sha256: string;
+  packageName: string;
+  versionName: string;
+  versionCode: number;
+  minSdkVersion: number;
+  minAndroidVersion?: string;
+  targetSdkVersion: number;
+  targetAndroidVersion?: string;
+  certificateFingerprintSha256: string;
+  certificateSubject: string;
+  isProductionSigned: boolean;
+  signingScheme: string;
+  publishedAt: string;
+  verifiedLocallyBy: "apksigner" | "node-apk-parser";
 }
 
 export interface ReleaseAuditLogDocument {

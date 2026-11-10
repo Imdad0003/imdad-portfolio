@@ -144,29 +144,41 @@ export async function firestoreRestList<T = Record<string, unknown>>(
 ): Promise<T[]> {
   try {
     const cleanPath = collectionPath.replace(/^\//, "");
-    const url = `${BASE_URL}/${cleanPath}?pageSize=${pageSize}`;
-    const headers: Record<string, string> = {};
-    if (idToken) {
-      headers["Authorization"] = `Bearer ${idToken}`;
-    }
+    const allDocs: T[] = [];
+    let pageToken: string | undefined = undefined;
 
-    const res = await fetch(url, { method: "GET", headers });
-    if (!res.ok) return [];
+    do {
+      let url = `${BASE_URL}/${cleanPath}?pageSize=${pageSize}`;
+      if (pageToken) {
+        url += `&pageToken=${encodeURIComponent(pageToken)}`;
+      }
 
-    const json = await res.json();
-    if (!json.documents || !Array.isArray(json.documents)) return [];
+      const headers: Record<string, string> = {};
+      if (idToken) {
+        headers["Authorization"] = `Bearer ${idToken}`;
+      }
 
-    const docs = json.documents.map((d: { fields?: Record<string, unknown> }) => {
-      if (!d.fields) return {};
-      return Object.fromEntries(
-        Object.entries(d.fields).map(([k, v]) => [
-          k,
-          fromFirestoreValue(v as Record<string, unknown>),
-        ])
-      );
-    });
+      const res = await fetch(url, { method: "GET", headers });
+      if (!res.ok) break;
 
-    return docs as T[];
+      const json = await res.json();
+      if (json.documents && Array.isArray(json.documents)) {
+        const docs = json.documents.map((d: { fields?: Record<string, unknown> }) => {
+          if (!d.fields) return {};
+          return Object.fromEntries(
+            Object.entries(d.fields).map(([k, v]) => [
+              k,
+              fromFirestoreValue(v as Record<string, unknown>),
+            ])
+          );
+        });
+        allDocs.push(...(docs as T[]));
+      }
+
+      pageToken = json.nextPageToken;
+    } while (pageToken);
+
+    return allDocs;
   } catch (err) {
     console.warn("firestoreRestList error:", err);
     return [];
