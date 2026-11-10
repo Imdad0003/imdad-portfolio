@@ -9,6 +9,7 @@ import { collection, getDocs, doc, setDoc, deleteDoc, query, orderBy } from "fir
 import { verifyAdminStatus, adminSignIn } from "@/lib/auth";
 import { AppReleaseManager } from "@/components/admin/AppReleaseManager";
 import { ReleaseHistoryView } from "@/components/admin/ReleaseHistoryView";
+import { WishMusicVisualManager } from "@/components/admin/WishMusicVisualManager";
 import { getPublishedApps } from "@/lib/cms";
 import { AppDocument } from "@/types/cms";
 import {
@@ -42,8 +43,8 @@ export default function AdminAppsPage() {
   const [passwordInput, setPasswordInput] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Tab state: "apps" | "releases" | "history"
-  const [activeTab, setActiveTab] = useState<"apps" | "releases" | "history">("releases");
+  // Tab state: "apps" | "releases" | "history" | "visuals"
+  const [activeTab, setActiveTab] = useState<"apps" | "releases" | "history" | "visuals">("releases");
 
   // Apps data
   const [apps, setApps] = useState<AppDocument[]>([]);
@@ -358,6 +359,19 @@ export default function AdminAppsPage() {
 
           <button
             type="button"
+            onClick={() => setActiveTab("visuals")}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === "visuals"
+                ? "bg-[#180D1D] text-white shadow-xs"
+                : "bg-white text-[#56475C] border border-[#502D55]/15 hover:bg-[#FAF4F9]"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#935073]" />
+            <span>WishMusic Visual Content</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab("apps")}
             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
               activeTab === "apps"
@@ -477,6 +491,11 @@ export default function AdminAppsPage() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* TAB 4: WISHMUSIC VISUAL CONTENT MANAGER */}
+        {activeTab === "visuals" && (
+          <WishMusicVisualManager currentUser={currentUser} />
         )}
       </Container>
 

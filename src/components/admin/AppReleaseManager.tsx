@@ -41,6 +41,7 @@ import {
 } from "@/lib/apk-parser-client";
 import {
   ConcurrentChunkUploader,
+  ChunkErrorDetails,
   UploadProgressInfo,
 } from "@/lib/chunk-uploader";
 
@@ -66,8 +67,10 @@ export interface UploadProgressDisplay {
   totalChunks: number;
   eta: string;
   isStalled: boolean;
+  stalledSeconds: number;
   activeWorkers: number;
   retriedChunks: number;
+  lastError?: ChunkErrorDetails | null;
 }
 
 interface AppReleaseManagerProps {
@@ -102,7 +105,7 @@ export function AppReleaseManager({
   const [file, setFile] = useState<File | null>(null);
   const [apkMeta, setApkMeta] = useState<ApkParsedMetadata | null>(null);
   const [cachedInspection, setCachedInspection] = useState<ApkInspectionPayload | null>(null);
-  const [concurrencySetting, setConcurrencySetting] = useState<number>(4);
+  const [concurrencySetting, setConcurrencySetting] = useState<number>(1);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<UploadProgressDisplay>({
     bytesTransferred: 0,
@@ -114,8 +117,10 @@ export function AppReleaseManager({
     totalChunks: 0,
     eta: "--",
     isStalled: false,
-    activeWorkers: 4,
+    stalledSeconds: 0,
+    activeWorkers: 1,
     retriedChunks: 0,
+    lastError: null,
   });
   const [uploadLogs, setUploadLogs] = useState<string[]>([]);
 
@@ -142,6 +147,7 @@ export function AppReleaseManager({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const activeUploaderRef = useRef<ConcurrentChunkUploader | null>(null);
+  const currentSessionIdRef = useRef<string | null>(null);
 
   // Re-run validation when app changes if file is loaded
   useEffect(() => {
@@ -268,14 +274,32 @@ export function AppReleaseManager({
   // ---------------------------------------------------------------------------
   // 2. CONCURRENT CHUNKED UPLOAD & PUBLICATION (ZERO FIREBASE STORAGE)
   // ---------------------------------------------------------------------------
-  const handleCancelUpload = () => {
+  const handleCancelUpload = async () => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
     activeUploaderRef.current = null;
+    const sessToClean = currentSessionIdRef.current || activeSessionId;
+    currentSessionIdRef.current = null;
+    setActiveSessionId(null);
+
     setWorkflowState("validated");
-    setPublishError("Upload was cancelled by administrator.");
+    setPublishError("Upload was cancelled by administrator. Staging session cleaned up.");
+
+    // Clean up staging session and chunk documents in Firestore
+    if (sessToClean && currentUser) {
+      try {
+        const token = await currentUser.getIdToken();
+        await fetch(`/api/admin/apps/releases/session?sessionId=${encodeURIComponent(sessToClean)}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUploadLogs((prev) => [...prev, `Cancelled session ${sessToClean} deleted from Firestore.`]);
+      } catch (err) {
+        console.warn("Notice: Failed to clean up cancelled session:", err);
+      }
+    }
   };
 
   const handleStartUpload = async (e: React.FormEvent) => {
@@ -335,18 +359,20 @@ export function AppReleaseManager({
         }
         sessionId = sessionData.sessionId;
         setActiveSessionId(sessionId);
+        currentSessionIdRef.current = sessionId;
       } else {
         sessionData = {
           sessionId,
-          chunkSize: 700 * 1024,
-          totalChunks: Math.ceil(file.size / (700 * 1024)),
+          chunkSize: 500 * 1024,
+          totalChunks: Math.ceil(file.size / (500 * 1024)),
         };
+        currentSessionIdRef.current = sessionId;
       }
 
       setUploadLogs((prev) => [
         ...prev,
-        `Session created: ${sessionId}. Slicing into ${sessionData.totalChunks} chunks (~700 KB each).`,
-        `Spawning ${concurrencySetting} concurrent workers direct to Cloud Firestore...`,
+        `Session created: ${sessionId}. Slicing into ${sessionData.totalChunks} chunks (~500 KB each).`,
+        `Spawning initial verified worker direct to Cloud Firestore (adapting to 4, 6, 8 workers)...`,
       ]);
 
       // 2. Launch high-throughput concurrent chunk uploader
@@ -359,7 +385,7 @@ export function AppReleaseManager({
         signal: abortController.signal,
         db,
         initialConcurrency: concurrencySetting,
-        minConcurrency: 2,
+        minConcurrency: 1,
         maxConcurrency: 8,
         onProgress: (info: UploadProgressInfo) => {
           let etaFormatted = "--";
@@ -382,8 +408,10 @@ export function AppReleaseManager({
             totalChunks: info.totalChunks,
             eta: etaFormatted,
             isStalled: info.isStalled,
+            stalledSeconds: info.stalledSeconds,
             activeWorkers: info.activeConcurrency,
             retriedChunks: info.retriedChunks,
+            lastError: info.lastError,
           });
         },
         onLog: (msg: string) => {
@@ -1062,11 +1090,27 @@ export function AppReleaseManager({
                       </div>
                     </div>
 
-                    {/* Stalled Alert */}
-                    {uploadProgress.isStalled && (
-                      <div className="p-2 rounded bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2">
+                    {/* Granular Chunk Failure Alert */}
+                    {uploadProgress.lastError && (
+                      <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-900 space-y-1.5 animate-fade-in">
+                        <div className="flex items-center gap-2 font-bold text-rose-800">
+                          <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                          <span>
+                            Chunk #{uploadProgress.lastError.chunkIndex + 1} of {uploadProgress.lastError.totalChunks} Failed
+                            (Attempt {uploadProgress.lastError.retryAttempt} of {uploadProgress.lastError.maxRetries})
+                          </span>
+                        </div>
+                        <div className="p-2 rounded bg-rose-100/70 font-mono text-[10.5px] text-rose-900 break-all leading-normal select-all">
+                          {uploadProgress.lastError.errorMessage}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stalled Banner (only if no active chunk failure is displayed) */}
+                    {uploadProgress.isStalled && !uploadProgress.lastError && (
+                      <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-800 flex items-center gap-2">
                         <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span>Upload temporarily stalled. Workers are automatically retrying with backoff...</span>
+                        <span>Upload temporarily stalled ({uploadProgress.stalledSeconds}s). Workers are automatically retrying with backoff...</span>
                       </div>
                     )}
 

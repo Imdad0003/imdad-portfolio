@@ -238,6 +238,16 @@ service cloud.firestore {
     //   - role: string (optional, max 50 chars)
     //   - createdAt: timestamp | string (optional)
     //
+    // Collection: appVisualContent
+    // Document ID: {contentId} (e.g., 'wishmusic')
+    // Fields:
+    //   - id: string (optional, max 64 chars)
+    //   - draft: map (optional) - Draft visual content configuration
+    //   - published: map (optional) - Published visual content configuration
+    //   - previous: map (optional) - Previous version for rollback
+    //   - updatedAt: timestamp | string (optional)
+    //   - publishedAt: timestamp | string (optional)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -666,6 +676,12 @@ service cloud.firestore {
         allow read: if isAdmin() || true;
         allow write: if isAdmin();
       }
+    }
+
+    // App Visual Content Collection: Public read access for visitors; Admin-only write access
+    match /appVisualContent/{contentId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Default Deny for all other collections and unmatched paths

@@ -31,45 +31,40 @@ export const isFirebaseConfigured = Boolean(
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
-let storageInstance: FirebaseStorage | null = null;
+let storage: FirebaseStorage | null = null;
 
 if (isFirebaseConfigured) {
   try {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
+    if (typeof window !== "undefined") {
+      try {
+        storage = initFirebaseStorage(app);
+      } catch (sErr) {
+        console.warn("Firebase Storage initialization notice:", sErr);
+      }
+    }
   } catch (err) {
     console.warn("Firebase initialization warning:", err);
   }
 }
 
 /**
- * Lazy-load Firebase Storage only when explicitly accessed by CMS image/video tools.
- * Completely isolates the APK Release workflow and prevents any storage retry timers
- * from being instantiated.
+ * Access the initialized Firebase Storage instance, or initialize on-demand.
+ * Returns the genuine FirebaseStorageImpl instance, preserving prototype checks (instanceof).
  */
-function getStorage(): FirebaseStorage | null {
-  if (storageInstance) return storageInstance;
-  if (!app || typeof window === "undefined") return null;
+export function getFirebaseStorage(): FirebaseStorage | null {
+  if (storage) return storage;
+  if (!app) return null;
   try {
-    storageInstance = initFirebaseStorage(app);
-    return storageInstance;
+    storage = initFirebaseStorage(app);
+    return storage;
   } catch (err) {
-    console.warn("Firebase Storage lazy initialization notice:", err);
+    console.warn("Firebase Storage on-demand initialization notice:", err);
     return null;
   }
 }
 
-// Transparent Proxy export: allows existing CMS callers to access storage
-// while guaranteeing zero initialization on APK and release management pages.
-export const storage = new Proxy({} as FirebaseStorage, {
-  get(_target, prop) {
-    const instance = getStorage();
-    if (!instance) return undefined;
-    const value = (instance as unknown as Record<string, unknown>)[prop as string];
-    return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(instance) : value;
-  },
-});
-
-export { app, db, auth, firebaseConfig };
+export { app, db, auth, storage, firebaseConfig };
 export default app;

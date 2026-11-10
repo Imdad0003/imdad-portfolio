@@ -1,5 +1,5 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
@@ -33,9 +33,11 @@ interface AppDetailPageProps {
 export const dynamicParams = true;
 
 export async function generateStaticParams() {
-  return appsData.map((app) => ({
-    slug: app.slug,
-  }));
+  return appsData
+    .filter((app) => app.slug.toLowerCase() !== "wishmusic")
+    .map((app) => ({
+      slug: app.slug,
+    }));
 }
 
 export async function generateMetadata({
@@ -64,6 +66,10 @@ export async function generateMetadata({
 
 export default async function AppDetailPage({ params }: AppDetailPageProps) {
   const { slug } = await params;
+  if (slug.toLowerCase() === "wishmusic") {
+    redirect("/apps/wishmusic");
+  }
+
   const cmsApp = await getPublishedAppBySlug(slug);
   const staticApp = getAppBySlug(slug);
 

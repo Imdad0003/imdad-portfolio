@@ -1,5 +1,15 @@
 import { doc, setDoc, Firestore } from "firebase/firestore";
 
+export interface ChunkErrorDetails {
+  chunkIndex: number;
+  totalChunks: number;
+  errorMessage: string;
+  retryAttempt: number;
+  maxRetries: number;
+  timestamp: number;
+  isTerminal?: boolean;
+}
+
 export interface UploadProgressInfo {
   bytesTransferred: number;
   totalBytes: number;
@@ -13,6 +23,7 @@ export interface UploadProgressInfo {
   isStalled: boolean;
   stalledSeconds: number;
   retriedChunks: number;
+  lastError?: ChunkErrorDetails | null;
 }
 
 export interface ChunkUploaderOptions {
@@ -94,6 +105,7 @@ export class ConcurrentChunkUploader {
   private lastProgressTime: number = 0;
   private isStalled: boolean = false;
   private stalledSeconds: number = 0;
+  private lastError: ChunkErrorDetails | null = null;
   private monitorInterval: NodeJS.Timeout | null = null;
 
   private onProgress?: (info: UploadProgressInfo) => void;
@@ -109,9 +121,11 @@ export class ConcurrentChunkUploader {
     this.db = options.db;
     this.writeChunk = options.writeChunk;
 
-    this.initialConcurrency = options.initialConcurrency ?? 4;
+    // Begin with 1 worker to ensure the first chunk write succeeds reliably,
+    // then evaluateAdaptiveConcurrency() ramps up to 4, 6, and 8.
+    this.initialConcurrency = options.initialConcurrency ?? 1;
     this.currentConcurrency = this.initialConcurrency;
-    this.minConcurrency = options.minConcurrency ?? 2;
+    this.minConcurrency = options.minConcurrency ?? 1;
     this.maxConcurrency = options.maxConcurrency ?? 8;
 
     this.onProgress = options.onProgress;
@@ -195,6 +209,7 @@ export class ConcurrentChunkUploader {
               this.lastProgressTime = Date.now();
               this.isStalled = false;
               this.stalledSeconds = 0;
+              this.lastError = null;
 
               // Check if we should dynamically scale concurrency
               this.evaluateAdaptiveConcurrency();
@@ -216,6 +231,16 @@ export class ConcurrentChunkUploader {
               const retries = (this.retryCounts.get(chunkIndex) || 0) + 1;
               this.retryCounts.set(chunkIndex, retries);
               this.totalRetriedChunks++;
+
+              this.lastError = {
+                chunkIndex,
+                totalChunks: this.totalChunks,
+                errorMessage: errorMsg,
+                retryAttempt: retries,
+                maxRetries: 4,
+                timestamp: Date.now(),
+              };
+              this.emitProgress();
 
               // Adaptive throttling: If network rate-limiting or timeout, reduce concurrency
               if (
@@ -251,6 +276,16 @@ export class ConcurrentChunkUploader {
                 }, backoffMs);
               } else {
                 hasError = true;
+                this.lastError = {
+                  chunkIndex,
+                  totalChunks: this.totalChunks,
+                  errorMessage: errorMsg,
+                  retryAttempt: retries,
+                  maxRetries: 4,
+                  timestamp: Date.now(),
+                  isTerminal: true,
+                };
+                this.emitProgress();
                 terminalError = new Error(
                   `Failed uploading chunk ${chunkIndex + 1}/${this.totalChunks} after 4 attempts: ${errorMsg}`
                 );
@@ -301,15 +336,29 @@ export class ConcurrentChunkUploader {
           throw new Error("Upload cancelled by administrator.");
         }
 
-        await setDoc(
-          doc(this.db, "stagingReleaseSessions", this.sessionId, "chunks", String(chunkIndex)),
-          {
-            index: chunkIndex,
-            data: chunkBase64,
-            size: chunkSizeActual,
-            receivedAt: Date.now(),
-          }
-        );
+        let timeoutId: NodeJS.Timeout | null = null;
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            reject(new Error("Direct Firestore write timed out after 12s."));
+          }, 12000);
+        });
+
+        try {
+          await Promise.race([
+            setDoc(
+              doc(this.db, "stagingReleaseSessions", this.sessionId, "chunks", String(chunkIndex)),
+              {
+                index: chunkIndex,
+                data: chunkBase64,
+                size: chunkSizeActual,
+                receivedAt: Date.now(),
+              }
+            ),
+            timeoutPromise,
+          ]);
+        } finally {
+          if (timeoutId) clearTimeout(timeoutId);
+        }
 
         this.recordSuccess(chunkSizeActual, Date.now() - chunkStartMs);
         return;
@@ -373,26 +422,33 @@ export class ConcurrentChunkUploader {
   }
 
   /**
-   * Dynamically increases concurrency when recent chunks complete with low latency (< 1200ms)
-   * and 0 recent retries, up to maxConcurrency (8).
+   * Dynamically increases concurrency:
+   * First ensures ONE chunk write succeeds reliably, then scales to 4, followed by 6 and 8.
    */
   private evaluateAdaptiveConcurrency(): void {
     if (this.currentConcurrency >= this.maxConcurrency) return;
 
-    // Need at least 4 recent chunk measurements
+    // Requirement: "First make ONE chunk write succeed reliably. Then test 4 workers, followed by 6 and 8."
+    if (this.completed.size >= 1 && this.currentConcurrency < 4) {
+      this.currentConcurrency = Math.min(this.maxConcurrency, 4);
+      this.log(`Initial chunk verified successfully: scaled concurrency to ${this.currentConcurrency} workers.`);
+      return;
+    }
+
     if (this.chunkDurations.length >= 4) {
       const recentLatencies = this.chunkDurations.slice(-4);
       const avgLatency =
         recentLatencies.reduce((sum, d) => sum + d, 0) / recentLatencies.length;
 
-      // If average latency is under 1200ms and no retries happened in the last 4 chunks
-      if (avgLatency < 1200) {
-        this.currentConcurrency = Math.min(
-          this.maxConcurrency,
-          this.currentConcurrency + 1
-        );
+      if (avgLatency < 1500 && this.currentConcurrency < 6) {
+        this.currentConcurrency = Math.min(this.maxConcurrency, 6);
         this.log(
-          `Low latency detected (avg ${avgLatency.toFixed(0)}ms): increased concurrency to ${this.currentConcurrency}`
+          `Low latency detected (avg ${avgLatency.toFixed(0)}ms): scaled concurrency to 6 workers.`
+        );
+      } else if (avgLatency < 1200 && this.currentConcurrency < 8) {
+        this.currentConcurrency = Math.min(this.maxConcurrency, 8);
+        this.log(
+          `Optimal latency detected (avg ${avgLatency.toFixed(0)}ms): scaled concurrency to 8 workers.`
         );
       }
     }
@@ -481,6 +537,7 @@ export class ConcurrentChunkUploader {
       isStalled: this.isStalled,
       stalledSeconds: this.stalledSeconds,
       retriedChunks: this.totalRetriedChunks,
+      lastError: this.lastError,
     });
   }
 

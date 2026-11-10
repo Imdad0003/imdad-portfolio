@@ -341,3 +341,73 @@ export async function verifyGitHubRepositoryAccess(): Promise<{
   }
 }
 
+/**
+ * Ensures a dedicated permanent GitHub Release exists for media assets (e.g., wishmusic-media).
+ * Returns release id and uploadUrl.
+ */
+export async function getOrCreateMediaRelease(tag = "wishmusic-media"): Promise<{
+  id: number;
+  uploadUrl: string;
+}> {
+  const config = getGitHubConfig();
+  if (!config.isConfigured || !config.token) {
+    throw new Error("GITHUB_TOKEN is not configured.");
+  }
+
+  const res = await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/releases/tags/${tag}`,
+    {
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "IMDAD-BUILDS-Visual-Manager",
+      },
+    }
+  );
+
+  if (res.ok) {
+    const data = await res.json();
+    return { id: data.id, uploadUrl: data.upload_url };
+  }
+
+  if (res.status === 404) {
+    return await createGitHubRelease({
+      tag,
+      name: "WishMusic Visual Media Assets",
+      body: "Permanent storage for WishMusic website screenshots, wallpapers, and feature media.",
+      draft: false,
+      prerelease: false,
+    });
+  }
+
+  const errText = await res.text();
+  throw new Error(`Failed to lookup media release tag (${res.status}): ${errText}`);
+}
+
+/**
+ * Deletes a release asset from GitHub repository.
+ */
+export async function deleteGitHubReleaseAsset(assetId: number): Promise<boolean> {
+  const config = getGitHubConfig();
+  if (!config.isConfigured || !config.token) {
+    throw new Error("GITHUB_TOKEN is not configured.");
+  }
+
+  const res = await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/releases/assets/${assetId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        Accept: "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "User-Agent": "IMDAD-BUILDS-Visual-Manager",
+      },
+    }
+  );
+
+  return res.status === 204 || res.status === 200 || res.status === 404;
+}
+
+

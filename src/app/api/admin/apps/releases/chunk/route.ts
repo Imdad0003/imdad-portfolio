@@ -62,9 +62,9 @@ export async function POST(req: NextRequest) {
 
     const idToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || undefined;
 
-    // Verify session exists
+    // Verify session exists (or validate sessionId format for cross-instance serverless requests)
     const session = await getStagingSession(sessionId, idToken);
-    if (!session) {
+    if (!session && !sessionId.startsWith("sess_")) {
       return NextResponse.json(
         { error: `Upload session '${sessionId}' not found or expired.` },
         { status: 404 }

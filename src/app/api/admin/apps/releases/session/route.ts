@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { verifyAdminRequest } from "@/lib/server-auth";
 import { sanitizeFileName } from "@/lib/asset-sanitizer";
-import { saveStagingSession } from "@/lib/staging-chunks";
+import { saveStagingSession, deleteStagingSession } from "@/lib/staging-chunks";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 const MAX_APK_SIZE_BYTES = 150 * 1024 * 1024; // 150 MB
-const CHUNK_SIZE_BYTES = 700 * 1024; // 700 KB per chunk (fits comfortably under Firestore 1MB document limit and Vercel 4.5 MB request limit)
+const CHUNK_SIZE_BYTES = 500 * 1024; // 500 KB per chunk (~667 KB base64, comfortably below Firestore 1 MiB document limit)
 
 /**
  * Admin APK Upload Session API
@@ -101,5 +101,36 @@ export async function POST(req: NextRequest) {
       { error: `Failed to initialize upload session: ${msg}` },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Clean up staging session and any uploaded chunk documents upon cancellation or abort.
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const authResult = await verifyAdminRequest(req);
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { error: authResult.error || "Unauthorized admin account." },
+        { status: authResult.statusCode }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const sessionId = searchParams.get("sessionId");
+
+    if (!sessionId || typeof sessionId !== "string" || !sessionId.startsWith("sess_")) {
+      return NextResponse.json({ error: "Missing or invalid sessionId parameter." }, { status: 400 });
+    }
+
+    const idToken = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "") || undefined;
+    await deleteStagingSession(sessionId, idToken);
+
+    return NextResponse.json({ success: true, sessionId, message: "Staging session and chunks deleted." }, { status: 200 });
+  } catch (err: unknown) {
+    console.error("Session cleanup error:", err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: `Failed to clean up staging session: ${msg}` }, { status: 500 });
   }
 }

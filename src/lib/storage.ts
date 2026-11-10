@@ -6,7 +6,7 @@ import {
   deleteObject,
   UploadTask,
 } from "firebase/storage";
-import { storage } from "@/lib/firebase";
+import { storage, getFirebaseStorage } from "@/lib/firebase";
 import { validateMediaFile, sanitizeFileName } from "@/lib/asset-sanitizer";
 
 export type AssetCategory = "apps" | "projects" | "services" | "general";
@@ -29,7 +29,7 @@ export interface ResumableUploadHandle {
  * Checks if Firebase Storage instance is initialized and available.
  */
 export function isStorageAvailable(): boolean {
-  return Boolean(storage);
+  return Boolean(storage || getFirebaseStorage());
 }
 
 /**
@@ -49,7 +49,8 @@ export function uploadStudioAssetResumable(
     allowVideo?: boolean;
   }
 ): ResumableUploadHandle {
-  if (!storage) {
+  const storageInstance = storage || getFirebaseStorage();
+  if (!storageInstance) {
     throw new Error(
       "Firebase Storage is not initialized. Please verify storageBucket in your Firebase configuration."
     );
@@ -58,7 +59,7 @@ export function uploadStudioAssetResumable(
   const sub = options?.subfolder ? `${options.subfolder.replace(/^\/+|\/+$/g, "")}/` : "";
   const sanitizedName = sanitizeFileName(file.name);
   const filePath = `studio-assets/${category}/${sub}${Date.now()}_${sanitizedName}`;
-  const storageRef = ref(storage, filePath);
+  const storageRef = ref(storageInstance, filePath);
 
   const uploadTask = uploadBytesResumable(storageRef, file, {
     contentType: file.type || "application/octet-stream",
@@ -141,7 +142,8 @@ export async function uploadStudioAsset(
  * Accepts either a full download URL (extracts path) or a relative storage path.
  */
 export async function deleteStudioAsset(urlOrPath: string): Promise<void> {
-  if (!storage) {
+  const storageInstance = storage || getFirebaseStorage();
+  if (!storageInstance) {
     throw new Error("Firebase Storage is not initialized.");
   }
 
@@ -156,7 +158,7 @@ export async function deleteStudioAsset(urlOrPath: string): Promise<void> {
       }
     }
 
-    const fileRef = ref(storage, storagePath);
+    const fileRef = ref(storageInstance, storagePath);
     await deleteObject(fileRef);
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);

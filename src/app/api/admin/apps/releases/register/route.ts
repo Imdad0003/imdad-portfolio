@@ -266,8 +266,6 @@ export async function POST(req: NextRequest) {
       createdAt: now,
       publishedAt: status === "published" ? now : undefined,
       updatedAt: now,
-      verificationTrust: `verified_by_${relManifest.verifiedLocallyBy || "apksigner"}`,
-      verifiedAt: now,
     };
 
     const authHeader = req.headers.get("authorization") || "";
@@ -292,12 +290,15 @@ export async function POST(req: NextRequest) {
 
     const appUpdateData: Record<string, unknown> = {
       version: relManifest.versionName,
+      packageName: relManifest.packageName,
+      latestReleaseId: releaseId,
+      latestVersionName: relManifest.versionName,
       latestVersionCode: relManifest.versionCode,
-      downloadUrl: ghAsset.browser_download_url,
-      apkSize: relManifest.assetSizeFormatted,
-      apkSha256: relManifest.sha256,
-      minSdkVersion: relManifest.minSdkVersion,
-      minAndroidVersion: relManifest.minAndroidVersion || "Android 7.0",
+      latestDownloadUrl: ghAsset.browser_download_url,
+      latestApkSize: relManifest.assetSizeFormatted,
+      latestSha256: relManifest.sha256,
+      status: "AVAILABLE",
+      statusLabel: "Available for Android",
       updatedAt: now,
     };
 
