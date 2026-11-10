@@ -170,101 +170,118 @@ export async function uploadGitHubReleaseAsset(
   const targetUrl = `${cleanUrl}?name=${encodeURIComponent(params.fileName)}`;
   const parsed = new URL(targetUrl);
 
-  return new Promise<GitHubAssetResponse>((resolve, reject) => {
-    const req = https.request(
-      {
-        hostname: parsed.hostname,
-        path: parsed.pathname + parsed.search,
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${config.token}`,
-          Accept: "application/vnd.github+json",
-          "X-GitHub-Api-Version": "2022-11-28",
-          "User-Agent": "IMDAD-BUILDS-App-Release-Manager",
-          "Content-Type": params.contentType || "application/octet-stream",
-          "Content-Length": String(params.fileBuffer.length),
-          Connection: "close",
+  const attemptUpload = (): Promise<GitHubAssetResponse> => {
+    return new Promise<GitHubAssetResponse>((resolve, reject) => {
+      const req = https.request(
+        {
+          hostname: parsed.hostname,
+          path: parsed.pathname + parsed.search,
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${config.token}`,
+            Accept: "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "IMDAD-BUILDS-App-Release-Manager",
+            "Content-Type": params.contentType || "application/octet-stream",
+            "Content-Length": String(params.fileBuffer.length),
+            Connection: "close",
+          },
+          timeout: 900000, // 15 minutes timeout for large binary uploads
         },
-        timeout: 900000, // 15 minutes timeout for large binary uploads
-      },
-      (res) => {
-        let responseData = "";
-        res.on("data", (chunk) => {
-          responseData += chunk;
-        });
+        (res) => {
+          let responseData = "";
+          res.on("data", (chunk) => {
+            responseData += chunk;
+          });
 
-        res.on("end", async () => {
-          if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
-            try {
-              const data = JSON.parse(responseData);
-              resolve({
-                id: data.id,
-                name: data.name,
-                size: data.size,
-                downloadUrl: data.browser_download_url,
-                contentType: data.content_type,
-                createdAt: data.created_at,
-              });
-            } catch (err: unknown) {
-              const msg = err instanceof Error ? err.message : String(err);
-              reject(new Error(`Failed to parse GitHub asset response (${msg}): ${responseData}`));
-            }
-          } else if (res.statusCode === 422 && params.releaseId) {
-            // Asset duplicate recovery logic: safe idempotent recovery
-            try {
-              const listRes = await fetch(
-                `https://api.github.com/repos/${config.owner}/${config.repo}/releases/${params.releaseId}/assets`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${config.token}`,
-                    Accept: "application/vnd.github+json",
-                    "X-GitHub-Api-Version": "2022-11-28",
-                    "User-Agent": "IMDAD-BUILDS-App-Release-Manager",
-                  },
-                }
-              );
-              if (listRes.ok) {
-                const assets: Array<{
-                  id: number;
-                  name: string;
-                  size: number;
-                  browser_download_url: string;
-                  content_type: string;
-                  created_at: string;
-                }> = await listRes.json();
-                const existing = assets.find((a) => a.name === params.fileName);
-                if (existing) {
-                  resolve({
-                    id: existing.id,
-                    name: existing.name,
-                    size: existing.size,
-                    downloadUrl: existing.browser_download_url,
-                    contentType: existing.content_type,
-                    createdAt: existing.created_at,
-                  });
-                  return;
-                }
+          res.on("end", async () => {
+            if (res.statusCode && res.statusCode >= 200 && res.statusCode < 300) {
+              try {
+                const data = JSON.parse(responseData);
+                resolve({
+                  id: data.id,
+                  name: data.name,
+                  size: data.size,
+                  downloadUrl: data.browser_download_url,
+                  contentType: data.content_type,
+                  createdAt: data.created_at,
+                });
+              } catch (err: unknown) {
+                const msg = err instanceof Error ? err.message : String(err);
+                reject(new Error(`Failed to parse GitHub asset response (${msg}): ${responseData}`));
               }
-            } catch (checkErr) {
-              console.warn("Failed to check existing release assets on 422:", checkErr);
+            } else if (res.statusCode === 422 && params.releaseId) {
+              // Asset duplicate recovery logic: safe idempotent recovery
+              try {
+                const listRes = await fetch(
+                  `https://api.github.com/repos/${config.owner}/${config.repo}/releases/${params.releaseId}/assets`,
+                  {
+                    headers: {
+                      Authorization: `Bearer ${config.token}`,
+                      Accept: "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                      "User-Agent": "IMDAD-BUILDS-App-Release-Manager",
+                    },
+                  }
+                );
+                if (listRes.ok) {
+                  const assets: Array<{
+                    id: number;
+                    name: string;
+                    size: number;
+                    browser_download_url: string;
+                    content_type: string;
+                    created_at: string;
+                  }> = await listRes.json();
+                  const existing = assets.find((a) => a.name === params.fileName);
+                  if (existing) {
+                    resolve({
+                      id: existing.id,
+                      name: existing.name,
+                      size: existing.size,
+                      downloadUrl: existing.browser_download_url,
+                      contentType: existing.content_type,
+                      createdAt: existing.created_at,
+                    });
+                    return;
+                  }
+                }
+              } catch (checkErr) {
+                console.warn("Failed to check existing release assets on 422:", checkErr);
+              }
+              reject(new Error(`GitHub Release asset upload failed (422): ${responseData}`));
+            } else {
+              reject(new Error(`GitHub Release asset upload failed (${res.statusCode}): ${responseData}`));
             }
-            reject(new Error(`GitHub Release asset upload failed (422): ${responseData}`));
-          } else {
-            reject(new Error(`GitHub Release asset upload failed (${res.statusCode}): ${responseData}`));
-          }
-        });
-      }
-    );
+          });
+        }
+      );
 
-    req.on("error", (err) => reject(err));
-    req.on("timeout", () => {
-      req.destroy();
-      reject(new Error("GitHub Release asset upload timed out."));
+      req.on("error", (err) => reject(err));
+      req.on("timeout", () => {
+        req.destroy();
+        reject(new Error("GitHub Release asset upload timed out."));
+      });
+
+      // Write fileBuffer directly to request stream
+      req.end(params.fileBuffer);
     });
+  };
 
-    // Write fileBuffer directly to request stream
-    req.end(params.fileBuffer);
-  });
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await attemptUpload();
+    } catch (err) {
+      lastError = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`GitHub asset upload attempt ${attempt}/3 failed (${msg}). Retrying...`);
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, attempt * 1500));
+      }
+    }
+  }
+  throw lastError;
 }
 
 /**

@@ -270,56 +270,87 @@ export async function POST(req: NextRequest) {
       verifiedAt: now,
     };
 
-    if (db) {
+    const authHeader = req.headers.get("authorization") || "";
+    const idToken = authHeader.startsWith("Bearer ") ? authHeader.substring(7).trim() : undefined;
+
+    const auditLog: ReleaseAuditLogDocument = {
+      id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      appId,
+      releaseId,
+      action: "publish",
+      performedBy: authResult.user?.email || "admin",
+      details: {
+        versionName: relManifest.versionName,
+        versionCode: relManifest.versionCode,
+        sha256: relManifest.sha256,
+        githubTag: relManifest.releaseTag,
+        githubAssetId: relManifest.assetId,
+        verifiedBy: relManifest.verifiedLocallyBy,
+      },
+      timestamp: now,
+    };
+
+    const appUpdateData: Record<string, unknown> = {
+      version: relManifest.versionName,
+      latestVersionCode: relManifest.versionCode,
+      downloadUrl: ghAsset.browser_download_url,
+      apkSize: relManifest.assetSizeFormatted,
+      apkSha256: relManifest.sha256,
+      minSdkVersion: relManifest.minSdkVersion,
+      minAndroidVersion: relManifest.minAndroidVersion || "Android 7.0",
+      updatedAt: now,
+    };
+
+    let persisted = false;
+
+    // 1. Authenticated REST persistence using admin ID token (if present)
+    if (idToken) {
+      const releaseSaved = await firestoreRestPatch(
+        `appReleases/${releaseId}`,
+        releaseDoc as unknown as Record<string, unknown>,
+        idToken
+      );
+      if (releaseSaved) {
+        if (isLatestStable) {
+          await firestoreRestPatch(`apps/${appId}`, appUpdateData, idToken);
+        }
+        await firestoreRestPatch(
+          `releaseAuditLogs/${auditLog.id}`,
+          auditLog as unknown as Record<string, unknown>,
+          idToken
+        );
+        persisted = true;
+      }
+    }
+
+    // 2. Client SDK fallback / local dev persistence
+    if (!persisted && db) {
       try {
         await setDoc(doc(db, "appReleases", releaseId), releaseDoc);
 
-        // Update app document with latest release info
         if (isLatestStable) {
-          await updateDoc(doc(db, "apps", appId), {
-            version: relManifest.versionName,
-            latestVersionCode: relManifest.versionCode,
-            downloadUrl: ghAsset.browser_download_url,
-            apkSize: relManifest.assetSizeFormatted,
-            apkSha256: relManifest.sha256,
-            minSdkVersion: relManifest.minSdkVersion,
-            minAndroidVersion: relManifest.minAndroidVersion || "Android 7.0",
-            updatedAt: now,
-          });
+          await updateDoc(doc(db, "apps", appId), appUpdateData);
         }
 
-        // Record audit log
-        const auditLog: ReleaseAuditLogDocument = {
-          id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-          appId,
-          releaseId,
-          action: "publish",
-          performedBy: authResult.user?.email || "admin",
-          details: {
-            versionName: relManifest.versionName,
-            versionCode: relManifest.versionCode,
-            sha256: relManifest.sha256,
-            githubTag: relManifest.releaseTag,
-            githubAssetId: relManifest.assetId,
-            verifiedBy: relManifest.verifiedLocallyBy,
-          },
-          timestamp: now,
-        };
         await setDoc(doc(db, "releaseAuditLogs", auditLog.id), auditLog);
+        persisted = true;
       } catch (dbErr) {
         console.error("Firestore persistence error during release registration:", dbErr);
-        return NextResponse.json(
-          {
-            success: false,
-            errors: ["Failed to save release to database."],
-            recovery: {
-              releaseDoc,
-              githubAssetUrl: ghAsset.browser_download_url,
-            },
-          },
-          { status: 500 }
-        );
       }
+    }
+
+    if (!persisted) {
+      return NextResponse.json(
+        {
+          success: false,
+          errors: ["Failed to save release to database."],
+          recovery: {
+            releaseDoc,
+            githubAssetUrl: ghAsset.browser_download_url,
+          },
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(

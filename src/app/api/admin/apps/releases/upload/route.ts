@@ -264,7 +264,7 @@ export async function POST(req: NextRequest) {
 
     // 5. Release Distribution & Asset Hosting
     const ghConfig = getGitHubConfig();
-    let hostingProvider: "github" | "storage" | "custom" = "custom";
+    let hostingProvider: "github" | "custom" = "custom";
     let downloadUrl = customDownloadUrl;
     let githubReleaseId: number | undefined;
     let githubTag: string | undefined;

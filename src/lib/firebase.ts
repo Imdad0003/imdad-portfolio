@@ -1,7 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
-import { getStorage, FirebaseStorage } from "firebase/storage";
+import { getStorage as initFirebaseStorage, FirebaseStorage } from "firebase/storage";
 
 /**
  * Firebase Web App Configuration
@@ -31,18 +31,45 @@ export const isFirebaseConfigured = Boolean(
 let app: FirebaseApp | null = null;
 let db: Firestore | null = null;
 let auth: Auth | null = null;
-let storage: FirebaseStorage | null = null;
+let storageInstance: FirebaseStorage | null = null;
 
 if (isFirebaseConfigured) {
   try {
     app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
-    storage = getStorage(app);
   } catch (err) {
     console.warn("Firebase initialization warning:", err);
   }
 }
 
-export { app, db, auth, storage, firebaseConfig };
+/**
+ * Lazy-load Firebase Storage only when explicitly accessed by CMS image/video tools.
+ * Completely isolates the APK Release workflow and prevents any storage retry timers
+ * from being instantiated.
+ */
+function getStorage(): FirebaseStorage | null {
+  if (storageInstance) return storageInstance;
+  if (!app || typeof window === "undefined") return null;
+  try {
+    storageInstance = initFirebaseStorage(app);
+    return storageInstance;
+  } catch (err) {
+    console.warn("Firebase Storage lazy initialization notice:", err);
+    return null;
+  }
+}
+
+// Transparent Proxy export: allows existing CMS callers to access storage
+// while guaranteeing zero initialization on APK and release management pages.
+export const storage = new Proxy({} as FirebaseStorage, {
+  get(_target, prop) {
+    const instance = getStorage();
+    if (!instance) return undefined;
+    const value = (instance as unknown as Record<string, unknown>)[prop as string];
+    return typeof value === "function" ? (value as (...args: unknown[]) => unknown).bind(instance) : value;
+  },
+});
+
+export { app, db, auth, firebaseConfig };
 export default app;

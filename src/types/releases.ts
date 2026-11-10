@@ -2,7 +2,7 @@ export type ReleaseChannel = "stable" | "beta";
 
 export type ReleaseStatus = "draft" | "published" | "archived" | "rolled_back";
 
-export type ReleaseHostingProvider = "github" | "storage" | "custom";
+export type ReleaseHostingProvider = "github" | "custom";
 
 export interface ApkParsedMetadata {
   packageName: string;
