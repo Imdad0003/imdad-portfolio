@@ -21,7 +21,7 @@ import {
   adminSignOut,
   adminSendPasswordReset,
 } from "@/lib/auth";
-import { uploadStudioAsset } from "@/lib/storage";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import { AppReleaseManager } from "@/components/admin/AppReleaseManager";
 import { ReleaseHistoryView } from "@/components/admin/ReleaseHistoryView";
 import { AmazonPortfolioManager } from "@/components/admin/AmazonPortfolioManager";
@@ -501,15 +501,16 @@ export default function AdminPortalPage() {
     setCurrentUser(null);
   };
 
-  // Generic File Upload Handler
-  const handleFileUpload = async (file: File, category: "apps" | "projects" | "services" | "general"): Promise<string | null> => {
+  // Generic File Upload Handler (Direct Client-Side Cloudinary Unsigned Upload)
+  const handleFileUpload = async (file: File, category: "apps" | "projects" | "services" | "general" = "general"): Promise<string | null> => {
     setUploadingImage(true);
     try {
-      const url = await uploadStudioAsset(file, category);
+      const url = await uploadToCloudinary(file, { folder: `studio-assets/${category}` });
       return url;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Upload failed";
-      alert(`Storage Upload Error: ${msg}`);
+      console.error("Cloudinary upload error:", err);
+      alert(`Image Upload Error: ${msg}`);
       return null;
     } finally {
       setUploadingImage(false);
@@ -2451,6 +2452,12 @@ export default function AdminPortalPage() {
                 <div>
                   <label className="block font-mono text-[10px] text-[#56475C] mb-1">App Logo (URL or Upload)</label>
                   <div className="flex gap-2 items-center">
+                    {editingApp.logo && (
+                      <div className="w-9 h-9 rounded-lg border border-[#502D55]/15 bg-white p-0.5 shrink-0 overflow-hidden flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={editingApp.logo} alt="Logo" className="w-full h-full object-contain" />
+                      </div>
+                    )}
                     <input
                       type="text"
                       value={editingApp.logo || ""}
@@ -2458,18 +2465,23 @@ export default function AdminPortalPage() {
                       placeholder="https://... or upload file"
                       className="w-full px-3 py-2 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs"
                     />
-                    <label className="px-3 py-2 rounded-xl bg-[#FAF2EA] text-[#7A3F26] border border-[#F6DBC0] text-xs font-bold cursor-pointer hover:bg-[#F3E5D8] shrink-0 flex items-center gap-1">
+                    <label className={`px-3 py-2 rounded-xl bg-[#FAF2EA] text-[#7A3F26] border border-[#F6DBC0] text-xs font-bold shrink-0 flex items-center gap-1 transition-opacity ${uploadingImage ? "opacity-50 pointer-events-none" : "cursor-pointer hover:bg-[#F3E5D8]"}`}>
                       <Upload className="w-3.5 h-3.5" />
                       <span>{uploadingImage ? "Uploading..." : "Upload"}</span>
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploadingImage}
                         className="hidden"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const url = await handleFileUpload(file, "apps");
-                            if (url) setEditingApp((prev) => ({ ...prev, logo: url }));
+                            try {
+                              const url = await handleFileUpload(file, "apps");
+                              if (url) setEditingApp((prev) => (prev ? { ...prev, logo: url } : prev));
+                            } finally {
+                              e.target.value = "";
+                            }
                           }
                         }}
                       />
@@ -2643,6 +2655,12 @@ export default function AdminPortalPage() {
                 <div>
                   <label className="block font-mono text-[10px] text-[#56475C] mb-1">Cover Image (URL or Upload)</label>
                   <div className="flex gap-2 items-center">
+                    {editingProject.coverImage && (
+                      <div className="w-9 h-9 rounded-lg border border-[#502D55]/15 bg-white p-0.5 shrink-0 overflow-hidden flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={editingProject.coverImage} alt="Cover" className="w-full h-full object-cover" />
+                      </div>
+                    )}
                     <input
                       type="text"
                       value={editingProject.coverImage || ""}
@@ -2650,18 +2668,23 @@ export default function AdminPortalPage() {
                       placeholder="https://... or upload file"
                       className="w-full px-3 py-2 rounded-xl bg-[#FAF4F9] border border-[#502D55]/15 text-xs"
                     />
-                    <label className="px-3 py-2 rounded-xl bg-[#FAF2EA] text-[#7A3F26] border border-[#F6DBC0] text-xs font-bold cursor-pointer hover:bg-[#F3E5D8] shrink-0 flex items-center gap-1">
+                    <label className={`px-3 py-2 rounded-xl bg-[#FAF2EA] text-[#7A3F26] border border-[#F6DBC0] text-xs font-bold shrink-0 flex items-center gap-1 transition-opacity ${uploadingImage ? "opacity-50 pointer-events-none" : "cursor-pointer hover:bg-[#F3E5D8]"}`}>
                       <Upload className="w-3.5 h-3.5" />
                       <span>{uploadingImage ? "Uploading..." : "Upload"}</span>
                       <input
                         type="file"
                         accept="image/*"
+                        disabled={uploadingImage}
                         className="hidden"
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            const url = await handleFileUpload(file, "projects");
-                            if (url) setEditingProject((prev) => ({ ...prev, coverImage: url }));
+                            try {
+                              const url = await handleFileUpload(file, "projects");
+                              if (url) setEditingProject((prev) => (prev ? { ...prev, coverImage: url } : prev));
+                            } finally {
+                              e.target.value = "";
+                            }
                           }
                         }}
                       />

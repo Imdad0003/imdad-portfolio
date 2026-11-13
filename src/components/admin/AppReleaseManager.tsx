@@ -33,7 +33,7 @@ import {
 import { User } from "firebase/auth";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc } from "firebase/firestore";
-import { uploadStudioAsset } from "@/lib/storage";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 import { AppDocument } from "@/types/cms";
 import {
   ApkParsedMetadata,
@@ -233,9 +233,9 @@ export function AppReleaseManager({
     try {
       let url = "";
       try {
-        url = await uploadStudioAsset(file, "apps");
-      } catch (storageErr) {
-        console.warn("Storage upload notice, attempting visual API fallback:", storageErr);
+        url = await uploadToCloudinary(file, { folder: "apps/wishmusic" });
+      } catch (cloudErr) {
+        console.warn("Cloudinary direct upload notice, attempting visual API fallback:", cloudErr);
       }
 
       if (!url && currentUser) {
@@ -281,9 +281,9 @@ export function AppReleaseManager({
         const f = files[i];
         let url = "";
         try {
-          url = await uploadStudioAsset(f, "apps");
+          url = await uploadToCloudinary(f, { folder: "apps/wishmusic/screenshots" });
         } catch (err) {
-          console.warn("Storage upload notice, attempting visual API fallback:", err);
+          console.warn("Cloudinary upload notice, attempting visual API fallback:", err);
         }
 
         if (!url && token) {

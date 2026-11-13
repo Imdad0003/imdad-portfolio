@@ -1,13 +1,10 @@
 import {
   ref,
-  uploadBytes,
-  uploadBytesResumable,
-  getDownloadURL,
   deleteObject,
-  UploadTask,
 } from "firebase/storage";
 import { storage, getFirebaseStorage } from "@/lib/firebase";
-import { validateMediaFile, sanitizeFileName } from "@/lib/asset-sanitizer";
+import { validateMediaFile } from "@/lib/asset-sanitizer";
+import { uploadToCloudinary } from "@/lib/cloudinary";
 
 export type AssetCategory = "apps" | "projects" | "services" | "general";
 
@@ -22,19 +19,19 @@ export interface ResumableUploadHandle {
   cancel: () => void;
   pause: () => void;
   resume: () => void;
-  task: UploadTask;
 }
 
 /**
- * Checks if Firebase Storage instance is initialized and available.
+ * Checks if media asset storage is available.
+ * Client-side Cloudinary unsigned upload is always available.
  */
 export function isStorageAvailable(): boolean {
-  return Boolean(storage || getFirebaseStorage());
+  return true;
 }
 
 /**
- * Upload an asset to Firebase Storage with progress tracking, pause/cancel support,
- * and security sanitization.
+ * Upload an asset with progress tracking, client-side validation,
+ * and direct unsigned Cloudinary storage.
  *
  * @param file - The HTML File object to upload
  * @param category - Category folder ("apps" | "projects" | "services" | "general")
@@ -49,81 +46,59 @@ export function uploadStudioAssetResumable(
     allowVideo?: boolean;
   }
 ): ResumableUploadHandle {
-  const storageInstance = storage || getFirebaseStorage();
-  if (!storageInstance) {
-    throw new Error(
-      "Firebase Storage is not initialized. Please verify storageBucket in your Firebase configuration."
-    );
-  }
-
-  const sub = options?.subfolder ? `${options.subfolder.replace(/^\/+|\/+$/g, "")}/` : "";
-  const sanitizedName = sanitizeFileName(file.name);
-  const filePath = `studio-assets/${category}/${sub}${Date.now()}_${sanitizedName}`;
-  const storageRef = ref(storageInstance, filePath);
-
-  const uploadTask = uploadBytesResumable(storageRef, file, {
-    contentType: file.type || "application/octet-stream",
-    customMetadata: {
-      originalName: file.name,
-      uploadedAt: new Date().toISOString(),
-      category,
-    },
-  });
+  let isCancelled = false;
+  const folder = `studio-assets/${category}${options?.subfolder ? `/${options.subfolder.replace(/^\/+|\/+$/g, "")}` : ""}`;
 
   const promise = new Promise<string>((resolve, reject) => {
-    // Perform pre-upload validation asynchronously
     validateMediaFile(file, { allowVideo: options?.allowVideo ?? true })
       .then((valResult) => {
         if (!valResult.valid) {
-          uploadTask.cancel();
           reject(new Error(valResult.error || "File validation failed."));
           return;
         }
 
-        uploadTask.on(
-          "state_changed",
-          (snapshot) => {
-            const percentage = snapshot.totalBytes > 0
-              ? Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100)
-              : 0;
+        if (isCancelled) {
+          reject(new Error("Upload cancelled by user."));
+          return;
+        }
+
+        uploadToCloudinary(file, {
+          folder,
+          onProgress: (percent) => {
             if (options?.onProgress) {
+              const bytesTransferred = Math.round((file.size * percent) / 100);
               options.onProgress({
-                bytesTransferred: snapshot.bytesTransferred,
-                totalBytes: snapshot.totalBytes,
-                percentage,
+                percentage: percent,
+                bytesTransferred,
+                totalBytes: file.size,
               });
             }
           },
-          (error) => {
-            reject(error);
-          },
-          async () => {
-            try {
-              const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(downloadUrl);
-            } catch (err) {
-              reject(err);
+        })
+          .then((url) => {
+            if (isCancelled) {
+              reject(new Error("Upload cancelled by user."));
+            } else {
+              resolve(url);
             }
-          }
-        );
+          })
+          .catch((err) => reject(err));
       })
-      .catch((err) => {
-        uploadTask.cancel();
-        reject(err);
-      });
+      .catch((err) => reject(err));
   });
 
   return {
     promise,
-    cancel: () => uploadTask.cancel(),
-    pause: () => uploadTask.pause(),
-    resume: () => uploadTask.resume(),
-    task: uploadTask,
+    cancel: () => {
+      isCancelled = true;
+    },
+    pause: () => {},
+    resume: () => {},
   };
 }
 
 /**
- * Standard upload asset wrapper for backwards compatibility.
+ * Standard upload asset wrapper using direct Cloudinary unsigned upload.
  *
  * @param file - The HTML File object to upload
  * @param category - Category folder ("apps" | "projects" | "services" | "general")
@@ -133,18 +108,22 @@ export async function uploadStudioAsset(
   file: File,
   category: AssetCategory = "general"
 ): Promise<string> {
-  const handle = uploadStudioAssetResumable(file, category);
-  return handle.promise;
+  return uploadToCloudinary(file, { folder: `studio-assets/${category}` });
 }
 
 /**
- * Deletes an uploaded asset from Firebase Storage.
- * Accepts either a full download URL (extracts path) or a relative storage path.
+ * Deletes an uploaded asset if it resides in Firebase Storage.
+ * Cloudinary assets do not require deletion from client.
  */
 export async function deleteStudioAsset(urlOrPath: string): Promise<void> {
+  if (urlOrPath.includes("cloudinary.com")) {
+    // Cloudinary unsigned upload deletion is restricted on client for security
+    return;
+  }
+
   const storageInstance = storage || getFirebaseStorage();
   if (!storageInstance) {
-    throw new Error("Firebase Storage is not initialized.");
+    return;
   }
 
   try {
@@ -162,6 +141,6 @@ export async function deleteStudioAsset(urlOrPath: string): Promise<void> {
     await deleteObject(fileRef);
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : String(err);
-    console.warn("Storage delete error (asset may already be removed):", errorMsg);
+    console.warn("Storage delete notice (asset may already be removed):", errorMsg);
   }
 }
