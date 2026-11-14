@@ -45,11 +45,11 @@ export default async function Home() {
       case "packages":
         return <HomePackagesSection key="packages" />;
       case "apps":
-        return <NewAppsSection key="apps" />;
+        return <NewAppsSection key="apps" initialContent={siteContent.appsSection} />;
       case "services":
-        return <StudioServicesSection key="services" />;
+        return <StudioServicesSection key="services" initialContent={siteContent.servicesSection} />;
       case "projects":
-        return <FeaturedProjectsSection key="projects" />;
+        return <FeaturedProjectsSection key="projects" initialContent={siteContent.projectsSection} />;
       case "about":
         return <StudioAboutSection key="about" initialContent={siteContent.about} />;
       case "reviews":

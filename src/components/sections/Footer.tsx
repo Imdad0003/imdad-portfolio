@@ -12,12 +12,15 @@ import { Instagram } from "@/components/ui/InstagramIcon";
 
 export function Footer() {
   const [footerData, setFooterData] = useState({
+    logo: "/imdad-logo.png",
     tagline: "Independent digital product studio founded by Imdad. We architect and build mobile apps, web applications, e-commerce solutions, and high-retention creative media.",
+    description: "Independent digital product studio founded by Imdad. We architect and build mobile apps, web applications, e-commerce solutions, and high-retention creative media.",
     whatsappUrl: getWhatsAppUrl(),
     email: siteConfig.contact.email,
     instagramUrl: siteConfig.links.instagram,
     copyrightYear: 2026,
     studioName: "IMDAD.BUILDS",
+    copyrightText: "© 2026 IMDAD.BUILDS. All rights reserved. Powered by imdad.builds.",
   });
 
   useEffect(() => {
@@ -25,12 +28,15 @@ export function Footer() {
       .then((content) => {
         if (content) {
           setFooterData({
+            logo: content.footer?.logo || "/imdad-logo.png",
             tagline: content.footer?.tagline || "Independent digital product studio founded by Imdad. We architect and build mobile apps, web applications, e-commerce solutions, and high-retention creative media.",
+            description: content.footer?.description || content.footer?.tagline || "Independent digital product studio founded by Imdad. We architect and build mobile apps, web applications, e-commerce solutions, and high-retention creative media.",
             whatsappUrl: content.socialLinks?.whatsapp || (content.contact?.whatsappNumber ? `https://wa.me/${content.contact.whatsappNumber.replace(/[^0-9]/g, "")}` : getWhatsAppUrl()),
             email: content.contact?.email || siteConfig.contact.email,
             instagramUrl: content.socialLinks?.instagram || siteConfig.links.instagram,
             copyrightYear: content.footer?.copyrightYear || 2026,
             studioName: content.footer?.studioName || "IMDAD.BUILDS",
+            copyrightText: content.footer?.copyrightText || `© ${content.footer?.copyrightYear || 2026} ${content.footer?.studioName || "IMDAD.BUILDS"}. All rights reserved. Powered by imdad.builds.`,
           });
         }
       })
@@ -47,17 +53,16 @@ export function Footer() {
           <div className="lg:col-span-4 space-y-4">
             <div className="flex items-center gap-2.5">
               <div className="relative w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-white border border-slate-200 p-0.5 shadow-2xs">
-                <Image
-                  src="/imdad-logo.png"
-                  alt="IMDAD.BUILDS Logo"
-                  width={36}
-                  height={36}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={footerData.logo || "/imdad-logo.png"}
+                  alt={`${footerData.studioName} Logo`}
                   className="w-full h-full object-contain"
                 />
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-lg tracking-tight text-[#0A192F]">
-                  IMDAD.BUILDS
+                  {footerData.studioName}
                 </span>
                 <span className="studio-tag text-[8px] text-[#0284C7] font-mono font-bold uppercase tracking-wider">
                   PRODUCT STUDIO // LAB
@@ -66,7 +71,7 @@ export function Footer() {
             </div>
 
             <p className="text-slate-600 max-w-sm leading-relaxed text-xs sm:text-sm">
-              Independent digital product studio founded by Imdad. We architect and build mobile apps, web applications, e-commerce solutions, and high-retention creative media.
+              {footerData.description}
             </p>
 
             <div className="pt-1">
@@ -248,7 +253,7 @@ export function Footer() {
 
         {/* Bottom Studio Bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-          <p>© {footerData.copyrightYear} {footerData.studioName}. Independent Digital Product Studio.</p>
+          <p>{footerData.copyrightText}</p>
           <div className="flex items-center gap-6">
             <span className="font-mono text-[11px]">BUILD • CREATE • SCALE</span>
             <a

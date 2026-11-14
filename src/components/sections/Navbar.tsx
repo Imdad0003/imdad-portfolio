@@ -6,6 +6,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { navItems } from "@/data/navigation";
 import { siteConfig, getWhatsAppUrl } from "@/data/config";
+import { getSiteContent } from "@/lib/cms";
 import { Button } from "@/components/ui/Button";
 import { Menu, X, ArrowRight, MessageSquare, ChevronDown } from "lucide-react";
 import { Instagram } from "@/components/ui/InstagramIcon";
@@ -15,6 +16,38 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [servicesDropdownOpen, setServicesDropdownOpen] = useState(false);
   const pathname = usePathname();
+
+  const [navData, setNavData] = useState({
+    logo: "/imdad-logo.png",
+    brandName: "IMDAD.BUILDS",
+    badgeText: "PRODUCT STUDIO // LAB",
+    navLinks: navItems,
+    ctaText: "Start a Project",
+    ctaLink: "/contact",
+  });
+
+  useEffect(() => {
+    getSiteContent()
+      .then((content) => {
+        if (content && content.navigation) {
+          setNavData((prev) => ({
+            logo: content.navigation?.logo || prev.logo,
+            brandName: content.navigation?.brandName || prev.brandName,
+            badgeText: content.navigation?.badgeText || prev.badgeText,
+            navLinks:
+              content.navigation?.navLinks && content.navigation.navLinks.length > 0
+                ? content.navigation.navLinks.map((l) => ({
+                    label: l.label,
+                    href: l.href,
+                  }))
+                : prev.navLinks,
+            ctaText: content.navigation?.ctaText || prev.ctaText,
+            ctaLink: content.navigation?.ctaLink || prev.ctaLink,
+          }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -47,27 +80,25 @@ export function Navbar() {
           <Link
             href="/"
             className="flex items-center gap-2.5 group focus-ring rounded-lg py-1 shrink-0"
-            aria-label="IMDAD.BUILDS - Product Studio"
+            aria-label={`${navData.brandName} - Product Studio`}
           >
             <div className="relative w-8 h-8 sm:w-9 sm:h-9 shrink-0 flex items-center justify-center rounded-xl bg-white border border-slate-200 p-0.5 shadow-2xs group-hover:border-[#0284C7]/40 transition-colors">
-              <Image
-                src="/imdad-logo.png"
-                alt="IMDAD.BUILDS Logo"
-                width={36}
-                height={36}
-                priority
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={navData.logo || "/imdad-logo.png"}
+                alt={`${navData.brandName} Logo`}
                 className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
               />
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
                 <span className="font-black text-sm sm:text-base tracking-tight text-[#0A192F] group-hover:text-[#0284C7] transition-colors leading-tight">
-                  IMDAD.BUILDS
+                  {navData.brandName}
                 </span>
                 <span className="hidden sm:inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Studio Open for Projects" />
               </div>
               <span className="studio-tag text-[7.5px] sm:text-[8px] text-slate-500 font-mono leading-none">
-                PRODUCT STUDIO // LAB
+                {navData.badgeText}
               </span>
             </div>
           </Link>
@@ -77,7 +108,7 @@ export function Navbar() {
             className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/80 border border-slate-200/80 backdrop-blur-md shadow-xs"
             aria-label="Main Navigation"
           >
-            {navItems.map((item) => {
+            {navData.navLinks.map((item) => {
               const isActive =
                 item.href === "/"
                   ? pathname === "/"
@@ -170,12 +201,12 @@ export function Navbar() {
             </a>
 
             <Button
-              href="/contact"
+              href={navData.ctaLink || "/contact"}
               variant="primary"
               size="sm"
               className="hidden sm:inline-flex text-xs px-4 py-2 font-bold shadow-xs bg-[#0284C7] hover:bg-[#0369A1] text-white"
             >
-              Start a Project
+              {navData.ctaText || "Start a Project"}
               <ArrowRight className="w-3.5 h-3.5" />
             </Button>
 
@@ -281,13 +312,13 @@ export function Navbar() {
                 </a>
 
                 <Button
-                  href="/contact"
+                  href={navData.ctaLink || "/contact"}
                   variant="primary"
                   size="md"
                   className="w-full justify-center text-xs min-h-[44px] font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Start a Project
+                  {navData.ctaText || "Start a Project"}
                   <ArrowRight className="w-4 h-4" />
                 </Button>
               </div>

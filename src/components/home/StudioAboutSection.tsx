@@ -69,41 +69,40 @@ export function StudioAboutSection({ initialContent }: StudioAboutSectionProps) 
 
           {/* Right Column: 3 Operational Pillars (5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
-            <div className="p-5 sm:p-6 rounded-2xl bg-white/95 border border-slate-200 backdrop-blur-md shadow-2xs">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-sky-50 text-[#0284C7] border border-sky-100 flex items-center justify-center font-bold text-xs">
-                  01
+            {(
+              aboutContent.pillars || [
+                {
+                  number: "01",
+                  title: "Real Products, Zero Fluff",
+                  description:
+                    "We build working codebases, deployed mobile applications, and verified marketplace listings. No fake startup metrics or vanity presentations.",
+                },
+                {
+                  number: "02",
+                  title: "Direct Founder Partnership",
+                  description:
+                    "No middle managers or delegated offshore handoffs. You collaborate directly with the builder who architects, codes, and refines your solution.",
+                },
+                {
+                  number: "03",
+                  title: "Conversion-First Engineering",
+                  description:
+                    "Every layout, visual contrast choice, and micro-interaction is engineered to remove customer hesitation, speed up transactions, and maximize conversion rates.",
+                },
+              ]
+            ).map((pillar, idx) => (
+              <div key={idx} className="p-5 sm:p-6 rounded-2xl bg-white/95 border border-slate-200 backdrop-blur-md shadow-2xs">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-sky-50 text-[#0284C7] border border-sky-100 flex items-center justify-center font-bold text-xs">
+                    {pillar.number || `0${idx + 1}`}
+                  </div>
+                  <h4 className="font-black text-base text-[#0A192F]">{pillar.title}</h4>
                 </div>
-                <h4 className="font-black text-base text-[#0A192F]">Real Products, Zero Fluff</h4>
+                <p className="text-xs text-slate-600 leading-relaxed pl-11">
+                  {pillar.description}
+                </p>
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed pl-11">
-                We build working codebases, deployed mobile applications, and verified marketplace listings. No fake startup metrics or vanity presentations.
-              </p>
-            </div>
-
-            <div className="p-5 sm:p-6 rounded-2xl bg-white/95 border border-slate-200 backdrop-blur-md shadow-2xs">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-sky-50 text-[#0284C7] border border-sky-100 flex items-center justify-center font-bold text-xs">
-                  02
-                </div>
-                <h4 className="font-black text-base text-[#0A192F]">Direct Founder Partnership</h4>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed pl-11">
-                No middle managers or delegated offshore handoffs. You collaborate directly with the builder who architects, codes, and refines your solution.
-              </p>
-            </div>
-
-            <div className="p-5 sm:p-6 rounded-2xl bg-white/95 border border-slate-200 backdrop-blur-md shadow-2xs">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-lg bg-sky-50 text-[#0284C7] border border-sky-100 flex items-center justify-center font-bold text-xs">
-                  03
-                </div>
-                <h4 className="font-black text-base text-[#0A192F]">Conversion-First Engineering</h4>
-              </div>
-              <p className="text-xs text-slate-600 leading-relaxed pl-11">
-                Every layout, visual contrast choice, and micro-interaction is engineered to remove customer hesitation, speed up transactions, and maximize conversion rates.
-              </p>
-            </div>
+            ))}
           </div>
 
         </div>

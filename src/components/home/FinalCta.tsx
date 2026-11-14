@@ -55,7 +55,7 @@ export function FinalCta({ initialContent }: FinalCtaProps) {
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
             <Link
-              href="/contact"
+              href={ctaContent.primaryCtaLink || "/contact"}
               className="w-full sm:w-auto px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-xs sm:text-sm bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md transition-all flex items-center justify-center gap-2 focus-ring active:scale-95"
             >
               <span>{ctaContent.primaryCtaText || "Start a Project"}</span>
@@ -63,7 +63,7 @@ export function FinalCta({ initialContent }: FinalCtaProps) {
             </Link>
 
             <Link
-              href="/about"
+              href={ctaContent.secondaryCtaLink || "/about"}
               className="w-full sm:w-auto px-8 py-3.5 min-h-[48px] rounded-xl font-bold text-xs sm:text-sm bg-white text-[#0A192F] border border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center justify-center gap-2 focus-ring shadow-2xs active:scale-95"
             >
               <Compass className="w-4 h-4 text-[#0284C7]" />
@@ -83,7 +83,7 @@ export function FinalCta({ initialContent }: FinalCtaProps) {
           </div>
 
           <div className="mt-8 pt-5 border-t border-slate-200/80 text-[11px] font-mono text-slate-500">
-            ESTIMATED TIMELINES: 3–14 DAYS &bull; SCOPED FIXED RATES &bull; ZERO RETAINER TRAPS
+            {ctaContent.footnote || "ESTIMATED TIMELINES: 3–14 DAYS • SCOPED FIXED RATES • ZERO RETAINER TRAPS"}
           </div>
         </div>
       </Container>

@@ -25,6 +25,7 @@ import { uploadToCloudinary } from "@/lib/cloudinary";
 import { AppReleaseManager } from "@/components/admin/AppReleaseManager";
 import { ReleaseHistoryView } from "@/components/admin/ReleaseHistoryView";
 import { AmazonPortfolioManager } from "@/components/admin/AmazonPortfolioManager";
+import { HomepageBuilder } from "@/components/admin/HomepageBuilder";
 import { appsData } from "@/data/apps";
 import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
@@ -96,6 +97,7 @@ export default function AdminPortalPage() {
   // Tab & data state
   const [activeTab, setActiveTab] = useState<
     | "dashboard"
+    | "homepage-builder"
     | "amazon-portfolio"
     | "apps"
     | "app-releases"
@@ -1024,6 +1026,7 @@ export default function AdminPortalPage() {
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/70 border border-[#502D55]/10 backdrop-blur-md mb-8 overflow-x-auto">
           {[
             { id: "dashboard", label: "Dashboard", icon: Layers },
+            { id: "homepage-builder", label: "Homepage Builder", icon: Sparkles },
             { id: "amazon-portfolio", label: "Amazon & A+ Portfolio", icon: ShoppingBag },
             { id: "apps", label: `App Directory (${apps.length})`, icon: Smartphone },
             { id: "app-releases", label: "Release Manager", icon: Upload },
@@ -1068,6 +1071,14 @@ export default function AdminPortalPage() {
                 <span className="text-[11px] text-[#56475C]">Instant serverless sync &bull; Zero redeploy</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("homepage-builder")}
+                  className="p-3 rounded-2xl bg-sky-50 border border-sky-200 hover:border-[#0284C7] hover:bg-sky-100/70 transition-all flex flex-col items-center justify-center text-center gap-1.5 group cursor-pointer"
+                >
+                  <Sparkles className="w-4 h-4 text-[#0284C7] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold text-[#0A192F]">Homepage CMS</span>
+                </button>
                 <Link
                   href="/admin/projects"
                   className="p-3 rounded-2xl bg-[#FAF4F9] border border-[#502D55]/15 hover:border-[#935073] hover:bg-[#FAF4F9]/80 transition-all flex flex-col items-center justify-center text-center gap-1.5 group"
@@ -1240,6 +1251,18 @@ export default function AdminPortalPage() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB: HOMEPAGE VISUAL BUILDER (CMS)                       */}
+        {/* ======================================================== */}
+        {activeTab === "homepage-builder" && (
+          <HomepageBuilder
+            currentUserEmail={currentUser?.email || undefined}
+            apps={apps}
+            projects={projects}
+            services={services}
+          />
         )}
 
         {/* ======================================================== */}
@@ -1657,6 +1680,22 @@ export default function AdminPortalPage() {
         {/* ======================================================== */}
         {activeTab === "content" && siteContent && (
           <div className="space-y-6 max-w-3xl">
+            <div className="p-4 rounded-2xl bg-sky-50 border border-sky-200 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Sparkles className="w-5 h-5 text-[#0284C7]" />
+                <div>
+                  <span className="font-bold text-xs text-[#0A192F]">Dedicated Homepage Visual Builder</span>
+                  <p className="text-[11px] text-slate-500">Live desktop &amp; mobile preview, Media Library picker, and Draft &amp; Publish system.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab("homepage-builder")}
+                className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[#0284C7] text-white hover:bg-[#0369A1] transition-all cursor-pointer"
+              >
+                Open Visual Builder &rarr;
+              </button>
+            </div>
             <div className="flex justify-between items-center">
               <div>
                 <h2 className="text-lg font-bold text-[#180D1D]">Site Content Configuration</h2>

@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { studioServices, StudioService } from "@/data/servicesData";
-import { getPublishedServices } from "@/lib/cms";
+import { getPublishedServices, getSiteContent } from "@/lib/cms";
+import type { SiteContentDocument } from "@/types/cms";
 import {
   ArrowRight,
   Globe,
@@ -22,9 +23,36 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Share2,
 };
 
-export function StudioServicesSection() {
+interface StudioServicesSectionProps {
+  initialContent?: SiteContentDocument["servicesSection"];
+}
+
+export function StudioServicesSection({ initialContent }: StudioServicesSectionProps) {
   const [services, setServices] = useState<StudioService[]>(studioServices);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(0);
+  const [headerContent, setHeaderContent] = useState({
+    eyebrow: initialContent?.eyebrow || "STUDIO CAPABILITIES // 5 DISCIPLINES",
+    title: initialContent?.title || "Studio Services",
+    subtitle: initialContent?.subtitle || "High-precision engineering, e-commerce operations, and direct-response creative media tailored for ambitious brands.",
+    ctaText: initialContent?.ctaText || "EXPLORE ALL SERVICES & PRICING",
+    ctaLink: initialContent?.ctaLink || "/services",
+  });
+
+  useEffect(() => {
+    getSiteContent()
+      .then((content) => {
+        if (content && content.servicesSection) {
+          setHeaderContent({
+            eyebrow: content.servicesSection.eyebrow || "STUDIO CAPABILITIES // 5 DISCIPLINES",
+            title: content.servicesSection.title || "Studio Services",
+            subtitle: content.servicesSection.subtitle || "High-precision engineering, e-commerce operations, and direct-response creative media tailored for ambitious brands.",
+            ctaText: content.servicesSection.ctaText || "EXPLORE ALL SERVICES & PRICING",
+            ctaLink: content.servicesSection.ctaLink || "/services",
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     getPublishedServices()
@@ -65,21 +93,21 @@ export function StudioServicesSection() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono text-[#0284C7] mb-3 shadow-2xs font-bold uppercase tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />
-              STUDIO CAPABILITIES // 5 DISCIPLINES
+              {headerContent.eyebrow}
             </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0A192F]">
-              Studio Services
+              {headerContent.title}
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-xl">
-              High-precision engineering, e-commerce operations, and direct-response creative media tailored for ambitious brands.
+              {headerContent.subtitle}
             </p>
           </div>
 
           <Link
-            href="/services"
+            href={headerContent.ctaLink || "/services"}
             className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#0A192F] hover:text-[#0284C7] transition-colors group shrink-0"
           >
-            <span>EXPLORE ALL SERVICES &amp; PRICING</span>
+            <span>{headerContent.ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

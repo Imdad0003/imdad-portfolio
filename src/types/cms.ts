@@ -164,17 +164,66 @@ export interface WebsitePackageDocument {
   published: boolean;
 }
 
+export interface MediaAssetDocument {
+  id: string;
+  url: string;
+  name: string;
+  alt: string;
+  category: "logos" | "hero" | "apps" | "projects" | "services" | "general";
+  fileSize: number;
+  width?: number;
+  height?: number;
+  format?: string;
+  createdAt: string;
+  updatedAt?: string;
+  usedIn?: string[];
+}
+
 export interface SiteContentDocument {
-  id: "main";
+  id: "main" | "draft" | string;
   hero: {
     badge: string;
     headline: string;
+    highlightedText?: string;
     subheadline: string;
     primaryCtaText: string;
     primaryCtaLink: string;
     secondaryCtaText: string;
     secondaryCtaLink: string;
     announcement: string;
+    heroImage?: string;
+    heroImageAlt?: string;
+  };
+  navigation?: {
+    logo?: string;
+    brandName?: string;
+    badgeText?: string;
+    navLinks?: Array<{ label: string; href: string; isExternal?: boolean }>;
+    ctaText?: string;
+    ctaLink?: string;
+  };
+  appsSection?: {
+    eyebrow?: string;
+    title?: string;
+    subtitle?: string;
+    ctaText?: string;
+    ctaLink?: string;
+    displayedAppIds?: string[];
+  };
+  servicesSection?: {
+    eyebrow?: string;
+    title?: string;
+    subtitle?: string;
+    ctaText?: string;
+    ctaLink?: string;
+  };
+  projectsSection?: {
+    eyebrow?: string;
+    title?: string;
+    subtitle?: string;
+    ctaText?: string;
+    ctaLink?: string;
+    displayedProjectIds?: string[];
   };
   about: {
     eyebrow: string;
@@ -182,13 +231,18 @@ export interface SiteContentDocument {
     bio: string;
     ethos: string;
     location: string;
+    pillars?: Array<{ number: string; title: string; description: string }>;
   };
   finalCta: {
     eyebrow: string;
     headline: string;
     description: string;
     primaryCtaText: string;
+    primaryCtaLink?: string;
     secondaryCtaText: string;
+    secondaryCtaLink?: string;
+    badgeText?: string;
+    footnote?: string;
   };
   contact: {
     email: string;
@@ -203,11 +257,16 @@ export interface SiteContentDocument {
     whatsapp: string;
     email: string;
     easyxo: string;
+    github?: string;
   };
   footer: {
+    logo?: string;
     tagline: string;
     copyrightYear: number;
     studioName: string;
+    description?: string;
+    copyrightText?: string;
+    navLinks?: Array<{ label: string; href: string }>;
   };
   title?: string;
   section?: string;
@@ -219,10 +278,14 @@ export interface SiteContentDocument {
       title?: string;
       description?: string;
       ogImage?: string;
+      keywords?: string[];
     };
     [key: string]: unknown;
   };
   published: boolean;
+  publishedAt?: string;
+  publishedBy?: string;
+  draftModifiedAt?: string;
   updatedAt: string;
 }
 
@@ -244,12 +307,25 @@ export interface SettingsDocument {
   id: "global";
   studioName: string;
   tagline: string;
+  primaryLogo?: string;
+  secondaryLogo?: string;
+  favicon?: string;
   contactEmail: string;
   whatsappNumber: string;
   instagramHandle: string;
+  instagramUrl?: string;
   liveUrl: string;
   maintenanceMode: boolean;
   allowPublicReviews: boolean;
+  brandColors?: {
+    primary?: string;
+    accent?: string;
+    surface?: string;
+  };
+  typography?: {
+    headingFont?: string;
+    bodyFont?: string;
+  };
   contact?: Record<string, unknown>;
   socials?: Record<string, unknown>;
   config?: Record<string, unknown>;

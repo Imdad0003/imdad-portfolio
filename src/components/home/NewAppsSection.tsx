@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { appsData, App, AppPlatform, AppStatus } from "@/data/apps";
-import { getPublishedApps } from "@/lib/cms";
+import { getPublishedApps, getSiteContent } from "@/lib/cms";
+import type { SiteContentDocument } from "@/types/cms";
 import {
   ArrowRight,
   Music,
@@ -13,8 +14,35 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-export function NewAppsSection() {
+interface NewAppsSectionProps {
+  initialContent?: SiteContentDocument["appsSection"];
+}
+
+export function NewAppsSection({ initialContent }: NewAppsSectionProps) {
   const [apps, setApps] = useState<App[]>(appsData);
+  const [headerContent, setHeaderContent] = useState({
+    eyebrow: initialContent?.eyebrow || "PRODUCT LAB // CURRENT RELEASES",
+    title: initialContent?.title || "New Apps",
+    subtitle: initialContent?.subtitle || "Digital products conceptualized, engineered, and shipped by Imdad.builds. Distinctive tools with zero bloat.",
+    ctaText: initialContent?.ctaText || "VIEW ALL APPS & ECOSYSTEM",
+    ctaLink: initialContent?.ctaLink || "/apps",
+  });
+
+  useEffect(() => {
+    getSiteContent()
+      .then((content) => {
+        if (content && content.appsSection) {
+          setHeaderContent({
+            eyebrow: content.appsSection.eyebrow || "PRODUCT LAB // CURRENT RELEASES",
+            title: content.appsSection.title || "New Apps",
+            subtitle: content.appsSection.subtitle || "Digital products conceptualized, engineered, and shipped by Imdad.builds. Distinctive tools with zero bloat.",
+            ctaText: content.appsSection.ctaText || "VIEW ALL APPS & ECOSYSTEM",
+            ctaLink: content.appsSection.ctaLink || "/apps",
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     getPublishedApps()
@@ -73,21 +101,21 @@ export function NewAppsSection() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono text-[#0284C7] mb-3 shadow-2xs font-bold uppercase tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />
-              PRODUCT LAB // CURRENT RELEASES
+              {headerContent.eyebrow}
             </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0A192F]">
-              New Apps
+              {headerContent.title}
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-xl">
-              Digital products conceptualized, engineered, and shipped by Imdad.builds. Distinctive tools with zero bloat.
+              {headerContent.subtitle}
             </p>
           </div>
 
           <Link
-            href="/apps"
+            href={headerContent.ctaLink || "/apps"}
             className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#0A192F] hover:text-[#0284C7] transition-colors group shrink-0"
           >
-            <span>VIEW ALL APPS &amp; ECOSYSTEM</span>
+            <span>{headerContent.ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

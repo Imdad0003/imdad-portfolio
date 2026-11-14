@@ -22,6 +22,7 @@ import type {
   WebsitePackageDocument,
   SiteContentDocument,
   SettingsDocument,
+  MediaAssetDocument,
 } from "@/types/cms";
 import type {
   AppReleaseDocument,
@@ -430,28 +431,152 @@ export async function getPublishedPackages(): Promise<WebsitePackageDocument[]> 
   return [...defaultCorePackages, ...defaultServicePackages];
 }
 
-export async function getSiteContent(): Promise<SiteContentDocument> {
-  const defaultMetadata = {
+export const defaultSiteContent: SiteContentDocument = {
+  id: "main",
+  hero: {
+    badge: "DIGITAL PRODUCT STUDIO",
+    headline: "Apps, Platforms & Digital Commerce.",
+    highlightedText: "Digital Commerce.",
+    subheadline:
+      "Independent studio engineering high-performance mobile apps, web applications, conversion-engineered e-commerce engines, and retention media.",
+    primaryCtaText: "Explore New Apps",
+    primaryCtaLink: "/apps",
+    secondaryCtaText: "Studio Services",
+    secondaryCtaLink: "/services",
+    announcement: "Now building: WishMusic & WishTracking for iOS/Android",
+    heroImage: "/imdad-logo.png",
+    heroImageAlt: "IMDAD.BUILDS Product Lab",
+  },
+  navigation: {
+    logo: "/imdad-logo.png",
+    brandName: "IMDAD.BUILDS",
+    badgeText: "PRODUCT STUDIO // LAB",
+    navLinks: [
+      { label: "Apps", href: "/apps" },
+      { label: "Services", href: "/services" },
+      { label: "Projects", href: "/projects" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "About", href: "/about" },
+    ],
+    ctaText: "Start a Project",
+    ctaLink: "/contact",
+  },
+  appsSection: {
+    eyebrow: "PRODUCT LAB // CURRENT RELEASES",
+    title: "New Apps",
+    subtitle:
+      "Digital products conceptualized, engineered, and shipped by Imdad.builds. Distinctive tools with zero bloat.",
+    ctaText: "VIEW ALL APPS & ECOSYSTEM",
+    ctaLink: "/apps",
+  },
+  servicesSection: {
+    eyebrow: "STUDIO CAPABILITIES // 5 DISCIPLINES",
+    title: "Studio Services",
+    subtitle:
+      "High-precision engineering, e-commerce operations, and direct-response creative media tailored for ambitious brands.",
+    ctaText: "EXPLORE ALL SERVICES & PRICING",
+    ctaLink: "/services",
+  },
+  projectsSection: {
+    eyebrow: "CASE STUDIES // PROVEN EXECUTION",
+    title: "Featured Projects",
+    subtitle:
+      "Real commerce ventures, technical storefronts, and conversion-first visual architectures shipped by our studio.",
+    ctaText: "VIEW ALL CASE STUDIES",
+    ctaLink: "/projects",
+  },
+  about: {
+    eyebrow: "STUDIO ORIGIN",
+    headline: "Building software, platforms & creative assets with commercial precision.",
+    bio: "Imdad.builds was founded as an independent digital studio where software engineering converges with direct commercial reality. Unlike agencies who theorize about products, we build, launch, and operate them ourselves.",
+    ethos: "Zero bloat. Fast iterations. Real products powered by imdad.builds.",
+    location: "India • Global Distribution",
+    pillars: [
+      {
+        number: "01",
+        title: "Real Products, Zero Fluff",
+        description:
+          "We build working codebases, deployed mobile applications, and verified marketplace listings. No fake startup metrics or vanity presentations.",
+      },
+      {
+        number: "02",
+        title: "Direct Founder Partnership",
+        description:
+          "No middle managers or delegated offshore handoffs. You collaborate directly with the builder who architects, codes, and refines your solution.",
+      },
+      {
+        number: "03",
+        title: "Commercial-First Engineering",
+        description:
+          "Code is engineered for reliability, conversion, and clean distribution. Fast turnaround without compromising architecture.",
+      },
+    ],
+  },
+  finalCta: {
+    eyebrow: "DIRECT FOUNDER COLLABORATION // Q2-Q3 2026",
+    headline: "Have an ambitious product idea or digital service need?",
+    description:
+      "From early conceptual wireframes to high-conversion stores and consumer apps, let's build something enduring together.",
+    primaryCtaText: "Start a Project",
+    primaryCtaLink: "/contact",
+    secondaryCtaText: "Explore the Studio",
+    secondaryCtaLink: "/about",
+    badgeText: "STUDIO OPEN FOR PROJECTS",
+    footnote:
+      "ESTIMATED TIMELINES: 3–14 DAYS • SCOPED FIXED RATES • ZERO RETAINER TRAPS",
+  },
+  contact: {
+    email: siteConfig.contact.email,
+    whatsappNumber: siteConfig.contact.whatsappNumber,
+    whatsappDisplay: siteConfig.contact.whatsappDisplay,
+    whatsappMessage: siteConfig.contact.whatsappMessage,
+    instagramHandle: siteConfig.contact.instagramHandle,
+    instagramUrl: siteConfig.contact.instagramUrl,
+  },
+  socialLinks: {
+    instagram: siteConfig.links.instagram,
+    whatsapp: siteConfig.links.whatsapp,
+    email: siteConfig.links.email,
+    easyxo: siteConfig.links.easyxo,
+  },
+  footer: {
+    logo: "/imdad-logo.png",
+    tagline: siteConfig.subTagline,
+    copyrightYear: 2026,
+    studioName: siteConfig.name,
+    description:
+      "Independent digital product studio founded by Imdad. We architect and build mobile apps, web applications, e-commerce solutions, and high-retention creative media.",
+    copyrightText: "© 2026 IMDAD.BUILDS. All rights reserved. Powered by imdad.builds.",
+    navLinks: [
+      { label: "Home", href: "/" },
+      { label: "Apps", href: "/apps" },
+      { label: "Services", href: "/services" },
+      { label: "Projects", href: "/projects" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "About", href: "/about" },
+      { label: "Contact", href: "/contact" },
+      { label: "Privacy Policy", href: "/privacy-policy" },
+      { label: "Terms", href: "/terms" },
+    ],
+  },
+  metadata: {
     sectionOrder: [
       "hero",
-      "packages",
       "apps",
       "services",
       "projects",
       "about",
-      "reviews",
-      "ai-assistant",
       "final-cta",
     ],
     sectionVisibility: {
       hero: true,
-      packages: true,
+      packages: false,
       apps: true,
       services: true,
       projects: true,
       about: true,
-      reviews: true,
-      "ai-assistant": true,
+      reviews: false,
+      "ai-assistant": false,
       "final-cta": true,
     },
     skills: [
@@ -476,134 +601,102 @@ export async function getSiteContent(): Promise<SiteContentDocument> {
       title: "IMDAD.BUILDS | Independent Digital Product Studio",
       description:
         "Independent digital product studio building mobile apps, web applications, e-commerce systems, and conversion-engineered creative media.",
+      ogImage: "/imdad-logo.png",
+      keywords: ["IMDAD.BUILDS", "Product Studio", "Mobile Apps", "Web Development", "WishMusic"],
     },
+  },
+  published: true,
+  updatedAt: new Date().toISOString(),
+};
+
+function mergeSiteContent(raw: Record<string, any>, targetId: "main" | "draft" = "main"): SiteContentDocument {
+  return {
+    id: targetId,
+    hero: {
+      ...defaultSiteContent.hero,
+      ...(raw.hero || {}),
+    },
+    navigation: {
+      ...defaultSiteContent.navigation,
+      ...(raw.navigation || {}),
+    },
+    appsSection: {
+      ...defaultSiteContent.appsSection,
+      ...(raw.appsSection || {}),
+    },
+    servicesSection: {
+      ...defaultSiteContent.servicesSection,
+      ...(raw.servicesSection || {}),
+    },
+    projectsSection: {
+      ...defaultSiteContent.projectsSection,
+      ...(raw.projectsSection || {}),
+    },
+    about: {
+      ...defaultSiteContent.about,
+      ...(raw.about || {}),
+      pillars: raw.about?.pillars || defaultSiteContent.about.pillars,
+    },
+    finalCta: {
+      ...defaultSiteContent.finalCta,
+      ...(raw.finalCta || {}),
+    },
+    contact: {
+      ...defaultSiteContent.contact,
+      ...(raw.contact || {}),
+    },
+    socialLinks: {
+      ...defaultSiteContent.socialLinks,
+      ...(raw.socialLinks || {}),
+    },
+    footer: {
+      ...defaultSiteContent.footer,
+      ...(raw.footer || {}),
+    },
+    metadata: {
+      sectionOrder: raw.metadata?.sectionOrder || defaultSiteContent.metadata?.sectionOrder,
+      sectionVisibility: {
+        ...defaultSiteContent.metadata?.sectionVisibility,
+        ...(raw.metadata?.sectionVisibility || {}),
+      },
+      skills: raw.metadata?.skills || defaultSiteContent.metadata?.skills,
+      seo: {
+        ...defaultSiteContent.metadata?.seo,
+        ...(raw.metadata?.seo || {}),
+      },
+    },
+    published: raw.published ?? true,
+    publishedAt: raw.publishedAt,
+    publishedBy: raw.publishedBy,
+    draftModifiedAt: raw.draftModifiedAt,
+    updatedAt: raw.updatedAt || new Date().toISOString(),
   };
+}
+
+export async function getSiteContent(options?: { isDraft?: boolean }): Promise<SiteContentDocument> {
+  const isDraft = options?.isDraft === true;
 
   if (db && isFirebaseConfigured) {
     try {
-      const docRef = doc(db, "siteContent", "main");
-      const snap = await getDoc(docRef);
+      if (isDraft) {
+        const draftRef = doc(db, "siteContent", "draft");
+        const draftSnap = await getDoc(draftRef);
+        if (draftSnap.exists()) {
+          return mergeSiteContent(draftSnap.data(), "draft");
+        }
+      }
+
+      const mainRef = doc(db, "siteContent", "main");
+      const snap = await getDoc(mainRef);
       if (snap.exists()) {
-        const raw = snap.data();
-        return {
-          id: "main",
-          ...raw,
-          metadata: {
-            sectionOrder: raw.metadata?.sectionOrder || defaultMetadata.sectionOrder,
-            sectionVisibility: {
-              ...defaultMetadata.sectionVisibility,
-              ...(raw.metadata?.sectionVisibility || {}),
-            },
-            skills: raw.metadata?.skills || defaultMetadata.skills,
-            seo: {
-              ...defaultMetadata.seo,
-              ...(raw.metadata?.seo || {}),
-            },
-          },
-        } as SiteContentDocument;
+        return mergeSiteContent(snap.data(), "main");
       }
     } catch (err) {
       console.warn("Firestore getSiteContent fallback:", err);
     }
   }
 
-  return {
-    id: "main",
-    hero: {
-      badge: "DIGITAL PRODUCT STUDIO",
-      headline: "Apps, Platforms & Digital Commerce.",
-      subheadline:
-        "Independent studio engineering high-performance mobile apps, web applications, conversion-engineered e-commerce engines, and retention media.",
-      primaryCtaText: "Explore New Apps",
-      primaryCtaLink: "/apps",
-      secondaryCtaText: "Studio Services",
-      secondaryCtaLink: "/services",
-      announcement: "Now building: WishMusic & WishTracking for iOS/Android",
-    },
-    about: {
-      eyebrow: "STUDIO ORIGIN",
-      headline: "Building software, platforms & creative assets with commercial precision.",
-      bio: "Imdad.builds was founded as an independent digital studio where software engineering converges with direct commercial reality. Unlike agencies who theorize about products, we build, launch, and operate them ourselves.",
-      ethos: "Zero bloat. Fast iterations. Real products powered by imdad.builds.",
-      location: "India • Global Distribution",
-    },
-    finalCta: {
-      eyebrow: "COLLABORATE WITH IMDAD",
-      headline: "Have an ambitious product idea or digital service need?",
-      description:
-        "From early conceptual wireframes to high-conversion stores and consumer apps, let's build something enduring together.",
-      primaryCtaText: "Start a Project",
-      secondaryCtaText: "Explore Studio Services",
-    },
-    contact: {
-      email: siteConfig.contact.email,
-      whatsappNumber: siteConfig.contact.whatsappNumber,
-      whatsappDisplay: siteConfig.contact.whatsappDisplay,
-      whatsappMessage: siteConfig.contact.whatsappMessage,
-      instagramHandle: siteConfig.contact.instagramHandle,
-      instagramUrl: siteConfig.contact.instagramUrl,
-    },
-    socialLinks: {
-      instagram: siteConfig.links.instagram,
-      whatsapp: siteConfig.links.whatsapp,
-      email: siteConfig.links.email,
-      easyxo: siteConfig.links.easyxo,
-    },
-    footer: {
-      tagline: siteConfig.subTagline,
-      copyrightYear: 2026,
-      studioName: siteConfig.name,
-    },
-    metadata: {
-      sectionOrder: [
-        "hero",
-        "packages",
-        "apps",
-        "services",
-        "projects",
-        "about",
-        "reviews",
-        "ai-assistant",
-        "final-cta",
-      ],
-      sectionVisibility: {
-        hero: true,
-        packages: true,
-        apps: true,
-        services: true,
-        projects: true,
-        about: true,
-        reviews: true,
-        "ai-assistant": true,
-        "final-cta": true,
-      },
-      skills: [
-        {
-          category: "Mobile & App Engineering",
-          items: ["Flutter", "Dart", "iOS", "Android", "State Management", "Offline-First SQLite"],
-        },
-        {
-          category: "Web & Storefronts",
-          items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay", "Node.js"],
-        },
-        {
-          category: "Marketplace & E-Commerce",
-          items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo Platform"],
-        },
-        {
-          category: "AI & Media Systems",
-          items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging", "Cloudflare R2"],
-        },
-      ],
-      seo: {
-        title: "IMDAD.BUILDS | Independent Digital Product Studio",
-        description:
-          "Independent digital product studio building mobile apps, web applications, e-commerce systems, and conversion-engineered creative media.",
-      },
-    },
-    published: true,
-    updatedAt: new Date().toISOString(),
-  };
+  return { ...defaultSiteContent };
 }
 
 export async function getSettings(): Promise<SettingsDocument> {
@@ -776,6 +869,143 @@ export async function saveSiteContentAdmin(content: Partial<SiteContentDocument>
     },
     { merge: true }
   );
+}
+
+export async function saveSiteContentDraft(content: Partial<SiteContentDocument>): Promise<void> {
+  if (!db) throw new Error("Firestore is not initialized");
+  const docRef = doc(db, "siteContent", "draft");
+  const now = new Date().toISOString();
+  await setDoc(
+    docRef,
+    {
+      ...content,
+      id: "draft",
+      draftModifiedAt: now,
+      updatedAt: now,
+    },
+    { merge: true }
+  );
+}
+
+export async function publishSiteContent(
+  content: Partial<SiteContentDocument>,
+  publisherEmail?: string
+): Promise<void> {
+  if (!db) throw new Error("Firestore is not initialized");
+  const now = new Date().toISOString();
+  const payload = {
+    ...content,
+    id: "main",
+    published: true,
+    publishedAt: now,
+    publishedBy: publisherEmail || "admin",
+    updatedAt: now,
+  };
+
+  // Promote to public main document
+  await setDoc(doc(db, "siteContent", "main"), payload, { merge: true });
+
+  // Keep draft in sync
+  await setDoc(doc(db, "siteContent", "draft"), { ...payload, id: "draft" }, { merge: true });
+}
+
+// ==========================================
+// 2.5 MEDIA LIBRARY APIS
+// ==========================================
+
+export async function getAllMediaAssetsAdmin(category?: string): Promise<MediaAssetDocument[]> {
+  if (!db) return [];
+  try {
+    let q = query(collection(db, "mediaAssets"), orderBy("createdAt", "desc"));
+    if (category && category !== "all") {
+      q = query(
+        collection(db, "mediaAssets"),
+        where("category", "==", category),
+        orderBy("createdAt", "desc")
+      );
+    }
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as MediaAssetDocument));
+  } catch (err) {
+    console.warn("getAllMediaAssetsAdmin error:", err);
+    return [];
+  }
+}
+
+export async function saveMediaAssetAdmin(asset: Partial<MediaAssetDocument> & { id: string }): Promise<void> {
+  if (!db) throw new Error("Firestore is not initialized");
+  const docRef = doc(db, "mediaAssets", asset.id);
+  const now = new Date().toISOString();
+  await setDoc(
+    docRef,
+    {
+      ...asset,
+      updatedAt: now,
+      createdAt: asset.createdAt || now,
+    },
+    { merge: true }
+  );
+}
+
+export async function checkAssetUsage(url: string): Promise<{ inUse: boolean; locations: string[] }> {
+  const locations: string[] = [];
+  if (!db || !url) return { inUse: false, locations };
+
+  try {
+    // 1. Check site content
+    const siteSnap = await getDoc(doc(db, "siteContent", "main"));
+    if (siteSnap.exists()) {
+      const siteStr = JSON.stringify(siteSnap.data());
+      if (siteStr.includes(url)) {
+        locations.push("Published Homepage");
+      }
+    }
+
+    // 2. Check apps
+    const appsSnap = await getDocs(collection(db, "apps"));
+    appsSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (JSON.stringify(data).includes(url)) {
+        locations.push(`App: ${data.name || d.id}`);
+      }
+    });
+
+    // 3. Check projects
+    const projSnap = await getDocs(collection(db, "projects"));
+    projSnap.docs.forEach((d) => {
+      const data = d.data();
+      if (JSON.stringify(data).includes(url)) {
+        locations.push(`Project: ${data.name || d.id}`);
+      }
+    });
+  } catch (err) {
+    console.warn("Error checking asset usage:", err);
+  }
+
+  return {
+    inUse: locations.length > 0,
+    locations,
+  };
+}
+
+export async function deleteMediaAssetAdmin(
+  id: string,
+  url?: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!db) throw new Error("Firestore is not initialized");
+
+  if (url) {
+    const usage = await checkAssetUsage(url);
+    if (usage.inUse) {
+      return {
+        success: false,
+        error: `Cannot delete asset: still referenced in ${usage.locations.join(", ")}. Please replace or remove references first.`,
+      };
+    }
+  }
+
+  await deleteDoc(doc(db, "mediaAssets", id));
+  return { success: true };
 }
 
 export async function saveSettingsAdmin(settings: Partial<SettingsDocument>): Promise<void> {

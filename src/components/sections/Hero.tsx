@@ -73,7 +73,15 @@ export function Hero({ initialContent }: HeroProps) {
 
             {/* Main Display Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-black tracking-[-0.03em] text-[#0A192F] leading-[1.06]">
-              {heroContent.headline}
+              {heroContent.highlightedText && heroContent.headline.includes(heroContent.highlightedText) ? (
+                <>
+                  {heroContent.headline.split(heroContent.highlightedText)[0]}
+                  <span className="text-[#0284C7]">{heroContent.highlightedText}</span>
+                  {heroContent.headline.split(heroContent.highlightedText).slice(1).join(heroContent.highlightedText)}
+                </>
+              ) : (
+                heroContent.headline
+              )}
             </h1>
 
             {/* Supporting Editorial Copy */}

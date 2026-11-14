@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { getFeaturedProjects, Project, normalizeProjectCategory } from "@/data/projectsData";
-import { getPublishedProjects } from "@/lib/cms";
+import { getPublishedProjects, getSiteContent } from "@/lib/cms";
+import type { SiteContentDocument } from "@/types/cms";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -29,8 +30,35 @@ const categoryIconMap: Record<string, React.ComponentType<{ className?: string }
   "Branding": Sparkles,
 };
 
-export function FeaturedProjectsSection() {
+interface FeaturedProjectsSectionProps {
+  initialContent?: SiteContentDocument["projectsSection"];
+}
+
+export function FeaturedProjectsSection({ initialContent }: FeaturedProjectsSectionProps) {
   const [featured, setFeatured] = useState<Project[]>(getFeaturedProjects().slice(0, 4));
+  const [headerContent, setHeaderContent] = useState({
+    eyebrow: initialContent?.eyebrow || "CASE STUDIES // PROVEN EXECUTION",
+    title: initialContent?.title || "Featured Projects",
+    subtitle: initialContent?.subtitle || "Real commerce ventures, technical storefronts, and conversion-first visual architectures shipped by our studio.",
+    ctaText: initialContent?.ctaText || "VIEW ALL CASE STUDIES",
+    ctaLink: initialContent?.ctaLink || "/projects",
+  });
+
+  useEffect(() => {
+    getSiteContent()
+      .then((content) => {
+        if (content && content.projectsSection) {
+          setHeaderContent({
+            eyebrow: content.projectsSection.eyebrow || "CASE STUDIES // PROVEN EXECUTION",
+            title: content.projectsSection.title || "Featured Projects",
+            subtitle: content.projectsSection.subtitle || "Real commerce ventures, technical storefronts, and conversion-first visual architectures shipped by our studio.",
+            ctaText: content.projectsSection.ctaText || "VIEW ALL CASE STUDIES",
+            ctaLink: content.projectsSection.ctaLink || "/projects",
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     getPublishedProjects()
@@ -74,21 +102,21 @@ export function FeaturedProjectsSection() {
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono text-[#0284C7] mb-3 shadow-2xs font-bold uppercase tracking-wider">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-pulse" />
-              CASE STUDIES // PROVEN EXECUTION
+              {headerContent.eyebrow}
             </div>
             <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0A192F]">
-              Featured Projects
+              {headerContent.title}
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate-600 max-w-xl">
-              Real commerce ventures, technical storefronts, and conversion-first visual architectures shipped by our studio.
+              {headerContent.subtitle}
             </p>
           </div>
 
           <Link
-            href="/projects"
+            href={headerContent.ctaLink || "/projects"}
             className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#0A192F] hover:text-[#0284C7] transition-colors group shrink-0"
           >
-            <span>VIEW ALL CASE STUDIES</span>
+            <span>{headerContent.ctaText}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
