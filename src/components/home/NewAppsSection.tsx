@@ -53,6 +53,7 @@ export function NewAppsSection({ initialContent }: NewAppsSectionProps) {
               id: d.id,
               name: d.name,
               slug: d.slug,
+              logo: d.logo,
               tagline: d.tagline || d.shortDescription,
               description: d.shortDescription || d.description,
               fullDescription: d.description,
@@ -176,11 +177,24 @@ export function NewAppsSection({ initialContent }: NewAppsSectionProps) {
                   {/* App Title & Identity */}
                   <div className="flex items-start gap-3.5 mb-3">
                     <div
-                      className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-white/50 text-white bg-[#0284C7]"
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border border-slate-200 overflow-hidden bg-white text-white"
                     >
-                      {app.id === "wishmusic" && <Music className="w-6 h-6" />}
-                      {app.id === "wishtracking" && <Target className="w-6 h-6" />}
-                      {app.id === "easyxo" && <ShoppingBag className="w-6 h-6" />}
+                      {app.logo ? (
+                        <img
+                          src={app.logo}
+                          alt={app.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[#0284C7] text-white">
+                          {app.id === "wishmusic" && <Music className="w-6 h-6" />}
+                          {app.id === "wishtracking" && <Target className="w-6 h-6" />}
+                          {app.id === "easyxo" && <ShoppingBag className="w-6 h-6" />}
+                          {app.id !== "wishmusic" && app.id !== "wishtracking" && app.id !== "easyxo" && (
+                            <span className="font-black text-sm">{app.name.slice(0, 2).toUpperCase()}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div>
                       <h3 className="text-xl font-black text-[#0A192F] tracking-tight group-hover:text-[#0284C7] transition-colors">

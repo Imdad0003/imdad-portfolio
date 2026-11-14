@@ -36,15 +36,13 @@ import type {
 export async function getPublishedApps(): Promise<AppDocument[]> {
   if (db && isFirebaseConfigured) {
     try {
-      const q = query(
-        collection(db, "apps"),
-        where("published", "==", true)
-      );
-      const snapshot = await getDocs(q);
+      const snapshot = await getDocs(collection(db, "apps"));
       if (!snapshot.empty) {
-        return snapshot.docs
+        const list = snapshot.docs
           .map((d) => ({ id: d.id, ...d.data() } as AppDocument))
+          .filter((a) => a.published !== false)
           .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        if (list.length > 0) return list;
       }
     } catch (err) {
       console.warn("Firestore getPublishedApps fallback:", err);
@@ -56,6 +54,7 @@ export async function getPublishedApps(): Promise<AppDocument[]> {
     id: app.id,
     name: app.name,
     slug: app.slug,
+    logo: app.logo,
     shortDescription: app.description,
     description: app.fullDescription,
     platform: app.platform,
@@ -446,6 +445,57 @@ export const defaultSiteContent: SiteContentDocument = {
     announcement: "Now building: WishMusic & WishTracking for iOS/Android",
     heroImage: "/imdad-logo.png",
     heroImageAlt: "IMDAD.BUILDS Product Lab",
+    backgroundImage: "",
+    backgroundImageOpacity: 20,
+    viewportHeader: "STUDIO VIEWPORT // INTERACTIVE PROTOTYPE",
+    viewportBadge: "UI PROTOTYPE",
+    prototypeApps: [
+      {
+        id: "wishmusic",
+        tabLabel: "WishMusic",
+        name: "WishMusic Player",
+        tagline: "Tactile audio architecture • iOS, Android, Web",
+        logo: "",
+        badge: "AUDIOENGINE PROTOTYPE v0.8.2",
+        statusLabel: "In Development",
+        statusVariant: "amber",
+        previewTitle: "Midnight Resonance — Chapter IV",
+        previewSubtitle: "Sample Track • Simulated Waveform Scrubber",
+        inspectLink: "/apps/wishmusic",
+        inspectLabel: "Inspect App",
+        type: "audio",
+      },
+      {
+        id: "wishtracking",
+        tabLabel: "WishTrack",
+        name: "WishTracking",
+        tagline: "Compound milestone tracker • Zero noise",
+        logo: "",
+        badge: "MOMENTUM ENGINE PROTOTYPE",
+        statusLabel: "Coming Soon",
+        statusVariant: "purple",
+        previewTitle: "Day 42 — Simulated Streak Metric",
+        previewSubtitle: "Consistency Model • Compound Curve",
+        inspectLink: "/apps/wishtracking",
+        inspectLabel: "Join Waitlist",
+        type: "tracker",
+      },
+      {
+        id: "easyxo",
+        tabLabel: "EasyXo",
+        name: "EasyXo Brand Platform",
+        tagline: "Founder-operated e-commerce venture",
+        logo: "",
+        badge: "EASYXO D2C ENGINE",
+        statusLabel: "Live Brand",
+        statusVariant: "emerald",
+        previewTitle: "easyxo.in",
+        previewSubtitle: "Direct-to-Consumer Storefront",
+        inspectLink: "/apps/easyxo",
+        inspectLabel: "Case Study",
+        type: "store",
+      },
+    ],
   },
   navigation: {
     logo: "/imdad-logo.png",
@@ -615,6 +665,7 @@ function mergeSiteContent(raw: Record<string, any>, targetId: "main" | "draft" =
     hero: {
       ...defaultSiteContent.hero,
       ...(raw.hero || {}),
+      prototypeApps: raw.hero?.prototypeApps || defaultSiteContent.hero.prototypeApps,
     },
     navigation: {
       ...defaultSiteContent.navigation,

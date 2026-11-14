@@ -4,8 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
-import type { SiteContentDocument } from "@/types/cms";
-import { getSiteContent } from "@/lib/cms";
+import type { SiteContentDocument, AppDocument, HeroPrototypeApp } from "@/types/cms";
+import { getSiteContent, getPublishedApps, defaultSiteContent } from "@/lib/cms";
 import {
   ArrowRight,
   Music,
@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   Play,
   Pause,
+  Sparkles,
 } from "lucide-react";
 
 interface HeroProps {
@@ -23,31 +24,65 @@ interface HeroProps {
 
 export function Hero({ initialContent }: HeroProps) {
   const [heroContent, setHeroContent] = useState<SiteContentDocument["hero"]>(
-    initialContent || {
-      badge: "INDEPENDENT PRODUCT LAB",
-      headline: "Building digital products, apps & experiences.",
-      subheadline:
-        "An independent studio where products are built from scratch: mobile apps, web applications, e-commerce engines, and high-retention creative media.",
-      primaryCtaText: "Explore Apps",
-      primaryCtaLink: "/apps",
-      secondaryCtaText: "View Services",
-      secondaryCtaLink: "/services",
-      announcement: "Now building: WishMusic & WishTracking for iOS/Android",
-    }
+    initialContent || defaultSiteContent.hero
   );
+  const [apps, setApps] = useState<AppDocument[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("wishmusic");
+  const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
     getSiteContent()
       .then((content) => {
         if (content && content.hero) {
           setHeroContent(content.hero);
+          if (content.hero.prototypeApps && content.hero.prototypeApps.length > 0) {
+            setActiveTab(content.hero.prototypeApps[0].id);
+          }
+        }
+      })
+      .catch(() => {});
+
+    getPublishedApps()
+      .then((data) => {
+        if (data && data.length > 0) {
+          setApps(data);
         }
       })
       .catch(() => {});
   }, []);
 
-  const [activeTab, setActiveTab] = useState<"wishmusic" | "wishtracking" | "easyxo">("wishmusic");
-  const [isPlaying, setIsPlaying] = useState(true);
+  const prototypeApps: HeroPrototypeApp[] =
+    heroContent.prototypeApps && heroContent.prototypeApps.length > 0
+      ? heroContent.prototypeApps
+      : defaultSiteContent.hero.prototypeApps || [];
+
+  const currentApp = prototypeApps.find((a) => a.id === activeTab) || prototypeApps[0] || {
+    id: "wishmusic",
+    tabLabel: "WishMusic",
+    name: "WishMusic Player",
+    tagline: "Tactile audio architecture • iOS, Android, Web",
+    badge: "AUDIOENGINE PROTOTYPE v0.8.2",
+    statusLabel: "In Development",
+    statusVariant: "amber",
+    previewTitle: "Midnight Resonance — Chapter IV",
+    previewSubtitle: "Sample Track • Simulated Waveform Scrubber",
+    inspectLink: "/apps/wishmusic",
+    inspectLabel: "Inspect App",
+    type: "audio",
+  };
+
+  const getAppLogo = (appItem: HeroPrototypeApp): string | undefined => {
+    if (appItem.logo && appItem.logo.trim() !== "") return appItem.logo;
+    const matched = apps.find(
+      (a) => a.id === appItem.id || a.slug === appItem.id || a.name.toLowerCase() === appItem.tabLabel.toLowerCase()
+    );
+    return matched?.logo;
+  };
+
+  const currentMatched = apps.find(
+    (a) => a.id === currentApp.id || a.slug === currentApp.id
+  );
+  const currentLogo = getAppLogo(currentApp);
 
   return (
     <section
@@ -55,7 +90,18 @@ export function Hero({ initialContent }: HeroProps) {
       className="relative min-h-[85vh] lg:min-h-[88vh] flex flex-col justify-center pt-6 pb-16 sm:pt-12 sm:pb-20 overflow-hidden"
     >
       {/* Background Architectural Grid Lines */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.035] bg-[radial-gradient(#180D1D_1px,transparent_1px)] [background-size:28px_28px]" />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.035] bg-[radial-gradient(#180D1D_1px,transparent_1px)] [background-size:28px_28px] z-0" />
+
+      {/* Editable Hero Background Image (Configurable via Admin CMS) */}
+      {heroContent.backgroundImage ? (
+        <div
+          className="absolute inset-0 pointer-events-none bg-cover bg-center transition-opacity duration-500 z-0"
+          style={{
+            backgroundImage: `url(${heroContent.backgroundImage})`,
+            opacity: (heroContent.backgroundImageOpacity ?? 20) / 100,
+          }}
+        />
+      ) : null}
 
       <Container>
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
@@ -140,259 +186,271 @@ export function Hero({ initialContent }: HeroProps) {
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#0284C7]" />
                   <span className="studio-tag text-[9px] text-slate-500 font-bold font-mono uppercase tracking-wider">
-                    STUDIO VIEWPORT // INTERACTIVE PROTOTYPE
+                    {heroContent.viewportHeader || "STUDIO VIEWPORT // INTERACTIVE PROTOTYPE"}
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-[#0284C7] bg-sky-50 border border-sky-200/80 px-2 py-0.5 rounded-full font-bold">
-                  UI PROTOTYPE
+                  {heroContent.viewportBadge || "UI PROTOTYPE"}
                 </span>
               </div>
 
-              {/* Product Selector Segment Tabs */}
+              {/* Product Selector Segment Tabs (Editable via CMS & using original uploaded logos) */}
               <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-50 border border-slate-200 mb-4">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("wishmusic")}
-                  className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeTab === "wishmusic"
-                      ? "bg-white text-[#0A192F] shadow-xs font-bold"
-                      : "text-slate-500 hover:text-[#0A192F]"
-                  }`}
-                >
-                  <Music className="w-3.5 h-3.5 text-[#0284C7]" />
-                  <span className="truncate">WishMusic</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("wishtracking")}
-                  className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeTab === "wishtracking"
-                      ? "bg-white text-[#0A192F] shadow-xs font-bold"
-                      : "text-slate-500 hover:text-[#0A192F]"
-                  }`}
-                >
-                  <Target className="w-3.5 h-3.5 text-[#0284C7]" />
-                  <span className="truncate">WishTrack</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("easyxo")}
-                  className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeTab === "easyxo"
-                      ? "bg-white text-[#0A192F] shadow-xs font-bold"
-                      : "text-slate-500 hover:text-[#0A192F]"
-                  }`}
-                >
-                  <ShoppingBag className="w-3.5 h-3.5 text-[#0284C7]" />
-                  <span className="truncate">EasyXo</span>
-                </button>
+                {prototypeApps.map((item) => {
+                  const logoUrl = getAppLogo(item);
+                  const isSelected = activeTab === item.id;
+
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActiveTab(item.id)}
+                      className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                        isSelected
+                          ? "bg-white text-[#0A192F] shadow-xs font-bold"
+                          : "text-slate-500 hover:text-[#0A192F]"
+                      }`}
+                    >
+                      {logoUrl ? (
+                        <div className="w-3.5 h-3.5 rounded-xs overflow-hidden shrink-0 bg-slate-100">
+                          <img
+                            src={logoUrl}
+                            alt={item.tabLabel}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : item.id === "wishmusic" ? (
+                        <Music className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+                      ) : item.id === "wishtracking" ? (
+                        <Target className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+                      ) : item.id === "easyxo" ? (
+                        <ShoppingBag className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+                      ) : (
+                        <Sparkles className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
+                      )}
+                      <span className="truncate">{item.tabLabel}</span>
+                    </button>
+                  );
+                })}
               </div>
 
-              {/* VIEWPORT 1: WISHMUSIC TACTILE PLAYER */}
-              {activeTab === "wishmusic" && (
-                <div className="space-y-3.5 animate-in fade-in duration-200">
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-[#180D1D] via-[#24132B] to-[#120816] text-white shadow-inner relative overflow-hidden border border-white/10">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-[#F6DBC0]/80 mb-3">
-                      <span className="flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                        AUDIOENGINE PROTOTYPE v0.8.2
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-300/30 text-[9px] font-bold">
-                        In Development
-                      </span>
-                    </div>
+              {/* ACTIVE PROTOTYPE VIEWPORT */}
+              <div className="space-y-3.5 animate-in fade-in duration-200">
+                <div className={`p-4 rounded-2xl text-white shadow-inner relative overflow-hidden border border-white/10 ${
+                  currentApp.type === "tracker"
+                    ? "bg-gradient-to-br from-[#120A17] to-[#2B1435]"
+                    : currentApp.type === "store"
+                    ? "bg-gradient-to-br from-[#1C1008] to-[#381E10]"
+                    : "bg-gradient-to-br from-[#180D1D] via-[#24132B] to-[#120816]"
+                }`}>
+                  
+                  {/* Status & Engine Badge */}
+                  <div className="flex items-center justify-between text-[10px] font-mono text-[#F6DBC0]/80 mb-3">
+                    <span className="flex items-center gap-1">
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        currentApp.statusVariant === "emerald"
+                          ? "bg-emerald-400"
+                          : currentApp.statusVariant === "purple"
+                          ? "bg-purple-400"
+                          : "bg-amber-400"
+                      }`} />
+                      {currentApp.badge || "AUDIOENGINE PROTOTYPE v0.8.2"}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                      currentApp.statusVariant === "emerald"
+                        ? "bg-emerald-400/20 text-emerald-300 border-emerald-300/30"
+                        : currentApp.statusVariant === "purple"
+                        ? "bg-purple-400/20 text-purple-200 border-purple-300/30"
+                        : "bg-amber-400/20 text-amber-300 border-amber-300/30"
+                    }`}>
+                      {currentApp.statusLabel || "In Development"}
+                    </span>
+                  </div>
 
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#935073] to-[#F6DBC0] flex items-center justify-center shadow-md shrink-0">
-                        <Music className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="overflow-hidden">
-                        <h4 className="font-bold text-sm tracking-tight text-white truncate">
-                          Midnight Resonance — Chapter IV
-                        </h4>
-                        <p className="text-[11px] text-[#d8cfc4] truncate">
-                          Sample Track &bull; Simulated Waveform Scrubber
-                        </p>
-                      </div>
+                  {/* App Original Logo + Title */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shadow-md shrink-0 overflow-hidden border border-white/20">
+                      {currentLogo ? (
+                        <img
+                          src={currentLogo}
+                          alt={currentApp.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : currentApp.id === "wishmusic" ? (
+                        <div className="w-full h-full bg-gradient-to-br from-[#935073] to-[#F6DBC0] flex items-center justify-center">
+                          <Music className="w-6 h-6 text-white" />
+                        </div>
+                      ) : currentApp.id === "wishtracking" ? (
+                        <div className="w-full h-full bg-gradient-to-br from-[#6B21A8] to-[#935073] flex items-center justify-center">
+                          <Target className="w-6 h-6 text-white" />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#0284C7] to-[#0369A1] flex items-center justify-center">
+                          <ShoppingBag className="w-6 h-6 text-white" />
+                        </div>
+                      )}
                     </div>
-
-                    {/* Interactive Audio Waveform Scrub Mockup */}
-                    <div className="space-y-1.5 pt-1">
-                      <div className="h-7 flex items-center justify-between gap-1 px-1">
-                        {[40, 65, 80, 45, 90, 75, 30, 85, 95, 60, 40, 70, 85, 50, 65, 90, 40, 80, 55, 70, 35, 60].map((h, i) => (
-                          <div
-                            key={i}
-                            className={`w-1 rounded-full transition-all duration-300 ${
-                              i < 13
-                                ? "bg-[#F6DBC0]"
-                                : isPlaying
-                                ? "bg-white/20"
-                                : "bg-white/10"
-                            }`}
-                            style={{ height: `${isPlaying ? h : Math.max(20, h * 0.5)}%` }}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex justify-between text-[9px] font-mono text-[#d8cfc4]/70">
-                        <span>02:14</span>
-                        <span>04:38</span>
-                      </div>
+                    <div className="overflow-hidden">
+                      <h4 className="font-bold text-sm tracking-tight text-white truncate">
+                        {currentApp.previewTitle || currentApp.name}
+                      </h4>
+                      <p className="text-[11px] text-[#d8cfc4] truncate">
+                        {currentApp.previewSubtitle || currentApp.tagline}
+                      </p>
                     </div>
+                  </div>
 
-                    {/* Mini Player Controls */}
-                    <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setIsPlaying(!isPlaying)}
-                          className="w-7 h-7 rounded-full bg-white text-[#180D1D] flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
-                          aria-label={isPlaying ? "Pause simulated preview" : "Play simulated preview"}
-                        >
-                          {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
-                        </button>
-                        <span className="text-[10px] font-mono text-[#d8cfc4]">
-                          {isPlaying ? "SIMULATED PLAY" : "PAUSED"}
+                  {/* SUB-VIEW 1: AUDIO WAVEFORM (for audio apps) */}
+                  {currentApp.type === "audio" && (
+                    <>
+                      <div className="space-y-1.5 pt-1">
+                        <div className="h-7 flex items-center justify-between gap-1 px-1">
+                          {[40, 65, 80, 45, 90, 75, 30, 85, 95, 60, 40, 70, 85, 50, 65, 90, 40, 80, 55, 70, 35, 60].map((h, i) => (
+                            <div
+                              key={i}
+                              className={`w-1 rounded-full transition-all duration-300 ${
+                                i < 13
+                                  ? "bg-[#F6DBC0]"
+                                  : isPlaying
+                                  ? "bg-white/20"
+                                  : "bg-white/10"
+                              }`}
+                              style={{ height: `${isPlaying ? h : Math.max(20, h * 0.5)}%` }}
+                            />
+                          ))}
+                        </div>
+                        <div className="flex justify-between text-[9px] font-mono text-[#d8cfc4]/70">
+                          <span>02:14</span>
+                          <span>04:38</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setIsPlaying(!isPlaying)}
+                            className="w-7 h-7 rounded-full bg-white text-[#180D1D] flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
+                            aria-label={isPlaying ? "Pause simulated preview" : "Play simulated preview"}
+                          >
+                            {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+                          </button>
+                          <span className="text-[10px] font-mono text-[#d8cfc4]">
+                            {isPlaying ? "SIMULATED PLAY" : "PAUSED"}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-mono text-[#F6DBC0]/80">
+                          LOCAL-FIRST CONCEPT
                         </span>
                       </div>
-                      <span className="text-[10px] font-mono text-[#F6DBC0]/80">
-                        LOCAL-FIRST CONCEPT
-                      </span>
-                    </div>
-                  </div>
+                    </>
+                  )}
 
-                  <div className="flex items-center justify-between text-xs pt-0.5">
-                    <div>
-                      <span className="font-bold text-[#180D1D]">WishMusic Player</span>
-                      <p className="text-[11px] text-[#7A6880]">Tactile audio architecture &bull; iOS, Android, Web</p>
-                    </div>
-                    <Link
-                      href="/apps/wishmusic"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#935073] hover:underline"
-                    >
-                      Inspect App
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              )}
-
-              {/* VIEWPORT 2: WISHTRACKING MOMENTUM APP */}
-              {activeTab === "wishtracking" && (
-                <div className="space-y-3.5 animate-in fade-in duration-200">
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-[#120A17] to-[#2B1435] text-white shadow-inner relative overflow-hidden border border-white/10">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-[#F6DBC0]/80 mb-3">
-                      <span>MOMENTUM ENGINE PROTOTYPE</span>
-                      <span className="px-2 py-0.5 rounded-full bg-purple-400/20 text-purple-200 border border-purple-300/30 text-[9px] font-bold">
-                        Coming Soon
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <div className="text-2xl font-black text-white">Day 42</div>
-                        <div className="text-[10px] font-mono text-[#d8cfc4]">Simulated Streak Metric</div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-xs font-mono text-[#10B981] font-bold">Consistency Model</div>
-                        <div className="text-[9px] text-[#d8cfc4]">Compound Curve</div>
-                      </div>
-                    </div>
-
-                    {/* Streak Week Grid */}
-                    <div className="grid grid-cols-7 gap-1 pt-1 mb-2">
-                      {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-                        <div key={i} className="flex flex-col items-center gap-1">
-                          <span className="text-[8px] font-mono text-[#d8cfc4]/60">{d}</span>
-                          <div className={`w-full h-6 rounded-md flex items-center justify-center ${i < 6 ? "bg-[#935073] text-white" : "bg-white/10 text-white/40"}`}>
-                            <CheckCircle2 className="w-3 h-3" />
-                          </div>
+                  {/* SUB-VIEW 2: STREAK / HABIT TRACKER (for tracker apps) */}
+                  {currentApp.type === "tracker" && (
+                    <>
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <div className="text-2xl font-black text-white">Day 42</div>
+                          <div className="text-[10px] font-mono text-[#d8cfc4]">Simulated Streak Metric</div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="text-right">
+                          <div className="text-xs font-mono text-[#10B981] font-bold">Consistency Model</div>
+                          <div className="text-[9px] text-[#d8cfc4]">Compound Curve</div>
+                        </div>
+                      </div>
 
-                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
-                      <span>ZERO ADS &bull; LOCAL FIRST</span>
-                      <span className="text-[#10B981]">100% PRIVATE</span>
-                    </div>
-                  </div>
+                      <div className="grid grid-cols-7 gap-1 pt-1 mb-2">
+                        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+                          <div key={i} className="flex flex-col items-center gap-1">
+                            <span className="text-[8px] font-mono text-[#d8cfc4]/60">{d}</span>
+                            <div className={`w-full h-6 rounded-md flex items-center justify-center ${i < 6 ? "bg-[#935073] text-white" : "bg-white/10 text-white/40"}`}>
+                              <CheckCircle2 className="w-3 h-3" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
 
-                  <div className="flex items-center justify-between text-xs pt-0.5">
-                    <div>
-                      <span className="font-bold text-[#180D1D]">WishTracking</span>
-                      <p className="text-[11px] text-[#7A6880]">Compound milestone tracker &bull; Zero noise</p>
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
+                        <span>ZERO ADS &bull; LOCAL FIRST</span>
+                        <span className="text-[#10B981]">100% PRIVATE</span>
+                      </div>
+                    </>
+                  )}
+
+                  {/* SUB-VIEW 3: STORE ENGINE METRICS (for store apps) */}
+                  {currentApp.type === "store" && (
+                    <>
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <div className="text-xl font-bold text-white">easyxo.in</div>
+                          <div className="text-[10px] text-[#F6DBC0]">Direct-to-Consumer Storefront</div>
+                        </div>
+                        <a
+                          href="https://easyxo.in"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                          aria-label="Visit Storefront"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[10px] pt-1 mb-2">
+                        <div className="p-2 rounded-lg bg-white/08 border border-white/06">
+                          <span className="text-[#F6DBC0]/70 block">Marketplaces</span>
+                          <span className="font-bold text-white">Amazon &bull; Flipkart &bull; Meesho</span>
+                        </div>
+                        <div className="p-2 rounded-lg bg-white/08 border border-white/06">
+                          <span className="text-[#F6DBC0]/70 block">Checkout Engine</span>
+                          <span className="font-bold text-white">UPI &bull; Razorpay Webhooks</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
+                        <span>GATEWAY: RAZORPAY UPI &amp; CARDS</span>
+                        <span className="text-emerald-400">ACTIVE PRODUCTION</span>
+                      </div>
+                    </>
+                  )}
+
+                  {/* SUB-VIEW 4: CUSTOM PREVIEW */}
+                  {currentApp.type === "custom" && (
+                    <div className="py-2 space-y-2">
+                      <div className="p-3 rounded-xl bg-white/10 border border-white/10 text-xs">
+                        <p className="text-white/90 leading-relaxed">
+                          {currentApp.tagline || currentMatched?.shortDescription || "Interactive prototype stage."}
+                        </p>
+                      </div>
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
+                        <span>ECOSYSTEM COMPONENT</span>
+                        <span className="text-[#0284C7]">ACTIVE DEMO</span>
+                      </div>
                     </div>
-                    <Link
-                      href="/apps/wishtracking"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#935073] hover:underline"
-                    >
-                      Join Waitlist
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
+                  )}
+
                 </div>
-              )}
 
-              {/* VIEWPORT 3: EASYXO PLATFORM */}
-              {activeTab === "easyxo" && (
-                <div className="space-y-3.5 animate-in fade-in duration-200">
-                  <div className="p-4 rounded-2xl bg-gradient-to-br from-[#1C1008] to-[#381E10] text-white shadow-inner relative overflow-hidden border border-white/10">
-                    <div className="flex items-center justify-between text-[10px] font-mono text-[#F6DBC0]/80 mb-3">
-                      <span>EASYXO D2C ENGINE</span>
-                      <span className="px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 border border-emerald-300/30 text-[9px] font-bold">
-                        Live Brand
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-2">
-                      <div>
-                        <div className="text-xl font-bold text-white">easyxo.in</div>
-                        <div className="text-[10px] text-[#F6DBC0]">Direct-to-Consumer Storefront</div>
-                      </div>
-                      <a
-                        href="https://easyxo.in"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                        aria-label="Visit EasyXo"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 text-[10px] pt-1 mb-2">
-                      <div className="p-2 rounded-lg bg-white/08 border border-white/06">
-                        <span className="text-[#F6DBC0]/70 block">Marketplaces</span>
-                        <span className="font-bold text-white">Amazon &bull; Flipkart &bull; Meesho</span>
-                      </div>
-                      <div className="p-2 rounded-lg bg-white/08 border border-white/06">
-                        <span className="text-[#F6DBC0]/70 block">Checkout Engine</span>
-                        <span className="font-bold text-white">UPI &bull; Razorpay Webhooks</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
-                      <span>GATEWAY: RAZORPAY UPI &amp; CARDS</span>
-                      <span className="text-emerald-400">ACTIVE PRODUCTION</span>
-                    </div>
+                {/* Bottom App Metadata & Direct Navigation Link */}
+                <div className="flex items-center justify-between text-xs pt-0.5">
+                  <div>
+                    <span className="font-bold text-[#180D1D]">{currentApp.name}</span>
+                    <p className="text-[11px] text-[#7A6880] truncate max-w-[220px] sm:max-w-xs">
+                      {currentApp.tagline || currentMatched?.tagline || currentMatched?.shortDescription}
+                    </p>
                   </div>
-
-                  <div className="flex items-center justify-between text-xs pt-0.5">
-                    <div>
-                      <span className="font-bold text-[#180D1D]">EasyXo Brand Platform</span>
-                      <p className="text-[11px] text-[#7A6880]">Founder-operated e-commerce venture</p>
-                    </div>
-                    <Link
-                      href="/apps/easyxo"
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[#d97746] hover:underline"
-                    >
-                      Case Study
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
+                  <Link
+                    href={currentApp.inspectLink || `/apps/${currentApp.id}`}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#0284C7] hover:underline shrink-0"
+                  >
+                    <span>{currentApp.inspectLabel || "Inspect App"}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
                 </div>
-              )}
+              </div>
 
-              {/* Bottom Stamp */}
+              {/* Bottom Architectural Stamp */}
               <div className="mt-3.5 pt-3 border-t border-[#502D55]/08 flex items-center justify-between text-[10px] font-mono text-[#7A6880]">
                 <span>ARCHITECTURE: NEXT.JS &bull; REACT NATIVE</span>
                 <span className="text-[#180D1D] font-bold">POWERED BY IMDAD.BUILDS</span>

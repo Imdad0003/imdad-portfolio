@@ -5,7 +5,6 @@ import { Navbar } from "@/components/sections/Navbar";
 import { Footer } from "@/components/sections/Footer";
 import { Chatbot } from "@/components/chatbot/Chatbot";
 import { LiquidBackground } from "@/components/ui/LiquidBackground";
-import { CursorGlow } from "@/components/ui/CursorGlow";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 
 export const metadata: Metadata = {
@@ -177,7 +176,6 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-[#F8FAFC] text-[#0A192F] selection:bg-[#0284C7]/20 selection:text-[#0284C7]">
         <ScrollProgress />
         <LiquidBackground />
-        <CursorGlow />
         <Navbar />
         <div className="flex-1 flex flex-col relative z-10 pt-16 sm:pt-20">
           {children}

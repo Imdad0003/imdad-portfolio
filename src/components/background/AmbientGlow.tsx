@@ -1,52 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 
 export function AmbientGlow() {
-  const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
-
-  useEffect(() => {
-    const prefersReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches;
-    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    if (prefersReducedMotion || isTouch) return;
-
-    let frameId: number;
-    let targetX = 0;
-    let targetY = 0;
-    let currentX = 0;
-    let currentY = 0;
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const nx = (e.clientX / window.innerWidth - 0.5) * 2;
-      const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      targetX = nx * 25;
-      targetY = ny * 25;
-    };
-
-    const updatePosition = () => {
-      currentX += (targetX - currentX) * 0.04;
-      currentY += (targetY - currentY) * 0.04;
-      setMouseOffset({ x: currentX, y: currentY });
-      frameId = requestAnimationFrame(updatePosition);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    frameId = requestAnimationFrame(updatePosition);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      cancelAnimationFrame(frameId);
-    };
-  }, []);
-
   return (
     <div
-      className="fixed inset-0 pointer-events-none z-[1] overflow-hidden transition-transform duration-700 ease-out"
-      style={{
-        transform: `translate3d(${mouseOffset.x}px, ${mouseOffset.y}px, 0)`,
-      }}
+      className="fixed inset-0 pointer-events-none z-[1] overflow-hidden"
       aria-hidden="true"
     >
       {/* 1. Top-Left Electric Blue Ambient Orb */}

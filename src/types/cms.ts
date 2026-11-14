@@ -179,6 +179,22 @@ export interface MediaAssetDocument {
   usedIn?: string[];
 }
 
+export interface HeroPrototypeApp {
+  id: string;
+  tabLabel: string;
+  name: string;
+  tagline: string;
+  logo?: string;
+  badge?: string;
+  statusLabel?: string;
+  statusVariant?: "amber" | "purple" | "emerald" | "sky";
+  previewTitle?: string;
+  previewSubtitle?: string;
+  inspectLink?: string;
+  inspectLabel?: string;
+  type?: "audio" | "tracker" | "store" | "custom";
+}
+
 export interface SiteContentDocument {
   id: "main" | "draft" | string;
   hero: {
@@ -193,6 +209,11 @@ export interface SiteContentDocument {
     announcement: string;
     heroImage?: string;
     heroImageAlt?: string;
+    backgroundImage?: string;
+    backgroundImageOpacity?: number;
+    viewportHeader?: string;
+    viewportBadge?: string;
+    prototypeApps?: HeroPrototypeApp[];
   };
   navigation?: {
     logo?: string;

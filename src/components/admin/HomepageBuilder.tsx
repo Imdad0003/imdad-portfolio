@@ -206,6 +206,26 @@ export function HomepageBuilder({
         ...prev,
         hero: { ...prev.hero, heroImage: asset.url, heroImageAlt: asset.alt || prev.hero.heroImageAlt },
       }));
+    } else if (mediaTargetField === "hero.backgroundImage") {
+      updateContent((prev) => ({
+        ...prev,
+        hero: { ...prev.hero, backgroundImage: asset.url },
+      }));
+    } else if (mediaTargetField.startsWith("hero.prototypeApps.")) {
+      const parts = mediaTargetField.split(".");
+      const idx = parseInt(parts[2], 10);
+      if (!isNaN(idx)) {
+        updateContent((prev) => {
+          const list = [...(prev.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || [])];
+          if (list[idx]) {
+            list[idx] = { ...list[idx], logo: asset.url };
+          }
+          return {
+            ...prev,
+            hero: { ...prev.hero, prototypeApps: list },
+          };
+        });
+      }
     } else if (mediaTargetField === "footer.logo") {
       updateContent((prev) => ({
         ...prev,
@@ -432,23 +452,103 @@ export function HomepageBuilder({
             <div className="w-full h-[calc(100%-36px)] overflow-y-auto bg-[#F8FAFC]">
               {/* Preview Hero */}
               {content.metadata?.sectionVisibility?.hero !== false && (
-                <div className="p-6 sm:p-10 border-b border-slate-200 text-left bg-white">
-                  <div className="inline-block px-3 py-1 rounded-full bg-sky-50 text-[#0284C7] font-mono text-[10px] font-bold uppercase mb-4 border border-sky-100">
-                    {content.hero.badge}
-                  </div>
-                  <h1 className="text-2xl sm:text-4xl font-black text-[#0A192F] tracking-tight leading-tight">
-                    {content.hero.headline}
-                  </h1>
-                  <p className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
-                    {content.hero.subheadline}
-                  </p>
-                  <div className="mt-6 flex flex-wrap gap-2.5">
-                    <button className="px-5 py-2.5 rounded-xl bg-[#0284C7] text-white font-bold text-xs">
-                      {content.hero.primaryCtaText}
-                    </button>
-                    <button className="px-5 py-2.5 rounded-xl border border-slate-200 text-[#0A192F] font-bold text-xs">
-                      {content.hero.secondaryCtaText}
-                    </button>
+                <div className="relative p-6 sm:p-10 border-b border-slate-200 text-left bg-white overflow-hidden">
+                  {content.hero.backgroundImage ? (
+                    <div
+                      className="absolute inset-0 pointer-events-none bg-cover bg-center"
+                      style={{
+                        backgroundImage: `url(${content.hero.backgroundImage})`,
+                        opacity: (content.hero.backgroundImageOpacity ?? 20) / 100,
+                      }}
+                    />
+                  ) : null}
+
+                  <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <div className="lg:col-span-7">
+                      <div className="inline-block px-3 py-1 rounded-full bg-sky-50 text-[#0284C7] font-mono text-[10px] font-bold uppercase mb-4 border border-sky-100">
+                        {content.hero.badge}
+                      </div>
+                      <h1 className="text-2xl sm:text-4xl font-black text-[#0A192F] tracking-tight leading-tight">
+                        {content.hero.headline}
+                      </h1>
+                      <p className="mt-3 text-xs sm:text-sm text-slate-600 leading-relaxed max-w-xl">
+                        {content.hero.subheadline}
+                      </p>
+                      <div className="mt-6 flex flex-wrap gap-2.5">
+                        <button className="px-5 py-2.5 rounded-xl bg-[#0284C7] text-white font-bold text-xs">
+                          {content.hero.primaryCtaText}
+                        </button>
+                        <button className="px-5 py-2.5 rounded-xl border border-slate-200 text-[#0A192F] font-bold text-xs">
+                          {content.hero.secondaryCtaText}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Studio Viewport Preview */}
+                    <div className="lg:col-span-5">
+                      <div className="p-4 rounded-2xl bg-white/95 border border-slate-200 shadow-md">
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-3">
+                          <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">
+                            {content.hero.viewportHeader || "STUDIO VIEWPORT"}
+                          </span>
+                          <span className="text-[9px] font-mono text-[#0284C7] bg-sky-50 px-2 py-0.5 rounded-full font-bold">
+                            {content.hero.viewportBadge || "UI PROTOTYPE"}
+                          </span>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-slate-50 border border-slate-200 mb-3">
+                          {(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []).slice(0, 3).map((item, idx) => {
+                            const matched = apps.find((a) => a.id === item.id || a.slug === item.id);
+                            const logo = item.logo || matched?.logo;
+                            return (
+                              <div
+                                key={idx}
+                                className={`py-1.5 px-1 rounded text-[10px] font-bold flex items-center justify-center gap-1 truncate ${
+                                  idx === 0 ? "bg-white text-[#0A192F] shadow-2xs" : "text-slate-500"
+                                }`}
+                              >
+                                {logo ? (
+                                  <img src={logo} alt="Logo" className="w-3 h-3 rounded-xs object-cover" />
+                                ) : (
+                                  <span className="w-2 h-2 rounded-full bg-[#0284C7]" />
+                                )}
+                                <span className="truncate">{item.tabLabel}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Active Item Card */}
+                        {(() => {
+                          const firstApp = (content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || [])[0];
+                          const matched = firstApp ? apps.find((a) => a.id === firstApp.id || a.slug === firstApp.id) : null;
+                          const logo = firstApp?.logo || matched?.logo;
+
+                          return (
+                            <div className="p-3 rounded-xl bg-slate-900 text-white space-y-2">
+                              <div className="flex items-center justify-between text-[9px] font-mono text-slate-300">
+                                <span>{firstApp?.badge || "PROTOTYPE"}</span>
+                                <span className="text-amber-300 font-bold">{firstApp?.statusLabel || "Live"}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 overflow-hidden border border-white/20">
+                                  {logo ? (
+                                    <img src={logo} alt="Logo" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-xs font-bold text-[#0284C7]">{firstApp?.tabLabel?.slice(0, 2)}</span>
+                                  )}
+                                </div>
+                                <div className="overflow-hidden">
+                                  <div className="font-bold text-xs truncate">{firstApp?.previewTitle || firstApp?.name}</div>
+                                  <div className="text-[10px] text-slate-400 truncate">{firstApp?.previewSubtitle || firstApp?.tagline}</div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -467,14 +567,23 @@ export function HomepageBuilder({
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {apps.slice(0, 2).map((app) => (
-                      <div key={app.id} className="p-4 rounded-2xl bg-white border border-slate-200">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-bold text-sm text-[#0A192F]">{app.name}</span>
-                          <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-sky-50 text-[#0284C7] font-bold">
-                            {app.status}
-                          </span>
+                      <div key={app.id} className="p-4 rounded-2xl bg-white border border-slate-200 flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 border border-slate-200 bg-slate-50 flex items-center justify-center">
+                          {app.logo ? (
+                            <img src={app.logo} alt={app.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span className="text-xs font-black text-[#0284C7]">{app.name.slice(0, 2)}</span>
+                          )}
                         </div>
-                        <p className="text-xs text-slate-500 line-clamp-2">{app.shortDescription}</p>
+                        <div className="overflow-hidden flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-bold text-sm text-[#0A192F] truncate">{app.name}</span>
+                            <span className="px-2 py-0.5 rounded text-[9px] font-mono bg-sky-50 text-[#0284C7] font-bold shrink-0">
+                              {app.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500 line-clamp-2">{app.shortDescription}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -784,6 +893,510 @@ export function HomepageBuilder({
                         <Folder className="w-3.5 h-3.5 text-[#0284C7]" />
                         <span>Media Library</span>
                       </button>
+                    </div>
+                  </div>
+
+                  {/* Hero Background Image Picker */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-[#0A192F]">Hero Section Background Image</label>
+                      {content.hero.backgroundImage && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateContent((prev) => ({
+                              ...prev,
+                              hero: { ...prev.hero, backgroundImage: "" },
+                            }))
+                          }
+                          className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
+                        >
+                          Remove Background Image
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex gap-3 items-center">
+                      {content.hero.backgroundImage ? (
+                        <div className="w-14 h-14 rounded-xl bg-white border border-slate-200 p-1 shrink-0 overflow-hidden flex items-center justify-center">
+                          <img src={content.hero.backgroundImage} alt="Hero Background" className="w-full h-full object-cover rounded-lg" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-slate-100 border border-dashed border-slate-300 shrink-0 flex items-center justify-center text-slate-400 text-[10px]">
+                          No Image
+                        </div>
+                      )}
+                      <input
+                        type="text"
+                        value={content.hero.backgroundImage || ""}
+                        onChange={(e) =>
+                          updateContent((prev) => ({
+                            ...prev,
+                            hero: { ...prev.hero, backgroundImage: e.target.value },
+                          }))
+                        }
+                        placeholder="https://... or choose from Media Library"
+                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-[#0A192F]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => openMediaLibrary("hero.backgroundImage")}
+                        className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-[#0A192F] font-bold text-xs border border-slate-200 shrink-0 flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                      >
+                        <Folder className="w-3.5 h-3.5 text-[#0284C7]" />
+                        <span>Media Library</span>
+                      </button>
+                    </div>
+
+                    {/* Background Opacity Slider */}
+                    {content.hero.backgroundImage && (
+                      <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-4">
+                        <label className="text-[11px] font-mono text-slate-600 shrink-0">
+                          Background Opacity: <span className="font-bold text-[#0284C7]">{content.hero.backgroundImageOpacity ?? 20}%</span>
+                        </label>
+                        <input
+                          type="range"
+                          min={5}
+                          max={100}
+                          step={5}
+                          value={content.hero.backgroundImageOpacity ?? 20}
+                          onChange={(e) =>
+                            updateContent((prev) => ({
+                              ...prev,
+                              hero: { ...prev.hero, backgroundImageOpacity: Number(e.target.value) },
+                            }))
+                          }
+                          className="w-48 accent-[#0284C7]"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* STUDIO VIEWPORT // INTERACTIVE PROTOTYPE APPS MANAGER */}
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+                    <div className="border-b border-slate-200 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <h4 className="text-xs font-black text-[#0A192F] uppercase tracking-wider">
+                          Studio Viewport / Interactive Prototype Showcase
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          Configure the interactive tabs and prototype cards displayed on the right side of the Hero
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentList = [
+                            ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                          ];
+                          currentList.push({
+                            id: `app-${Date.now()}`,
+                            tabLabel: "New App",
+                            name: "App Name",
+                            tagline: "Short tagline or category",
+                            badge: "PROTOTYPE v1.0",
+                            statusLabel: "In Development",
+                            statusVariant: "sky",
+                            previewTitle: "Preview Showcase",
+                            previewSubtitle: "Interactive prototype component",
+                            inspectLink: "/apps",
+                            inspectLabel: "Inspect App",
+                            type: "custom",
+                          });
+                          updateContent((prev) => ({
+                            ...prev,
+                            hero: { ...prev.hero, prototypeApps: currentList },
+                          }));
+                        }}
+                        className="text-xs font-bold text-[#0284C7] hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Viewport Tab</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] font-mono font-bold text-slate-600 mb-1">
+                          Viewport Eyebrow Header
+                        </label>
+                        <input
+                          type="text"
+                          value={content.hero.viewportHeader || "STUDIO VIEWPORT // INTERACTIVE PROTOTYPE"}
+                          onChange={(e) =>
+                            updateContent((prev) => ({
+                              ...prev,
+                              hero: { ...prev.hero, viewportHeader: e.target.value },
+                            }))
+                          }
+                          className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-[#0A192F]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-mono font-bold text-slate-600 mb-1">
+                          Viewport Pill Badge
+                        </label>
+                        <input
+                          type="text"
+                          value={content.hero.viewportBadge || "UI PROTOTYPE"}
+                          onChange={(e) =>
+                            updateContent((prev) => ({
+                              ...prev,
+                              hero: { ...prev.hero, viewportBadge: e.target.value },
+                            }))
+                          }
+                          className="w-full px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-[#0A192F]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Viewport Apps List */}
+                    <div className="space-y-3 pt-2">
+                      {(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []).map((pApp, pIdx) => {
+                        const matchedApp = apps.find((a) => a.id === pApp.id || a.slug === pApp.id);
+                        const effectiveLogo = pApp.logo || matchedApp?.logo;
+
+                        return (
+                          <div key={pIdx} className="p-4 rounded-xl bg-white border border-slate-200 space-y-3 shadow-2xs">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="w-5 h-5 rounded-full bg-slate-100 text-slate-600 font-mono text-[10px] font-bold flex items-center justify-center">
+                                  {pIdx + 1}
+                                </span>
+                                <span className="font-bold text-xs text-[#0A192F]">
+                                  Tab: {pApp.tabLabel || "Untitled Tab"}
+                                </span>
+                                {effectiveLogo && (
+                                  <div className="w-4 h-4 rounded-xs overflow-hidden shrink-0 border border-slate-200">
+                                    <img src={effectiveLogo} alt="Logo" className="w-full h-full object-cover" />
+                                  </div>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const currentList = (
+                                    content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []
+                                  ).filter((_, i) => i !== pIdx);
+                                  updateContent((prev) => ({
+                                    ...prev,
+                                    hero: { ...prev.hero, prototypeApps: currentList },
+                                  }));
+                                }}
+                                className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer text-xs"
+                                title="Remove Tab"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+
+                            {/* Link to Existing Listed App */}
+                            <div className="p-2.5 rounded-lg bg-sky-50/60 border border-sky-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                              <span className="text-[11px] font-mono text-[#0284C7] font-bold">
+                                Sync with Listed App:
+                              </span>
+                              <select
+                                value={pApp.id}
+                                onChange={(e) => {
+                                  const selectedId = e.target.value;
+                                  const found = apps.find((a) => a.id === selectedId || a.slug === selectedId);
+                                  const currentList = [
+                                    ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                  ];
+                                  if (found) {
+                                    currentList[pIdx] = {
+                                      ...currentList[pIdx],
+                                      id: found.id || found.slug,
+                                      tabLabel: found.name,
+                                      name: found.name,
+                                      tagline: found.tagline || found.shortDescription,
+                                      logo: found.logo || currentList[pIdx].logo || "",
+                                      inspectLink: `/apps/${found.slug || found.id}`,
+                                      inspectLabel: "Inspect App",
+                                      statusLabel: found.status === "LIVE" ? "Live Brand" : found.status === "IN_DEVELOPMENT" ? "In Development" : "Coming Soon",
+                                      statusVariant: found.status === "LIVE" ? "emerald" : found.status === "IN_DEVELOPMENT" ? "amber" : "purple",
+                                    };
+                                  } else {
+                                    currentList[pIdx] = { ...currentList[pIdx], id: selectedId };
+                                  }
+                                  updateContent((prev) => ({
+                                    ...prev,
+                                    hero: { ...prev.hero, prototypeApps: currentList },
+                                  }));
+                                }}
+                                className="px-2.5 py-1 rounded bg-white border border-sky-200 text-xs text-[#0A192F] font-bold"
+                              >
+                                <option value="">-- Choose an App to Sync --</option>
+                                {apps.map((app) => (
+                                  <option key={app.id} value={app.id || app.slug}>
+                                    {app.name} ({app.slug})
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Tab & App Details */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Tab Label</label>
+                                <input
+                                  type="text"
+                                  value={pApp.tabLabel}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], tabLabel: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Status Label</label>
+                                <input
+                                  type="text"
+                                  value={pApp.statusLabel || ""}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], statusLabel: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Status Color</label>
+                                <select
+                                  value={pApp.statusVariant || "amber"}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = {
+                                      ...currentList[pIdx],
+                                      statusVariant: e.target.value as "amber" | "purple" | "emerald" | "sky",
+                                    };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                >
+                                  <option value="amber">Amber (In Development)</option>
+                                  <option value="purple">Purple (Coming Soon)</option>
+                                  <option value="emerald">Emerald (Live Brand)</option>
+                                  <option value="sky">Sky Blue (Beta / Testing)</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* App Logo & Engine Title */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                  App Logo (Custom URL or Upload)
+                                </label>
+                                <div className="flex gap-2 items-center">
+                                  {effectiveLogo ? (
+                                    <div className="w-8 h-8 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100">
+                                      <img src={effectiveLogo} alt="Logo" className="w-full h-full object-cover" />
+                                    </div>
+                                  ) : null}
+                                  <input
+                                    type="text"
+                                    value={pApp.logo || ""}
+                                    onChange={(e) => {
+                                      const currentList = [
+                                        ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                      ];
+                                      currentList[pIdx] = { ...currentList[pIdx], logo: e.target.value };
+                                      updateContent((prev) => ({
+                                        ...prev,
+                                        hero: { ...prev.hero, prototypeApps: currentList },
+                                      }));
+                                    }}
+                                    placeholder={matchedApp?.logo ? "Auto-synced from App Listing" : "https://... or choose from Media"}
+                                    className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => openMediaLibrary(`hero.prototypeApps.${pIdx}.logo`)}
+                                    className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#0A192F] text-xs cursor-pointer shrink-0"
+                                    title="Choose from Media Library"
+                                  >
+                                    <Folder className="w-3.5 h-3.5 text-[#0284C7]" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">
+                                  Engine / Top Badge Header
+                                </label>
+                                <input
+                                  type="text"
+                                  value={pApp.badge || ""}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], badge: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  placeholder="e.g. AUDIOENGINE PROTOTYPE v0.8.2"
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Headline & Prototype Type */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Display Title</label>
+                                <input
+                                  type="text"
+                                  value={pApp.previewTitle || ""}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], previewTitle: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  placeholder="e.g. Midnight Resonance"
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Display Subtitle</label>
+                                <input
+                                  type="text"
+                                  value={pApp.previewSubtitle || ""}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], previewSubtitle: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  placeholder="e.g. Sample Track • Waveform"
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Prototype Demo Type</label>
+                                <select
+                                  value={pApp.type || "audio"}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = {
+                                      ...currentList[pIdx],
+                                      type: e.target.value as "audio" | "tracker" | "store" | "custom",
+                                    };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                >
+                                  <option value="audio">Audio Player (Waveform Scrubber)</option>
+                                  <option value="tracker">Streak Tracker (Consistency Grid)</option>
+                                  <option value="store">Store Metrics (D2C Marketplaces)</option>
+                                  <option value="custom">Custom Demo</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Bottom Card Copy & Inspect Link */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1 border-t border-slate-100">
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Bottom App Name</label>
+                                <input
+                                  type="text"
+                                  value={pApp.name || ""}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], name: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Inspect Link</label>
+                                <input
+                                  type="text"
+                                  value={pApp.inspectLink || ""}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], inspectLink: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  placeholder="/apps/wishmusic"
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+
+                              <div>
+                                <label className="block text-[10px] font-mono text-slate-500 mb-0.5">Inspect Button Label</label>
+                                <input
+                                  type="text"
+                                  value={pApp.inspectLabel || "Inspect App"}
+                                  onChange={(e) => {
+                                    const currentList = [
+                                      ...(content.hero.prototypeApps || defaultSiteContent.hero.prototypeApps || []),
+                                    ];
+                                    currentList[pIdx] = { ...currentList[pIdx], inspectLabel: e.target.value };
+                                    updateContent((prev) => ({
+                                      ...prev,
+                                      hero: { ...prev.hero, prototypeApps: currentList },
+                                    }));
+                                  }}
+                                  className="w-full px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F]"
+                                />
+                              </div>
+                            </div>
+
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
