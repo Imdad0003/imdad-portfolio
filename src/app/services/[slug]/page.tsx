@@ -1,5 +1,5 @@
 import React from "react";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { Metadata } from "next";
 import { Container } from "@/components/ui/Container";
@@ -23,9 +23,11 @@ interface ServicePageProps {
 }
 
 export async function generateStaticParams() {
-  return studioServices.map((service) => ({
-    slug: service.slug,
-  }));
+  return studioServices
+    .filter((service) => service.slug !== "ai-resume-builder" && service.slug !== "amazon-listing")
+    .map((service) => ({
+      slug: service.slug,
+    }));
 }
 
 export async function generateMetadata({
@@ -65,6 +67,11 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export default async function ServiceDetailPage({ params }: ServicePageProps) {
   const { slug } = await params;
+
+  if (slug === "ai-resume-builder") {
+    redirect("/services/ai-resume-builder");
+  }
+
   const staticService = getStudioServiceBySlug(slug);
   const cmsDoc = await getPublishedServiceBySlug(slug);
 

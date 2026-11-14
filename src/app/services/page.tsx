@@ -104,6 +104,9 @@ export default function ServicesPage() {
   };
 
   const getServiceTargetUrl = (service: ServiceItem): string => {
+    if (service.id === "ai-resume-builder") {
+      return "/services/ai-resume-builder";
+    }
     if (
       service.id.includes("amazon") ||
       service.id.includes("creative") ||
@@ -161,7 +164,7 @@ export default function ServicesPage() {
                 IN-DEPTH SERVICE DIRECTORIES
               </span>
               <h2 className="text-xl sm:text-2xl font-black text-[#0A192F]">
-                The 5 Studio Disciplines
+                Studio Disciplines &amp; Tools
               </h2>
             </div>
             <p className="text-xs text-slate-500 max-w-sm">

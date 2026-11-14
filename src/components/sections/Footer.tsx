@@ -165,6 +165,18 @@ export function Footer() {
                   <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/services/ai-resume-builder"
+                  className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
+                >
+                  <span className="flex items-center gap-1.5">
+                    06 AI Resume Builder
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-100 text-sky-700 font-bold">BETA</span>
+                  </span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </li>
               <li className="pt-1">
                 <Link
                   href="/pricing"

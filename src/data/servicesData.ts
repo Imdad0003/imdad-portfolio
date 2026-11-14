@@ -853,6 +853,84 @@ export const studioServices: StudioService[] = [
       },
     ],
   },
+
+  // ==========================================
+  // 6. AI RESUME BUILDER (SAAS TOOL)
+  // ==========================================
+  {
+    id: "ai-resume-builder",
+    number: "06",
+    title: "AI Resume Builder",
+    slug: "ai-resume-builder",
+    tagline: "ATS-optimized resume generation engineered with Gemini 4 Hydrogen.",
+    shortDescription:
+      "Transform your career history, projects, and skills into professional, ATS-compliant resumes with real-time quality audits and instant vector PDF export.",
+    fullDescription:
+      "An in-house SaaS service developed by IMDAD.BUILDS to solve broken hiring pipelines. Uses Google Gemini 4 Hydrogen reasoning to convert raw experiences into high-impact action bullets with zero hallucinations. Built for students, freshers, and experienced professionals.",
+    iconName: "FileText",
+    accentColor: "#0284C7",
+    capabilities: [
+      "Gemini 4 Hydrogen Reasoning",
+      "Single-Column True ATS Layouts",
+      "Student & Fresher Mode (Zero Experience Required)",
+      "Job Description Keyword Alignment",
+      "Action Verb Optimization",
+      "Selectable Vector PDF Export",
+      "Real-Time Readability & Quality Check",
+    ],
+    deliverables: [
+      "High-impact ATS-optimized resume",
+      "Clean vector A4 PDF export",
+      "Plain-text ATS copy stream",
+      "Real-time quality checklist review",
+    ],
+    suitableFor: [
+      "College students & fresh graduates",
+      "Career switchers & tech professionals",
+      "Experienced engineers & designers",
+      "Candidates applying through automated ATS portals",
+    ],
+    process: [
+      { step: "01", title: "Information Intake", description: "Enter your contact, career target, education, and optional experience." },
+      { step: "02", title: "Gemini 4 Hydrogen Engineering", description: "AI turns raw bullets into high-impact action verbs aligned to ATS parsers." },
+      { step: "03", title: "Live Editor & Quality Check", description: "Review, edit in-place, switch between 3 recruiter-approved styles, and check keyword density." },
+      { step: "04", title: "Instant PDF Download", description: "Save or print pixel-crisp A4 vector PDF ready for application." },
+    ],
+    hasRealPricing: true,
+    pricingNote: "Free Beta Launch. Future pricing: ₹50 / resume.",
+    packages: [
+      {
+        name: "Free Beta Access",
+        price: 0,
+        priceType: "fixed",
+        unit: "per resume",
+        description: "Full access to Gemini 4 Hydrogen resume engineering with unlimited vector PDF exports during public beta.",
+        features: [
+          "Gemini 4 Hydrogen AI Generation",
+          "3 Recruiter-Approved ATS Templates",
+          "Student & Fresher Project Prioritization",
+          "Vector Print-Ready PDF Download",
+          "Live Quality & Keyword Audit",
+          "No Signup Required",
+        ],
+        recommended: true,
+      },
+    ],
+    faqs: [
+      {
+        question: "Is the AI Resume Builder really free?",
+        answer: "Yes. During our initial beta launch, the AI Resume Builder is 100% free with no credit card or account needed.",
+      },
+      {
+        question: "Does the AI invent fake experience?",
+        answer: "Never. Our engine adheres to strict anti-hallucination guardrails. It only enhances the facts, dates, and responsibilities you provide.",
+      },
+      {
+        question: "Can I use it if I have no work experience?",
+        answer: "Absolutely. Our 'Student & Fresher' template prioritizes your university credentials, coursework, and technical projects.",
+      },
+    ],
+  },
 ];
 
 export function getAllStudioServices(): StudioService[] {

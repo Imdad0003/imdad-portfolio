@@ -25,6 +25,7 @@ export const navItems: NavItem[] = [
       { label: "03 E-commerce", href: "/services/ecommerce", description: "Marketplace cataloging & D2C storefronts" },
       { label: "04 Video Editing", href: "/services/video-editing", description: "Reels, Shorts, product demos & UGC ads" },
       { label: "05 Social Media", href: "/services/social-media", description: "Content planning, strategy & post creative" },
+      { label: "06 AI Resume Builder", href: "/services/ai-resume-builder", description: "ATS-friendly AI resume creator (Free Beta)" },
     ],
   },
   { label: "Projects", href: "/projects" },

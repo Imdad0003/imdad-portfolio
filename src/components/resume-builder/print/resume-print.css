@@ -1,0 +1,63 @@
+/* ATS-Compliant Vector Print Stylesheet for IMDAD.BUILDS AI Resume Builder */
+
+@media print {
+  /* 1. Page Geometry & Margin Configuration */
+  @page {
+    size: A4 portrait;
+    margin: 10mm 14mm;
+  }
+
+  /* 2. Hide all non-printable chrome (nav, footer, editor controls, chatbot, etc.) */
+  body * {
+    visibility: hidden;
+  }
+
+  #printable-resume,
+  #printable-resume * {
+    visibility: visible;
+  }
+
+  #printable-resume {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 3. Page Break Rules */
+  .resume-section {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .resume-item {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* 4. Disable animations & screen shadows in print */
+  * {
+    animation: none !important;
+    transition: none !important;
+    text-shadow: none !important;
+  }
+
+  /* 5. Clean, selectable text without links URLs appending */
+  a[href]:after {
+    content: "" !important;
+  }
+}

@@ -2415,6 +2415,111 @@ export default function AdminPortalPage() {
                   <span>Allow Public Reviews</span>
                 </label>
               </div>
+
+              {/* AI RESUME BUILDER SETTINGS */}
+              <div className="p-4 rounded-2xl bg-[#FAF4F9] border border-[#502D55]/15 space-y-3 pt-3">
+                <div className="flex items-center justify-between border-b border-[#502D55]/10 pb-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-[#0284C7]" />
+                    <span className="font-bold text-xs text-[#180D1D]">AI Resume Builder (Gemini 4 Hydrogen)</span>
+                  </div>
+                  <Link
+                    href="/services/ai-resume-builder"
+                    target="_blank"
+                    className="text-[11px] font-bold text-[#0284C7] hover:underline flex items-center gap-1"
+                  >
+                    <span>Open Live Service</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex items-center gap-2 text-xs font-bold text-[#180D1D] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={((settings as any).resumeBuilder?.enabled !== false)}
+                      onChange={(e) => {
+                        const prevRb = (settings as any).resumeBuilder || {};
+                        setSettings({
+                          ...settings,
+                          resumeBuilder: { ...prevRb, enabled: e.target.checked },
+                        } as any);
+                      }}
+                    />
+                    <span>Service Active / Enabled</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 text-xs font-bold text-[#180D1D] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={((settings as any).resumeBuilder?.isFreeBeta ?? true)}
+                      onChange={(e) => {
+                        const prevRb = (settings as any).resumeBuilder || {};
+                        setSettings({
+                          ...settings,
+                          resumeBuilder: { ...prevRb, isFreeBeta: e.target.checked },
+                        } as any);
+                      }}
+                    />
+                    <span>Free Beta Status (No Payment)</span>
+                  </label>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <label className="block text-[10px] font-mono text-[#56475C] mb-1">AI Reasoning Model</label>
+                    <select
+                      value={(settings as any).resumeBuilder?.aiModel || "gemini-4-hydrogen"}
+                      onChange={(e) => {
+                        const prevRb = (settings as any).resumeBuilder || {};
+                        setSettings({
+                          ...settings,
+                          resumeBuilder: { ...prevRb, aiModel: e.target.value },
+                        } as any);
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#502D55]/15 text-xs text-[#180D1D] font-bold"
+                    >
+                      <option value="gemini-4-hydrogen">gemini-4-hydrogen (Recommended)</option>
+                      <option value="gemini-2.5-flash">gemini-2.5-flash (High Speed)</option>
+                      <option value="gemini-2.0-flash">gemini-2.0-flash (Legacy)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono text-[#56475C] mb-1">Daily Generations Limit / IP</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={(settings as any).resumeBuilder?.dailyIpLimit || 15}
+                      onChange={(e) => {
+                        const prevRb = (settings as any).resumeBuilder || {};
+                        setSettings({
+                          ...settings,
+                          resumeBuilder: { ...prevRb, dailyIpLimit: Number(e.target.value) },
+                        } as any);
+                      }}
+                      className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#502D55]/15 text-xs text-[#180D1D]"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-mono text-[#56475C] mb-1">Banner Announcement Text</label>
+                  <input
+                    type="text"
+                    value={(settings as any).resumeBuilder?.noticeBanner || "FREE BETA LAUNCH — Generate ATS-optimized resumes in seconds."}
+                    onChange={(e) => {
+                      const prevRb = (settings as any).resumeBuilder || {};
+                      setSettings({
+                        ...settings,
+                        resumeBuilder: { ...prevRb, noticeBanner: e.target.value },
+                      } as any);
+                    }}
+                    className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-[#502D55]/15 text-xs text-[#180D1D]"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}

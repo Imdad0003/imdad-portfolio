@@ -831,6 +831,28 @@ export const allServices: ServiceItem[] = [
   // 7. AI CREATIVE SERVICES
   // ==========================================
   {
+    id: "ai-resume-builder",
+    category: "ai",
+    categoryLabel: "AI SaaS",
+    name: "AI Resume Builder (ATS-Optimized)",
+    description: "Gemini 4 Hydrogen-powered ATS resume generator. Anti-hallucination engine with instant vector PDF export.",
+    price: 0,
+    priceType: "fixed",
+    unit: "/ resume (Free Beta)",
+    deliverables: [
+      "Gemini 4 Hydrogen AI bullet point optimization",
+      "3 Recruiter-approved single-column ATS layouts",
+      "Student & Fresher mode (Zero work experience required)",
+      "Target job description keyword density alignment",
+      "Selectable vector A4 print & PDF download",
+      "Real-time ATS readability checklist",
+    ],
+    badge: "Best Value",
+    recommended: true,
+    chatbotPrompt:
+      "I want to create an ATS-compliant resume using your AI Resume Builder (Free Beta). How does it work?",
+  },
+  {
     id: "ai-product-image",
     category: "ai",
     categoryLabel: "AI Creative",

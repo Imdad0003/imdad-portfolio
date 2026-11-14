@@ -13,6 +13,7 @@ import {
   ShoppingBag,
   Video,
   Share2,
+  FileText,
 } from "lucide-react";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -21,6 +22,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ShoppingBag,
   Video,
   Share2,
+  FileText,
 };
 
 interface StudioServicesSectionProps {
