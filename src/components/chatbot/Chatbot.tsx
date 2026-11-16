@@ -6,6 +6,7 @@ import { ChatWindow } from "./ChatWindow";
 import { Message } from "./ChatMessage";
 import { Sparkles } from "lucide-react";
 import { RazorpayCheckoutModal } from "@/components/payments/RazorpayCheckoutModal";
+import { ExtractedVideoOrderState } from "@/lib/video-order-extractor";
 
 interface ProjectSummaryData {
   service: string;
@@ -28,11 +29,17 @@ export function Chatbot() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [loading, setLoading] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
+  const [orderState, setOrderState] = useState<ExtractedVideoOrderState | null>(null);
   const messagesRef = useRef<Message[]>(initialMessages);
+  const orderStateRef = useRef<ExtractedVideoOrderState | null>(null);
 
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
+
+  useEffect(() => {
+    orderStateRef.current = orderState;
+  }, [orderState]);
 
   const handleSendMessage = async (text: string) => {
     const userMsg: Message = {
@@ -55,6 +62,7 @@ export function Chatbot() {
             role: m.role,
             content: m.content,
           })),
+          orderState: orderStateRef.current,
         }),
       });
 
@@ -63,6 +71,11 @@ export function Chatbot() {
       }
 
       const data = await response.json();
+      if (data.videoOrderState) {
+        setOrderState(data.videoOrderState);
+        orderStateRef.current = data.videoOrderState;
+      }
+
       const botMsg: Message = {
         id: `bot-${Date.now()}`,
         role: "assistant",
@@ -90,20 +103,46 @@ export function Chatbot() {
 
   useEffect(() => {
     const handleOpenChat = (e: Event) => {
-      const customEvent = e as CustomEvent<{ prompt?: string }>;
+      const customEvent = e as CustomEvent<{
+        prompt?: string;
+        serviceId?: string;
+        serviceName?: string;
+        packagePrice?: number;
+        duration?: string;
+        aspectRatio?: string;
+      }>;
       setIsOpen(true);
       setHasUnread(false);
+      if (customEvent.detail?.serviceId) {
+        const initialOrder: ExtractedVideoOrderState = {
+          serviceId: customEvent.detail.serviceId,
+          serviceName: customEvent.detail.serviceName,
+          packagePrice: customEvent.detail.packagePrice,
+          approxDuration: customEvent.detail.duration,
+          aspectRatio:
+            customEvent.detail.aspectRatio ||
+            (customEvent.detail.serviceId === "youtube-longform" ? "16:9" : "9:16"),
+        };
+        setOrderState(initialOrder);
+        orderStateRef.current = initialOrder;
+      }
       if (customEvent.detail?.prompt) {
         handleSendMessage(customEvent.detail.prompt);
       }
     };
 
     window.addEventListener("imdad:open-chat", handleOpenChat);
-    return () => window.removeEventListener("imdad:open-chat", handleOpenChat);
+    window.addEventListener("open-chat", handleOpenChat);
+    return () => {
+      window.removeEventListener("imdad:open-chat", handleOpenChat);
+      window.removeEventListener("open-chat", handleOpenChat);
+    };
   }, []);
 
   const handleClearChat = () => {
     setMessages(initialMessages);
+    setOrderState(null);
+    orderStateRef.current = null;
   };
 
   const handleOpen = () => {

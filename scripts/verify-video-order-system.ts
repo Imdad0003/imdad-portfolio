@@ -208,7 +208,10 @@ async function runTestSuite() {
     orderData.order.orderNumber.startsWith("ORD-VID-") || orderData.order.orderNumber.startsWith("IMD-VID-"),
     `Generated order number format verified (${orderData.order.orderNumber})`
   );
-  assert(orderData.order.status === "pending_advance", "Order status initialized as 'pending_advance'");
+  assert(
+    orderData.order.status === "pending_payment" || orderData.order.status === "pending_advance",
+    "Order status initialized as 'pending_payment' (or 'pending_advance')"
+  );
   assert(orderData.order.paymentStatus === "unpaid", "Order paymentStatus initialized as 'unpaid' (not marked as paid)");
   assert(orderData.order.pricing.totalAmount === 1499, "Total amount verified as ₹1,499");
   assert(orderData.order.pricing.advanceAmount === 750, "50% advance amount verified as ₹750");

@@ -5,6 +5,7 @@ import {
   extractVideoOrderState,
   getNextVideoOrderQuestion,
   VideoOrderSummaryData,
+  ExtractedVideoOrderState,
 } from "@/lib/video-order-extractor";
 
 // In-memory rate limiting map (IP -> timestamps array)
@@ -28,7 +29,10 @@ function isRateLimited(ip: string): boolean {
 }
 
 // Fallback intelligent sales assistant engine when GEMINI_API_KEY is not configured or API is unreachable
-function generateSmartFallback(messages: Array<{ role: string; content: string }>): {
+function generateSmartFallback(
+  messages: Array<{ role: string; content: string }>,
+  orderState?: Partial<ExtractedVideoOrderState>
+): {
   reply: string;
   projectSummary?: {
     service: string;
@@ -37,6 +41,7 @@ function generateSmartFallback(messages: Array<{ role: string; content: string }
     pricingNote: string;
   } | null;
   videoOrderSummary?: VideoOrderSummaryData | null;
+  videoOrderState?: ExtractedVideoOrderState | null;
 } {
   const lastUserMessage = messages[messages.length - 1]?.content || "";
   const lower = lastUserMessage.toLowerCase();
@@ -44,16 +49,19 @@ function generateSmartFallback(messages: Array<{ role: string; content: string }
 
   // Active Video Editing Order Flow check
   const hasVideoContext =
+    Boolean(orderState?.serviceId) ||
     conversationText.includes("video") ||
     conversationText.includes("reel") ||
     conversationText.includes("ugc") ||
     conversationText.includes("short");
 
   if (hasVideoContext) {
-    const videoState = extractVideoOrderState(messages);
+    const videoState = extractVideoOrderState(messages, orderState);
     const isAnsweringOrder =
+      Boolean(orderState?.serviceId) ||
       messages.length > 1 &&
       Boolean(
+        videoState.serviceId ||
         videoState.aspectRatio ||
         videoState.approxDuration ||
         videoState.requirements ||
@@ -73,6 +81,7 @@ function generateSmartFallback(messages: Array<{ role: string; content: string }
       return {
         reply: step.reply,
         videoOrderSummary: step.videoOrderSummary || null,
+        videoOrderState: videoState,
       };
     }
   }
@@ -381,13 +390,50 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { messages } = body;
+    const { messages, orderState } = body;
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
         { reply: "Please provide a valid message to get started." },
         { status: 400 }
       );
+    }
+
+    const lastUserMessage = messages[messages.length - 1]?.content || "";
+    const conversationText = messages.map((m) => m.content).join(" ").toLowerCase();
+    const videoState = extractVideoOrderState(messages, orderState);
+
+    // Active Video Editing Order State Machine Handling
+    const hasVideoContext =
+      Boolean(orderState?.serviceId) ||
+      Boolean(videoState.serviceId) ||
+      conversationText.includes("video") ||
+      conversationText.includes("reel") ||
+      conversationText.includes("ugc") ||
+      conversationText.includes("short");
+
+    if (hasVideoContext) {
+      const isAnsweringOrder =
+        Boolean(orderState?.serviceId) ||
+        Boolean(videoState.serviceId) ||
+        Boolean(
+          videoState.aspectRatio ||
+          videoState.approxDuration ||
+          videoState.requirements ||
+          videoState.deliveryDate ||
+          videoState.fullName ||
+          videoState.mobileNumber ||
+          videoState.email
+        );
+
+      if (isAnsweringOrder) {
+        const step = getNextVideoOrderQuestion(videoState, lastUserMessage);
+        return NextResponse.json({
+          reply: step.reply,
+          videoOrderSummary: step.videoOrderSummary || null,
+          videoOrderState: videoState,
+        });
+      }
     }
 
     const apiKey = process.env.GEMINI_API_KEY || process.env.AI_API_KEY;
@@ -527,11 +573,12 @@ WEBSITE DESTINATIONS:
     }
 
     // Fallback engine (used when no API key is provided or API is unreachable)
-    const fallbackResult = generateSmartFallback(messages);
+    const fallbackResult = generateSmartFallback(messages, orderState);
     return NextResponse.json({
       reply: fallbackResult.reply,
       projectSummary: fallbackResult.projectSummary || null,
       videoOrderSummary: fallbackResult.videoOrderSummary || null,
+      videoOrderState: fallbackResult.videoOrderState || videoState,
     });
   } catch (error) {
     console.error("Chat API error:", error);
