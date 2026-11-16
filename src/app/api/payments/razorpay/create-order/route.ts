@@ -5,6 +5,64 @@ import { createRazorpayOrder, getRazorpayCredentials } from "@/lib/razorpay";
 export const dynamic = "force-dynamic";
 
 /**
+ * Diagnostic and Readiness Verification Endpoint for Razorpay Configuration
+ * Reports variable availability, format, and alignment without leaking secrets.
+ */
+export async function GET() {
+  const isProd = process.env.NODE_ENV === "production";
+  const rawKeyId = process.env.RAZORPAY_KEY_ID || "";
+  const rawPubKeyId = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "";
+  const rawKeySecret = process.env.RAZORPAY_KEY_SECRET || "";
+  const rawWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || "";
+
+  const keyId = rawKeyId.trim();
+  const pubKeyId = rawPubKeyId.trim();
+  const keySecret = rawKeySecret.trim();
+  const webhookSecret = rawWebhookSecret.trim();
+
+  const keyIdPrefix = keyId ? keyId.substring(0, 8) : "NOT_SET";
+  const pubKeyIdPrefix = pubKeyId ? pubKeyId.substring(0, 8) : "NOT_SET";
+
+  return NextResponse.json({
+    environment: process.env.NODE_ENV,
+    isProduction: isProd,
+    variables: {
+      RAZORPAY_KEY_ID: {
+        configured: Boolean(keyId),
+        prefix: keyIdPrefix,
+        length: keyId.length,
+        hasWhitespace: rawKeyId.length !== keyId.length,
+        isLiveKey: keyId.startsWith("rzp_live_"),
+        isTestKey: keyId.startsWith("rzp_test_"),
+      },
+      NEXT_PUBLIC_RAZORPAY_KEY_ID: {
+        configured: Boolean(pubKeyId),
+        prefix: pubKeyIdPrefix,
+        length: pubKeyId.length,
+        hasWhitespace: rawPubKeyId.length !== pubKeyId.length,
+        isLiveKey: pubKeyId.startsWith("rzp_live_"),
+        isTestKey: pubKeyId.startsWith("rzp_test_"),
+      },
+      RAZORPAY_KEY_SECRET: {
+        configured: Boolean(keySecret),
+        length: keySecret.length,
+        hasWhitespace: rawKeySecret.length !== keySecret.length,
+      },
+      RAZORPAY_WEBHOOK_SECRET: {
+        configured: Boolean(webhookSecret),
+        length: webhookSecret.length,
+        hasWhitespace: rawWebhookSecret.length !== webhookSecret.length,
+      },
+    },
+    consistency: {
+      keysMatch: Boolean(keyId && pubKeyId && keyId === pubKeyId),
+      credentialsPairConfigured: Boolean(keyId && keySecret),
+      webhookConfigured: Boolean(webhookSecret),
+    },
+  });
+}
+
+/**
  * Backend Razorpay Order Creation API Endpoint
  * IMDAD.BUILDS — Agent 03 Specification
  *

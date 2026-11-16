@@ -46,19 +46,24 @@ export interface VerifyWebhookParams {
 
 /**
  * Returns configured Razorpay credentials with safe test fallbacks.
+ * Credentials are automatically trimmed of any accidental leading/trailing whitespace.
  */
 export function getRazorpayCredentials() {
   const isProd = process.env.NODE_ENV === "production";
-  const keyId =
+  const rawKeyId =
     process.env.RAZORPAY_KEY_ID ||
     process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ||
     (isProd ? "" : "rzp_test_imdad_builds");
-  const keySecret =
+  const rawKeySecret =
     process.env.RAZORPAY_KEY_SECRET ||
     (isProd ? "" : "rzp_secret_imdad_builds_mock_test");
-  const webhookSecret =
+  const rawWebhookSecret =
     process.env.RAZORPAY_WEBHOOK_SECRET ||
     (isProd ? "" : "rzp_webhook_secret_mock_test");
+
+  const keyId = rawKeyId.trim();
+  const keySecret = rawKeySecret.trim();
+  const webhookSecret = rawWebhookSecret.trim();
 
   const isConfigured = Boolean(keyId && keySecret);
 
@@ -76,13 +81,33 @@ export function getRazorpayClient(): Razorpay {
     throw new Error("Razorpay client cannot be initialized: Missing RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET in production.");
   }
 
-  if (!razorpayInstance) {
-    razorpayInstance = new Razorpay({
-      key_id: keyId,
-      key_secret: keySecret,
-    });
+  return new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+}
+
+/**
+ * Safely extracts diagnostic error message from Razorpay API error responses
+ * without leaking sensitive credentials.
+ */
+export function parseRazorpayError(err: unknown): string {
+  if (!err) return "Order creation failed: unknown error";
+  if (typeof err === "object") {
+    const errorObj = err as Record<string, any>;
+    const statusCode = errorObj.statusCode ? `[HTTP ${errorObj.statusCode}] ` : "";
+    if (errorObj.error && typeof errorObj.error === "object") {
+      const code = errorObj.error.code ? `${errorObj.error.code}: ` : "";
+      const desc = errorObj.error.description || errorObj.error.message || JSON.stringify(errorObj.error);
+      return `${statusCode}${code}${desc}`;
+    }
+    if (errorObj.description) return `${statusCode}${errorObj.description}`;
+    if (errorObj.message) return `${statusCode}${errorObj.message}`;
   }
-  return razorpayInstance;
+  if (err instanceof Error) {
+    return err.message;
+  }
+  return String(err);
 }
 
 /**
@@ -125,11 +150,12 @@ export async function createRazorpayOrder(params: CreateOrderParams): Promise<Ra
       keyId,
     };
   } catch (err: unknown) {
+    const parsedMessage = parseRazorpayError(err);
     if (isProd) {
-      console.error("[Razorpay] API order creation failed in production:", err);
-      throw new Error(`Razorpay gateway error: ${err instanceof Error ? err.message : "Order creation failed"}`);
+      console.error("[Razorpay] API order creation failed in production:", parsedMessage);
+      throw new Error(`Razorpay gateway error: ${parsedMessage}`);
     }
-    console.warn("[Razorpay] API call failed in dev/test, generating authenticated mock order:", err);
+    console.warn("[Razorpay] API call failed in dev/test, generating authenticated mock order:", parsedMessage);
     const mockId = `order_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
     return {
       id: mockId,
