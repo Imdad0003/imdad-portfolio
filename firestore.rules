@@ -248,6 +248,51 @@ service cloud.firestore {
     //   - updatedAt: timestamp | string (optional)
     //   - publishedAt: timestamp | string (optional)
     //
+    // Collection: videoOrders
+    // Document ID: {orderId} (e.g., 'ord_vid_1731715200000_abc12')
+    // Fields:
+    //   - id: string (optional, max 64 chars)
+    //   - orderNumber: string (optional, max 64 chars)
+    //   - serviceCategory: string (required, 'video-editing')
+    //   - customer: map (required)
+    //     - fullName: string (optional, 1-100 chars)
+    //     - mobileNumber: string (optional, 5-30 chars)
+    //     - email: string (required, valid email, max 150 chars)
+    //   - project: map (optional)
+    //   - pricing: map (optional)
+    //   - status: string (optional, 1-50 chars)
+    //   - paymentStatus: string (optional, 1-50 chars)
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //   - metadata: map (optional)
+    //
+    // Collection: orderPrivateAssets
+    // Document ID: {assetId} (e.g., 'file_1731715200000_abc123')
+    // Fields:
+    //   - id: string (required, max 100 chars)
+    //   - name: string (required, max 255 chars)
+    //   - size: number (required, >= 0)
+    //   - type: string (required, MIME type)
+    //   - category: string ('raw_footage' | 'audio' | 'voiceover' | 'image' | 'asset' | 'other')
+    //   - storagePath: string (required, secure vault path)
+    //   - fileKey: string (required, internal identifier)
+    //   - orderId: string (required, order reference)
+    //   - status: string ('staged' | 'attached' | 'deleted')
+    //   - isPrivate: bool (true)
+    //   - uploadedAt: timestamp | string
+    //   - createdAt: timestamp | string
+    //
+    // Collection: orderConfigurations
+    // Document ID: {configId} (e.g., 'video-editing')
+    // Fields:
+    //   - serviceOptions: list (service configurations)
+    //   - videoFormats: list (supported video formats)
+    //   - aspectRatios: list (aspect ratio configurations)
+    //   - deliveryOptions: list (turnaround delivery choices)
+    //   - uploadSettings: map (file upload bounds and restrictions)
+    //   - orderFormFields: list (order form definitions)
+    //   - updatedAt: timestamp | string (optional)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -680,6 +725,36 @@ service cloud.firestore {
 
     // App Visual Content Collection: Public read access for visitors; Admin-only write access
     match /appVisualContent/{contentId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Video Orders Collection: Individual order retrieval for customers; Admin list/delete; Immutable-guarded updates
+    match /videoOrders/{orderId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if (request.resource.data.serviceCategory == 'video-editing' &&
+                        request.resource.data.customer.email is string) || isAdmin();
+      allow update: if isAdmin() || (
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.orderNumber == resource.data.orderNumber &&
+        request.resource.data.serviceCategory == resource.data.serviceCategory &&
+        request.resource.data.customer.email == resource.data.customer.email &&
+        request.resource.data.pricing.totalAmount == resource.data.pricing.totalAmount &&
+        request.resource.data.pricing.advanceAmount == resource.data.pricing.advanceAmount &&
+        request.resource.data.pricing.remainingAmount == resource.data.pricing.remainingAmount
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Order Private Assets Collection: Strictly private read/update/delete for Admin; Allows creation of private assets
+    match /orderPrivateAssets/{assetId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if (request.resource.data.isPrivate == true) || isAdmin();
+    }
+
+    // Order Configurations Collection: Public read for customer ordering form options; Admin write
+    match /orderConfigurations/{configId} {
       allow read: if true;
       allow write: if isAdmin();
     }

@@ -24,7 +24,12 @@ interface ServicePageProps {
 
 export async function generateStaticParams() {
   return studioServices
-    .filter((service) => service.slug !== "ai-resume-builder" && service.slug !== "amazon-listing")
+    .filter(
+      (service) =>
+        service.slug !== "ai-resume-builder" &&
+        service.slug !== "amazon-listing" &&
+        service.slug !== "video-editing"
+    )
     .map((service) => ({
       slug: service.slug,
     }));
@@ -70,6 +75,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
   if (slug === "ai-resume-builder") {
     redirect("/services/ai-resume-builder");
+  }
+
+  if (slug === "video-editing") {
+    redirect("/services/video-editing");
   }
 
   const staticService = getStudioServiceBySlug(slug);

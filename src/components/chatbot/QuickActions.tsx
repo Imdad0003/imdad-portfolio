@@ -6,6 +6,7 @@ interface QuickActionsProps {
 }
 
 const quickOptions = [
+  { label: "⚡ Order Video Edit", prompt: "I would like to place an order for video editing." },
   { label: "🛒 E-commerce", prompt: "I need help with marketplace listings (Amazon / Flipkart / Meesho)." },
   { label: "🎨 Product Images", prompt: "I need high-converting product listing creatives and infographics." },
   { label: "🎬 Video / UGC", prompt: "I need short-form video ads or UGC-style product reels." },

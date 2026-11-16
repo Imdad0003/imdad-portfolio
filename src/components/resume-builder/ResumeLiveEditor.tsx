@@ -20,6 +20,7 @@ import {
   FileCode,
   ShieldCheck,
   Eye,
+  Trash2,
 } from "lucide-react";
 import "./print/resume-print.css";
 
@@ -115,6 +116,16 @@ export function ResumeLiveEditor({
       // Ignore
     } finally {
       setIsRegeneratingSummary(false);
+    }
+  };
+
+  // Wipe resume and clear local storage draft
+  const handleClearAllData = () => {
+    if (typeof window !== "undefined" && window.confirm("Are you sure you want to delete this generated resume and your draft from your browser? This action cannot be undone.")) {
+      try {
+        localStorage.removeItem("imdad_resume_builder_draft_v1");
+      } catch {}
+      onBackToForm();
     }
   };
 
@@ -223,6 +234,17 @@ export function ResumeLiveEditor({
           >
             <Download className="w-3.5 h-3.5" />
             <span>Download / Print PDF</span>
+          </button>
+
+          {/* Delete / Clear Resume Data */}
+          <button
+            type="button"
+            onClick={handleClearAllData}
+            className="px-3 py-2 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 shadow-2xs cursor-pointer"
+            title="Wipe resume data and local draft"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Delete / Clear</span>
           </button>
         </div>
       </div>

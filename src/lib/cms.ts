@@ -36,11 +36,14 @@ import type {
 export async function getPublishedApps(): Promise<AppDocument[]> {
   if (db && isFirebaseConfigured) {
     try {
-      const snapshot = await getDocs(collection(db, "apps"));
+      const q = query(
+        collection(db, "apps"),
+        where("published", "==", true)
+      );
+      const snapshot = await getDocs(q);
       if (!snapshot.empty) {
         const list = snapshot.docs
           .map((d) => ({ id: d.id, ...d.data() } as AppDocument))
-          .filter((a) => a.published !== false)
           .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
         if (list.length > 0) return list;
       }

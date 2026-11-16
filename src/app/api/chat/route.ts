@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { allServices, formatPrice } from "@/data/pricing";
 import { siteConfig } from "@/data/config";
+import {
+  extractVideoOrderState,
+  getNextVideoOrderQuestion,
+  VideoOrderSummaryData,
+} from "@/lib/video-order-extractor";
 
 // In-memory rate limiting map (IP -> timestamps array)
 const rateLimitMap = new Map<string, number[]>();
@@ -31,10 +36,46 @@ function generateSmartFallback(messages: Array<{ role: string; content: string }
     scope: string;
     pricingNote: string;
   } | null;
+  videoOrderSummary?: VideoOrderSummaryData | null;
 } {
   const lastUserMessage = messages[messages.length - 1]?.content || "";
   const lower = lastUserMessage.toLowerCase();
   const conversationText = messages.map((m) => m.content).join(" ").toLowerCase();
+
+  // Active Video Editing Order Flow check
+  const hasVideoContext =
+    conversationText.includes("video") ||
+    conversationText.includes("reel") ||
+    conversationText.includes("ugc") ||
+    conversationText.includes("short");
+
+  if (hasVideoContext) {
+    const videoState = extractVideoOrderState(messages);
+    const isAnsweringOrder =
+      messages.length > 1 &&
+      Boolean(
+        videoState.aspectRatio ||
+        videoState.approxDuration ||
+        videoState.requirements ||
+        videoState.deliveryDate ||
+        videoState.fullName ||
+        videoState.mobileNumber ||
+        videoState.email ||
+        lower.includes("order") ||
+        lower.includes("reel") ||
+        lower.includes("ugc") ||
+        lower.includes("video") ||
+        lower.includes("edit")
+      );
+
+    if (isAnsweringOrder) {
+      const step = getNextVideoOrderQuestion(videoState, lastUserMessage);
+      return {
+        reply: step.reply,
+        videoOrderSummary: step.videoOrderSummary || null,
+      };
+    }
+  }
 
   // 1. Studio Apps: WishMusic & WishTracking & EasyXo
   if (lower.includes("wishmusic") || lower.includes("music app") || lower.includes("audio player")) {
@@ -257,8 +298,27 @@ function generateSmartFallback(messages: Array<{ role: string; content: string }
     lower.includes("reel") ||
     lower.includes("short")
   ) {
+    const videoState = extractVideoOrderState(messages);
+    const wantsOrder =
+      lower.includes("order") ||
+      lower.includes("edit") ||
+      lower.includes("package") ||
+      lower.includes("start") ||
+      lower.includes("create") ||
+      lower.includes("make") ||
+      lower.includes("build") ||
+      lower.includes("need");
+
+    if (wantsOrder) {
+      const step = getNextVideoOrderQuestion(videoState, lastUserMessage);
+      return {
+        reply: step.reply,
+        videoOrderSummary: step.videoOrderSummary || null,
+      };
+    }
+
     return {
-      reply: `Short-form video and UGC-style ads are built specifically to hook viewers in the first 3 seconds on Meta and Instagram.\n\nRates start from ₹799 for basic product videos, ₹999 for product reels, and ₹1,499 for UGC-style video ads (3-ad packages start from ₹3,999).\n\nHow many video creatives would you like to test?`,
+      reply: `Short-form video and UGC-style ads are built specifically to hook viewers in the first 3 seconds on Meta and Instagram.\n\nRates start from ₹799 for basic product videos, ₹999 for product reels, and ₹1,499 for UGC-style video ads (3-ad packages start from ₹3,999).\n\nWould you like to configure and place an order for a video editing package?`,
     };
   }
 
@@ -363,6 +423,24 @@ STUDIO DISCIPLINES:
 4. Video Editing: 9:16 vertical short-form reels, shorts, and 3-second hook direct-response ads for Meta & Instagram.
 5. Social Media: Structured 30-day content pillars, objection-busting carousels, and founder brand roadmaps.
 
+VIDEO EDITING ORDER COLLECTION WORKFLOW:
+When the user wants to order or discuss a video editing project (e.g., reels, UGC ads, product video):
+- Guide them smoothly through scoping and collecting their order information naturally.
+- CRITICAL: Ask questions ONE AT A TIME where appropriate. Do not barrage the customer with multiple questions at once.
+- Required items to collect:
+  1. Full name
+  2. Mobile number (WhatsApp compatible, 10 digits)
+  3. Email address
+  4. Video editing type (e.g., Product Reel ₹999, Basic Product Video ₹799, UGC-Style Ad ₹1,499, AI UGC Ad ₹1,499, Premium Ad Creative ₹2,499, YouTube Long-form ₹1,999)
+  5. Video format (e.g., MP4, MOV, WebM, etc.)
+  6. Aspect ratio (9:16 vertical reels/shorts, 16:9 horizontal, 1:1 square, custom)
+  7. Approximate video duration (e.g., 30s, 60s, etc.)
+  8. Editing requirements and instructions (hook, pacing, captions, audio, cuts)
+  9. Required delivery date (e.g., within 48 hours, by Friday)
+  10. Reference video or style (optional link or creator handle)
+- Explain the transparent 50% advance pricing model (e.g. Total: ₹1,000 | 50% Advance: ₹500 | Remaining on completion: ₹500).
+- Emphasize that file uploads (raw footage, audio, voiceovers, images) are completely optional and kept strictly secure.
+
 ONE QUESTION AT A TIME RULE (CRITICAL):
 - Never interrogate the customer with 3-4 questions at once.
 - Ask a MAXIMUM of ONE primary question per assistant message.
@@ -395,6 +473,7 @@ WEBSITE DESTINATIONS:
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            signal: AbortSignal.timeout(5000),
             body: JSON.stringify({
               system_instruction: {
                 parts: [{ text: systemPrompt }],
@@ -410,6 +489,21 @@ WEBSITE DESTINATIONS:
             data?.candidates?.[0]?.content?.parts?.[0]?.text ||
             "I'm here to help. Could you tell me more about your product or what you'd like to build?";
 
+          // Check if video order summary is ready
+          let videoOrderSummary = null;
+          const videoState = extractVideoOrderState(messages);
+          if (
+            videoState.fullName &&
+            videoState.mobileNumber &&
+            videoState.email &&
+            videoState.approxDuration
+          ) {
+            const step = getNextVideoOrderQuestion(videoState, "");
+            if (step.isComplete && step.videoOrderSummary) {
+              videoOrderSummary = step.videoOrderSummary;
+            }
+          }
+
           // Check if response contains a project summary
           let projectSummary = null;
           if (replyText.includes("PROJECT SUMMARY")) {
@@ -424,6 +518,7 @@ WEBSITE DESTINATIONS:
           return NextResponse.json({
             reply: replyText,
             projectSummary,
+            videoOrderSummary,
           });
         }
       } catch (err) {
@@ -436,6 +531,7 @@ WEBSITE DESTINATIONS:
     return NextResponse.json({
       reply: fallbackResult.reply,
       projectSummary: fallbackResult.projectSummary || null,
+      videoOrderSummary: fallbackResult.videoOrderSummary || null,
     });
   } catch (error) {
     console.error("Chat API error:", error);

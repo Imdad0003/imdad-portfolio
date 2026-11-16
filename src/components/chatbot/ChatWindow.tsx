@@ -5,6 +5,7 @@ import { ChatMessage, Message } from "./ChatMessage";
 import { QuickActions } from "./QuickActions";
 import { ChatInput } from "./ChatInput";
 import { ProjectSummaryCard } from "./ProjectSummaryCard";
+import { VideoOrderSummaryCard } from "./VideoOrderSummaryCard";
 import { siteConfig, getWhatsAppUrl } from "@/data/config";
 import {
   Sparkles,
@@ -102,6 +103,11 @@ export function ChatWindow({
               <ProjectSummaryCard
                 summary={message.projectSummary}
                 onSendInquiry={onSendInquiry}
+              />
+            )}
+            {message.videoOrderSummary && (
+              <VideoOrderSummaryCard
+                summary={message.videoOrderSummary}
               />
             )}
           </React.Fragment>

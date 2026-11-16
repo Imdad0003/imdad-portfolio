@@ -347,6 +347,15 @@ export interface SettingsDocument {
     headingFont?: string;
     bodyFont?: string;
   };
+  resumeBuilder?: {
+    enabled?: boolean;
+    maintenanceMode?: boolean;
+    isFreeBeta?: boolean;
+    priceInr?: number;
+    aiModel?: string;
+    dailyIpLimit?: number;
+    noticeBanner?: string;
+  };
   contact?: Record<string, unknown>;
   socials?: Record<string, unknown>;
   config?: Record<string, unknown>;

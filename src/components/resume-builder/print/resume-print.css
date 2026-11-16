@@ -35,8 +35,7 @@
 
   /* 3. Page Break Rules */
   .resume-section {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    break-inside: auto;
   }
 
   .resume-item {

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChatWindow } from "./ChatWindow";
 import { Message } from "./ChatMessage";
 import { Sparkles } from "lucide-react";
+import { RazorpayCheckoutModal } from "@/components/payments/RazorpayCheckoutModal";
 
 interface ProjectSummaryData {
   service: string;
@@ -68,6 +69,7 @@ export function Chatbot() {
         content: data.reply || "I'm here to help. Could you tell me more about your requirements?",
         timestamp: "Just now",
         projectSummary: data.projectSummary || null,
+        videoOrderSummary: data.videoOrderSummary || null,
       };
 
       setMessages((prev) => [...prev, botMsg]);
@@ -188,6 +190,9 @@ export function Chatbot() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Global Razorpay Payment Modal */}
+      <RazorpayCheckoutModal />
     </div>
   );
 }

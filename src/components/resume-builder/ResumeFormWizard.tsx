@@ -203,6 +203,22 @@ export function ResumeFormWizard({
     }
   };
 
+  const handleClearDraft = () => {
+    if (typeof window !== "undefined" && window.confirm("Are you sure you want to clear your saved resume draft? This will reset all form fields in your browser.")) {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {}
+      setPersonal({ fullName: "", email: "", phone: "", cityState: "", linkedinUrl: "", portfolioUrl: "" });
+      setCareer({ targetJobTitle: "", careerLevel: "fresher", targetIndustry: "", professionalSummary: "", targetJobDescription: "" });
+      setEducation([{ id: "edu-1", institution: "", degree: "", fieldOfStudy: "", startYear: "", graduationYear: "", grade: "" }]);
+      setExperience([]);
+      setSkillsAndMore({ technicalSkills: [], softSkills: [], projects: [], certifications: [], awards: [], languages: ["English"], volunteerExperience: "" });
+      setPreferences({ language: "en", templateId: "classic-professional", pageLength: "auto", optimizeForJobDescription: true });
+      setCurrentStep(0);
+      setStepError(null);
+    }
+  };
+
   const handleFinalSubmit = () => {
     setStepError(null);
     const payload: ResumeInputPayload = {
@@ -218,6 +234,24 @@ export function ResumeFormWizard({
 
   return (
     <div className="w-full max-w-4xl mx-auto">
+      {/* Privacy Notice & Draft Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-4 py-2.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 mb-4">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+          <span>
+            <strong>Private Local Draft:</strong> Stored strictly in your browser session. Never uploaded to a permanent database.
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleClearDraft}
+          className="text-xs font-semibold text-rose-600 hover:text-rose-700 hover:underline flex items-center gap-1 cursor-pointer shrink-0 self-end sm:self-auto"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+          <span>Reset / Clear Draft</span>
+        </button>
+      </div>
+
       {/* Wizard Progress Bar */}
       <div className="p-4 sm:p-6 bg-white rounded-3xl border border-slate-200 shadow-xs mb-6">
         <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">

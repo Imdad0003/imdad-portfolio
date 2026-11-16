@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ResumeLandingHero } from "@/components/resume-builder/ResumeLandingHero";
 import { ResumeFormWizard } from "@/components/resume-builder/ResumeFormWizard";
 import { ResumeLiveEditor } from "@/components/resume-builder/ResumeLiveEditor";
 import { ResumeInputPayload, GeneratedResume } from "@/types/resume";
 import { Container } from "@/components/ui/Container";
+import { getSettings } from "@/lib/cms";
+import { AlertTriangle, Wrench } from "lucide-react";
 
 export default function ResumeBuilderPage() {
   const [viewMode, setViewMode] = useState<"landing" | "form" | "editor">("landing");
@@ -14,7 +16,37 @@ export default function ResumeBuilderPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Dynamic admin configuration state
+  const [config, setConfig] = useState<{
+    enabled: boolean;
+    maintenanceMode: boolean;
+    isFreeBeta: boolean;
+    noticeBanner?: string;
+  }>({
+    enabled: true,
+    maintenanceMode: false,
+    isFreeBeta: true,
+    noticeBanner: undefined,
+  });
+
+  useEffect(() => {
+    getSettings()
+      .then((settings) => {
+        const rb = (settings as any)?.resumeBuilder;
+        if (rb) {
+          setConfig({
+            enabled: rb.enabled !== false,
+            maintenanceMode: rb.maintenanceMode === true,
+            isFreeBeta: rb.isFreeBeta ?? true,
+            noticeBanner: rb.noticeBanner,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const handleStart = () => {
+    if (!config.enabled || config.maintenanceMode) return;
     setViewMode("form");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -54,10 +86,28 @@ export default function ResumeBuilderPage() {
     }
   };
 
+  const isUnavailable = !config.enabled || config.maintenanceMode;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
+      {/* Maintenance or Disabled Notice */}
+      {isUnavailable && (
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-3 text-center">
+          <div className="max-w-4xl mx-auto flex items-center justify-center gap-2 text-xs font-semibold text-amber-900">
+            <Wrench className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              {config.noticeBanner || "AI Resume Builder is currently undergoing scheduled maintenance. Please check back shortly."}
+            </span>
+          </div>
+        </div>
+      )}
+
       {viewMode === "landing" && (
-        <ResumeLandingHero onStart={handleStart} isFreeBeta={true} />
+        <ResumeLandingHero
+          onStart={handleStart}
+          isFreeBeta={config.isFreeBeta}
+          noticeBanner={config.noticeBanner}
+        />
       )}
 
       {viewMode === "form" && (
@@ -72,7 +122,7 @@ export default function ResumeBuilderPage() {
                 &larr; Back to Overview
               </button>
               <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                FREE BETA
+                {config.isFreeBeta ? "FREE BETA" : "PRO"}
               </span>
             </div>
 

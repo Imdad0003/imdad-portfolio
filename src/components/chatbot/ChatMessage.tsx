@@ -1,5 +1,6 @@
 import React from "react";
 import { Sparkles, User } from "lucide-react";
+import { VideoOrderSummaryData } from "@/lib/video-order-extractor";
 
 export interface Message {
   id: string;
@@ -12,6 +13,7 @@ export interface Message {
     scope: string;
     pricingNote: string;
   } | null;
+  videoOrderSummary?: VideoOrderSummaryData | null;
 }
 
 interface ChatMessageProps {

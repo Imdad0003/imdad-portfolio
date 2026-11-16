@@ -26,6 +26,7 @@ import { AppReleaseManager } from "@/components/admin/AppReleaseManager";
 import { ReleaseHistoryView } from "@/components/admin/ReleaseHistoryView";
 import { AmazonPortfolioManager } from "@/components/admin/AmazonPortfolioManager";
 import { HomepageBuilder } from "@/components/admin/HomepageBuilder";
+import { VideoOrderAdminManager } from "@/components/admin/VideoOrderAdminManager";
 import { appsData } from "@/data/apps";
 import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
@@ -62,6 +63,7 @@ import {
   FileText,
   AlertTriangle,
   Sparkles,
+  Film,
   Upload,
   History,
   ArrowUp,
@@ -97,6 +99,7 @@ export default function AdminPortalPage() {
   // Tab & data state
   const [activeTab, setActiveTab] = useState<
     | "dashboard"
+    | "video-orders"
     | "homepage-builder"
     | "amazon-portfolio"
     | "apps"
@@ -1026,6 +1029,7 @@ export default function AdminPortalPage() {
         <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-white/70 border border-[#502D55]/10 backdrop-blur-md mb-8 overflow-x-auto">
           {[
             { id: "dashboard", label: "Dashboard", icon: Layers },
+            { id: "video-orders", label: "Video Orders & Payments", icon: Film },
             { id: "homepage-builder", label: "Homepage Builder", icon: Sparkles },
             { id: "amazon-portfolio", label: "Amazon & A+ Portfolio", icon: ShoppingBag },
             { id: "apps", label: `App Directory (${apps.length})`, icon: Smartphone },
@@ -1263,6 +1267,13 @@ export default function AdminPortalPage() {
             projects={projects}
             services={services}
           />
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB: VIDEO ORDERS & RAZORPAY AUTOMATION                   */}
+        {/* ======================================================== */}
+        {activeTab === "video-orders" && (
+          <VideoOrderAdminManager />
         )}
 
         {/* ======================================================== */}
