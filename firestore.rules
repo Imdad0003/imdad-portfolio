@@ -262,6 +262,9 @@ service cloud.firestore {
     //   - pricing: map (optional)
     //   - status: string (optional, 1-50 chars)
     //   - paymentStatus: string (optional, 1-50 chars)
+    //   - projectStatus: string (optional, 1-50 chars)
+    //   - assignedEditor: map | null (optional)
+    //   - payments: list (optional)
     //   - createdAt: timestamp | string (optional)
     //   - updatedAt: timestamp | string (optional)
     //   - metadata: map (optional)
@@ -729,21 +732,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Video Orders Collection: Individual order retrieval for customers; Admin list/delete; Immutable-guarded updates
+    // Video Orders Collection: Individual order retrieval for customers; Strict payment-state segregation on create; Admin-only updates/list/delete
     match /videoOrders/{orderId} {
       allow get: if true;
       allow list: if isAdmin();
-      allow create: if (request.resource.data.serviceCategory == 'video-editing' &&
-                        request.resource.data.customer.email is string) || isAdmin();
-      allow update: if isAdmin() || (
-        request.resource.data.id == resource.data.id &&
-        request.resource.data.orderNumber == resource.data.orderNumber &&
-        request.resource.data.serviceCategory == resource.data.serviceCategory &&
-        request.resource.data.customer.email == resource.data.customer.email &&
-        request.resource.data.pricing.totalAmount == resource.data.pricing.totalAmount &&
-        request.resource.data.pricing.advanceAmount == resource.data.pricing.advanceAmount &&
-        request.resource.data.pricing.remainingAmount == resource.data.pricing.remainingAmount
-      );
+      allow create: if (
+        request.resource.data.serviceCategory == 'video-editing' &&
+        request.resource.data.customer.email is string &&
+        request.resource.data.paymentStatus == 'unpaid' &&
+        request.resource.data.projectStatus == 'pending_payment' &&
+        request.resource.data.status == 'pending_payment' &&
+        request.resource.data.assignedEditor == null &&
+        request.resource.data.payments is list &&
+        request.resource.data.payments.size() == 0
+      ) || isAdmin();
+      allow update: if isAdmin();
       allow delete: if isAdmin();
     }
 

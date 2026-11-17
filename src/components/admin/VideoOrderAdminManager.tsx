@@ -389,6 +389,12 @@ export function VideoOrderAdminManager() {
                     >
                       {statusConfig.label}
                     </span>
+                    {order.paymentStatus === "unpaid" && (
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-amber-400" />
+                        <span>UNPAID</span>
+                      </span>
+                    )}
                     {order.paymentStatus === "advance_paid" && (
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                         50% Advance Paid
@@ -456,7 +462,7 @@ export function VideoOrderAdminManager() {
             {/* Drawer Header */}
             <div className="flex items-center justify-between pb-4 border-b border-white/10">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-base font-bold text-[#F8F4E9]">
                     Order {selectedOrder.orderNumber}
                   </h3>
@@ -467,8 +473,24 @@ export function VideoOrderAdminManager() {
                   >
                     {PROJECT_STATUS_LABELS[selectedOrder.projectStatus || "pending_payment"].label}
                   </span>
+                  {selectedOrder.paymentStatus === "unpaid" && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      <span>UNPAID</span>
+                    </span>
+                  )}
+                  {selectedOrder.paymentStatus === "advance_paid" && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                      50% ADVANCE PAID
+                    </span>
+                  )}
+                  {selectedOrder.paymentStatus === "fully_paid" && (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-600/30 text-emerald-200 border border-emerald-500/40 font-bold">
+                      FULLY PAID
+                    </span>
+                  )}
                 </div>
-                <p className="text-xs text-[#bba89d]">
+                <p className="text-xs text-[#bba89d] mt-1">
                   Created {new Date(selectedOrder.createdAt).toLocaleString()}
                 </p>
               </div>
@@ -481,6 +503,21 @@ export function VideoOrderAdminManager() {
                 Close
               </button>
             </div>
+
+            {/* Unpaid Order Security Banner */}
+            {selectedOrder.paymentStatus === "unpaid" && (
+              <div className="p-3.5 rounded-2xl bg-amber-950/50 border border-amber-500/40 text-amber-200 text-xs flex items-start gap-2.5 shadow-md">
+                <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                    <span>Payment Required (50% Advance Pending)</span>
+                  </div>
+                  <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                    This order is logged as unpaid. Advance payment of ₹{selectedOrder.pricing.advanceAmount.toLocaleString("en-IN")} must be verified before editor assignment or advancing into active production.
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Customer Contact Quick-Actions */}
             <div className="p-4 rounded-2xl bg-white/05 border border-white/10 space-y-3">
@@ -589,25 +626,49 @@ export function VideoOrderAdminManager() {
 
               <div className="space-y-2">
                 <label className="text-[11px] text-[#d8cfc4] block">Update Status:</label>
+                {selectedOrder.paymentStatus === "unpaid" && (
+                  <div className="p-2.5 rounded-xl bg-amber-950/40 border border-amber-500/30 text-amber-300 text-[11px] flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                    <span>Pipeline advancement is locked. Verified 50% advance payment is required before advancing project stage.</span>
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <select
                     value={targetStatus}
                     onChange={(e) => setTargetStatus(e.target.value as ProjectStatus)}
-                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-[#F8F4E9] focus:outline-none focus:border-[#F6DBC0]"
+                    disabled={selectedOrder.paymentStatus === "unpaid"}
+                    className="flex-1 px-3 py-2 rounded-xl bg-black/50 border border-white/20 text-xs text-[#F8F4E9] focus:outline-none focus:border-[#F6DBC0] disabled:opacity-40"
                   >
                     <option value="pending_payment">1. Pending Advance</option>
-                    <option value="payment_confirmed">2. Payment Confirmed</option>
-                    <option value="awaiting_editor_assignment">3. Awaiting Editor Assignment</option>
-                    <option value="editing_in_progress">4. Editing In Progress</option>
-                    <option value="review_and_revisions">5. Review & Revisions</option>
-                    <option value="final_payment_pending">6. Final Balance Due</option>
-                    <option value="completed_and_delivered">7. Completed & Delivered</option>
+                    <option value="payment_confirmed" disabled={selectedOrder.paymentStatus === "unpaid"}>
+                      2. Payment Confirmed {selectedOrder.paymentStatus === "unpaid" ? "(Locked — Advance Required)" : ""}
+                    </option>
+                    <option value="awaiting_editor_assignment" disabled={selectedOrder.paymentStatus === "unpaid"}>
+                      3. Awaiting Editor Assignment {selectedOrder.paymentStatus === "unpaid" ? "(Locked)" : ""}
+                    </option>
+                    <option value="editing_in_progress" disabled={selectedOrder.paymentStatus === "unpaid"}>
+                      4. Editing In Progress {selectedOrder.paymentStatus === "unpaid" ? "(Locked)" : ""}
+                    </option>
+                    <option value="review_and_revisions" disabled={selectedOrder.paymentStatus === "unpaid"}>
+                      5. Review & Revisions {selectedOrder.paymentStatus === "unpaid" ? "(Locked)" : ""}
+                    </option>
+                    <option value="final_payment_pending" disabled={selectedOrder.paymentStatus === "unpaid"}>
+                      6. Final Balance Due {selectedOrder.paymentStatus === "unpaid" ? "(Locked)" : ""}
+                    </option>
+                    <option value="completed_and_delivered" disabled={selectedOrder.paymentStatus !== "fully_paid"}>
+                      7. Completed & Delivered {selectedOrder.paymentStatus !== "fully_paid" ? "(Locked — 100% Full Payment Required)" : ""}
+                    </option>
                   </select>
 
                   <button
                     type="button"
                     onClick={handleUpdateStatus}
-                    disabled={savingStatus || targetStatus === selectedOrder.projectStatus}
+                    disabled={
+                      savingStatus ||
+                      targetStatus === selectedOrder.projectStatus ||
+                      (selectedOrder.paymentStatus === "unpaid" && targetStatus !== "pending_payment") ||
+                      (targetStatus === "completed_and_delivered" && selectedOrder.paymentStatus !== "fully_paid")
+                    }
                     className="px-4 py-2 rounded-xl bg-gradient-to-r from-[#F8F4E9] to-[#F6DBC0] text-[#180D1D] font-bold text-xs shadow-md disabled:opacity-40 cursor-pointer"
                   >
                     {savingStatus ? "Saving..." : "Update Stage"}
@@ -633,17 +694,24 @@ export function VideoOrderAdminManager() {
                 <span className="text-xs font-mono uppercase tracking-wider text-[#F6DBC0] font-bold">
                   Assigned Editor
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setIsEditingEditor(!isEditingEditor)}
-                  className="text-xs text-[#F6DBC0] hover:underline flex items-center gap-1 cursor-pointer"
-                >
-                  <Edit2 className="w-3 h-3" />
-                  <span>{isEditingEditor ? "Cancel" : "Assign / Reassign"}</span>
-                </button>
+                {selectedOrder.paymentStatus !== "unpaid" && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingEditor(!isEditingEditor)}
+                    className="text-xs text-[#F6DBC0] hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Edit2 className="w-3 h-3" />
+                    <span>{isEditingEditor ? "Cancel" : "Assign / Reassign"}</span>
+                  </button>
+                )}
               </div>
 
-              {isEditingEditor ? (
+              {selectedOrder.paymentStatus === "unpaid" ? (
+                <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-amber-400" />
+                  <span>Editor assignment is locked until 50% advance payment is received and verified.</span>
+                </div>
+              ) : isEditingEditor ? (
                 <form onSubmit={handleSaveEditor} className="space-y-3 text-xs">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>

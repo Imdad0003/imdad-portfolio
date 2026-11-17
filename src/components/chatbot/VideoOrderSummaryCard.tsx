@@ -244,12 +244,13 @@ export function VideoOrderSummaryCard({
   };
 
   const whatsappInquiryUrl = getWhatsAppUrl(
-    `Hi Imdad, I configured Video Order ${confirmedOrder?.orderNumber || "Draft"}:\n` +
+    `Hi Imdad, I created Video Order ${confirmedOrder?.orderNumber || "Draft"}:\n` +
       `• Service: ${summary.serviceName} (${summary.aspectRatio})\n` +
       `• Duration: ${summary.approxDuration}\n` +
       `• Total: ₹${summary.pricing.totalAmount} (50% Advance: ₹${summary.pricing.advanceAmount})\n` +
       `• Delivery Target: ${summary.deliveryDate}\n` +
-      `I would like to confirm my order!`
+      `• Status: Advance Payment Pending\n` +
+      `I have a question regarding my order:`
   );
 
   return (
@@ -593,16 +594,41 @@ export function VideoOrderSummaryCard({
             </div>
           </div>
         ) : (
-          <div className="space-y-2 p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-100">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span className="font-bold text-xs">
-                Order Registered: {confirmedOrder.orderNumber}
+          <div className="space-y-3 p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-100 shadow-md">
+            <div className="flex items-center justify-between pb-2 border-b border-amber-500/20">
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="font-bold text-xs text-amber-200">
+                  Order Registered — Advance Payment Required
+                </span>
+              </div>
+              <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Unpaid
               </span>
             </div>
-            <p className="text-[11px] text-emerald-200 leading-relaxed">
-              Your video editing order is logged with status <strong>Pending 50% Advance (₹{confirmedOrder.pricing.advanceAmount.toLocaleString("en-IN")})</strong>.
-            </p>
+
+            <div className="text-[11px] space-y-1 text-amber-200/90 leading-relaxed">
+              <div className="flex justify-between">
+                <span>Order Reference:</span>
+                <span className="font-mono font-bold text-white">{confirmedOrder.orderNumber}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>50% Advance Due:</span>
+                <span className="font-mono font-bold text-amber-300">
+                  ₹{confirmedOrder.pricing.advanceAmount.toLocaleString("en-IN")}
+                </span>
+              </div>
+              <div className="flex justify-between text-[10px] text-amber-200/70">
+                <span>Remaining on Delivery:</span>
+                <span className="font-mono">
+                  ₹{confirmedOrder.pricing.remainingAmount.toLocaleString("en-IN")}
+                </span>
+              </div>
+              <p className="pt-1 text-[11px] text-amber-200/80">
+                Production begins and an editor is allocated immediately upon advance payment verification.
+              </p>
+            </div>
+
             <div className="pt-1 flex flex-col gap-2">
               <button
                 type="button"
@@ -613,19 +639,19 @@ export function VideoOrderSummaryCard({
                     })
                   );
                 }}
-                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-[#F8F4E9] to-[#F6DBC0] text-[#180D1D] font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.02] transition-all cursor-pointer"
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-black font-bold text-xs flex items-center justify-center gap-1.5 shadow-md hover:scale-[1.01] transition-all cursor-pointer"
               >
-                <CreditCard className="w-3.5 h-3.5 text-[#180D1D]" />
+                <CreditCard className="w-3.5 h-3.5 text-black" />
                 <span>Pay 50% Advance with Razorpay (₹{confirmedOrder.pricing.advanceAmount.toLocaleString("en-IN")})</span>
               </button>
               <a
                 href={whatsappInquiryUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full py-2 px-3 rounded-lg bg-emerald-600/80 hover:bg-emerald-600 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm"
+                className="w-full py-2 px-3 rounded-lg bg-white/10 hover:bg-white/15 text-white/90 font-medium text-xs flex items-center justify-center gap-1.5 transition-all border border-white/15"
               >
-                <MessageSquare className="w-3.5 h-3.5" />
-                <span>Confirm on WhatsApp ({confirmedOrder.orderNumber})</span>
+                <MessageSquare className="w-3.5 h-3.5 text-[#F6DBC0]" />
+                <span>Inquire on WhatsApp ({confirmedOrder.orderNumber})</span>
               </a>
             </div>
           </div>

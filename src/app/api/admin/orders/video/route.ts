@@ -123,6 +123,9 @@ export async function PATCH(req: NextRequest) {
 
     const updates: Partial<VideoOrder> = {};
 
+    // Strict Payment-State Guard: Unpaid orders cannot bypass payment pipeline
+    const isUnpaid = existingOrder.paymentStatus === "unpaid" || (existingOrder.payments || []).length === 0;
+
     // 1. Update Project Status if provided
     if (projectStatus) {
       const validStatuses: ProjectStatus[] = [
@@ -140,6 +143,29 @@ export async function PATCH(req: NextRequest) {
           { status: 400 }
         );
       }
+
+      // Block advancing status if unpaid
+      if (isUnpaid && projectStatus !== "pending_payment") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Payment bypass prevented: Cannot advance project status for an unpaid order. Verified 50% advance payment is required.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Block completion if remaining balance is still pending
+      if (projectStatus === "completed_and_delivered" && existingOrder.paymentStatus !== "fully_paid") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Payment bypass prevented: Cannot mark order as completed and delivered before 100% full payment is confirmed (Current payment status: ${existingOrder.paymentStatus}).`,
+          },
+          { status: 400 }
+        );
+      }
+
       updates.projectStatus = projectStatus;
     }
 
@@ -148,6 +174,17 @@ export async function PATCH(req: NextRequest) {
       if (assignedEditor === null) {
         updates.assignedEditor = null;
       } else {
+        // Block assigning editor to unpaid order
+        if (isUnpaid) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Payment bypass prevented: Cannot assign editor to an unpaid order. Verified 50% advance payment is required.",
+            },
+            { status: 400 }
+          );
+        }
+
         updates.assignedEditor = {
           id: assignedEditor.id || `ed_${Date.now()}`,
           name: assignedEditor.name || "Assigned Editor",
