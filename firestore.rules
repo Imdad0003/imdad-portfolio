@@ -732,9 +732,9 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Video Orders Collection: Server-side tokenized access for customers; Admin read/update/list/delete; Strict payment-state segregation on create
+    // Video Orders Collection: Order retrieval for customers; Admin list/delete; Immutable-guarded updates & webhook sync
     match /videoOrders/{orderId} {
-      allow get: if isAdmin();
+      allow get: if true;
       allow list: if isAdmin();
       allow create: if (
         request.resource.data.serviceCategory == 'video-editing' &&
@@ -746,7 +746,15 @@ service cloud.firestore {
         request.resource.data.payments is list &&
         request.resource.data.payments.size() == 0
       ) || isAdmin();
-      allow update: if isAdmin();
+      allow update: if isAdmin() || (
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.orderNumber == resource.data.orderNumber &&
+        request.resource.data.serviceCategory == resource.data.serviceCategory &&
+        request.resource.data.pricing == resource.data.pricing &&
+        (resource.data.assignedEditor == null && request.resource.data.assignedEditor == null) &&
+        request.resource.data.payments is list &&
+        request.resource.data.payments.size() >= resource.data.payments.size()
+      );
       allow delete: if isAdmin();
     }
 
