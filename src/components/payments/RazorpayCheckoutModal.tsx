@@ -120,10 +120,15 @@ export function RazorpayCheckoutModal({
     setErrorMessage(null);
 
     try {
-      // 1. Create Order on Backend
+      const orderToken = activeOrder.accessToken;
+
+      // 1. Create Order on Backend with mandatory customer access token
       const res = await fetch("/api/payments/razorpay/create-order", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(orderToken ? { "x-order-token": orderToken } : {}),
+        },
         body: JSON.stringify({
           orderId: activeOrder.id,
           paymentType: activePaymentType,
@@ -171,7 +176,10 @@ export function RazorpayCheckoutModal({
           try {
             const verifyRes = await fetch("/api/payments/razorpay/verify", {
               method: "POST",
-              headers: { "Content-Type": "application/json" },
+              headers: {
+                "Content-Type": "application/json",
+                ...(orderToken ? { "x-order-token": orderToken } : {}),
+              },
               body: JSON.stringify({
                 orderId: activeOrder.id,
                 razorpayOrderId: response.razorpay_order_id,

@@ -169,7 +169,10 @@ async function runBypassDefenseSuite() {
   console.log("\n--- 6. Testing Premature Remaining Payment Creation ---");
   const remainingReq = new NextRequest("http://localhost:3000/api/payments/razorpay/create-order", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-order-token": createdOrder.accessToken,
+    },
     body: JSON.stringify({
       orderId: createdOrder.id,
       paymentType: "remaining",
@@ -193,7 +196,10 @@ async function runBypassDefenseSuite() {
   console.log("\n--- 7. Testing Forged Razorpay Signature Rejection ---");
   const forgedVerifyReq = new NextRequest("http://localhost:3000/api/payments/razorpay/verify", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "x-order-token": createdOrder.accessToken,
+    },
     body: JSON.stringify({
       orderId: createdOrder.id,
       razorpayOrderId: "order_fake_12345",

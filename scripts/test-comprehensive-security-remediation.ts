@@ -30,6 +30,7 @@ import { GET as adminGetRoute, PATCH as adminPatchRoute } from "../src/app/api/a
 import { POST as createPaymentOrderRoute } from "../src/app/api/payments/razorpay/create-order/route";
 import { POST as verifyPaymentRoute } from "../src/app/api/payments/razorpay/verify/route";
 import { POST as webhookRoute } from "../src/app/api/payments/razorpay/webhook/route";
+import { POST as claimLegacyRoute } from "../src/app/api/orders/video/claim/route";
 import { NextRequest } from "next/server";
 import crypto from "crypto";
 
@@ -278,31 +279,39 @@ async function runSecurityRemediationSuite() {
     `Sanitized summary returned for legacy order ${legacyOrder.orderNumber}`
   );
 
-  // Legacy customer claims order using their matching email: server dynamically migrates and issues token
-  const legacyClaimReq = new NextRequest(
+  // Querying with email alone strictly does NOT issue token and leaks zero PII
+  const legacyEmailReq = new NextRequest(
     `http://localhost:3000/api/orders/video?orderId=${legacyOrder.id}&email=legacy@client.com`
   );
-  const legacyClaimRes = await getOrderRoute(legacyClaimReq);
+  const legacyEmailRes = await getOrderRoute(legacyEmailReq);
+  const legacyEmailData = await legacyEmailRes.json();
+
+  assert(
+    legacyEmailRes.status === 200 &&
+    legacyEmailData.isSanitized === true &&
+    legacyEmailData.accessToken === undefined &&
+    legacyEmailData.order.customer === undefined,
+    "Insecure GET Email Claim Deprecated: Zero PII & No Token Issued Over GET",
+    `GET query returned sanitized summary without access token`
+  );
+
+  // Secure migration path: Customer initiates verified OTP claim
+  const legacyClaimReq = new NextRequest("http://localhost:3000/api/orders/video/claim", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      orderId: legacyOrder.id,
+      action: "request_otp",
+      email: "legacy@client.com",
+    }),
+  });
+  const legacyClaimRes = await claimLegacyRoute(legacyClaimReq);
   const legacyClaimData = await legacyClaimRes.json();
 
   assert(
-    legacyClaimRes.status === 200 &&
-    legacyClaimData.migrated === true &&
-    typeof legacyClaimData.accessToken === "string" &&
-    legacyClaimData.order.customer.fullName === "Legacy Client",
-    "Secure Migration Path: Customer Claims Legacy Order with Registered Email",
-    `Migrated legacy order and issued new accessToken: ${legacyClaimData.accessToken.substring(0, 16)}...`
-  );
-
-  // Subsequent request using the newly issued token now succeeds
-  const legacyTokenReq = new NextRequest(
-    `http://localhost:3000/api/orders/video?orderId=${legacyOrder.id}&token=${legacyClaimData.accessToken}`
-  );
-  const legacyTokenRes = await getOrderRoute(legacyTokenReq);
-  assert(
-    legacyTokenRes.status === 200,
-    "Subsequent Access Using Migrated Token Fully Functional",
-    `Legacy order successfully adopted into cryptographic token security model.`
+    legacyClaimRes.status === 200 && legacyClaimData.success === true,
+    "Secure Migration Path: Customer Initiates OTP Claim with Registered Email",
+    `Initiated secure OTP flow for legacy order ${legacyOrder.orderNumber}`
   );
 
   // --------------------------------------------------------------------------------
@@ -327,10 +336,31 @@ async function runSecurityRemediationSuite() {
     `Status: ${unpaidAdvanceRes.status}`
   );
 
-  // Cryptographic Razorpay signature verification invariant
-  const forgedSigReq = new NextRequest("http://localhost:3000/api/payments/razorpay/verify", {
+  // Unauthenticated Razorpay verify call rejected
+  const unauthVerifyReq = new NextRequest("http://localhost:3000/api/payments/razorpay/verify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      orderId: orderA.id,
+      razorpayOrderId: "order_fake",
+      razorpayPaymentId: "pay_fake",
+      razorpaySignature: "forged_signature_12345",
+    }),
+  });
+  const unauthVerifyRes = await verifyPaymentRoute(unauthVerifyReq);
+  assert(
+    unauthVerifyRes.status === 401,
+    "Razorpay Verify Rejects Unauthenticated Requests Without Token (HTTP 401)",
+    `HTTP Status: ${unauthVerifyRes.status}`
+  );
+
+  // Cryptographic Razorpay signature verification invariant with authorized token
+  const forgedSigReq = new NextRequest("http://localhost:3000/api/payments/razorpay/verify", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-order-token": tokenA,
+    },
     body: JSON.stringify({
       orderId: orderA.id,
       razorpayOrderId: "order_fake",

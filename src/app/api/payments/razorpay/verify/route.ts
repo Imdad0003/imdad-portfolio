@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getVideoOrderById, updateVideoOrder } from "@/lib/video-order-service";
+import { getVideoOrderById, updateVideoOrder, verifyOrderAccessToken } from "@/lib/video-order-service";
 import { verifyPaymentSignature, fetchRazorpayPayment } from "@/lib/razorpay";
 import { dispatchOrderNotifications } from "@/lib/order-notification";
+import { verifyAdminRequest } from "@/lib/server-auth";
 import { OrderPaymentRecord, VideoOrder } from "@/types/video-order";
 
 export const dynamic = "force-dynamic";
@@ -53,6 +54,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { success: false, error: `Order '${orderId}' not found.` },
         { status: 404 }
+      );
+    }
+
+    // 2. Authorization Check: Require valid customer order access token or verified admin identity
+    const authHeader = req.headers.get("authorization") || "";
+    const orderToken =
+      req.headers.get("x-order-token") ||
+      (authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : null) ||
+      (typeof body.token === "string" ? body.token : null);
+
+    const adminAuth = await verifyAdminRequest(req);
+    const isOwner = orderToken ? verifyOrderAccessToken(order, orderToken) : false;
+
+    if (!adminAuth.authorized && !isOwner) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized: A valid customer order access token (in 'x-order-token' header) or administrator credentials are required to verify payment.",
+        },
+        { status: 401 }
       );
     }
 

@@ -144,46 +144,13 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // 2. Cryptographic Order Access Token Verification
+    // 3. Cryptographic Order Access Token Verification (Owner Access)
     if (token && verifyOrderAccessToken(order, token)) {
       return NextResponse.json({
         success: true,
         order,
         accessLevel: "owner",
       });
-    }
-
-    // 3. Backward-Compatible Migration Path for Legacy Orders without Access Token
-    const storedHash = (order.metadata?.accessTokenHash as string) || "";
-    if (!storedHash) {
-      const email =
-        searchParams.get("email")?.trim().toLowerCase() ||
-        req.headers.get("x-customer-email")?.trim().toLowerCase();
-
-      if (email && email === order.customer.email.toLowerCase()) {
-        const { rawToken, tokenHash } = generateOrderAccessToken();
-        const updated = await updateVideoOrder(order.id, {
-          metadata: {
-            ...(order.metadata || {}),
-            accessTokenHash: tokenHash,
-            legacyMigratedAt: new Date().toISOString(),
-          },
-        });
-
-        const activeOrder = updated || {
-          ...order,
-          metadata: { ...(order.metadata || {}), accessTokenHash: tokenHash },
-        };
-        activeOrder.accessToken = rawToken;
-
-        return NextResponse.json({
-          success: true,
-          order: activeOrder,
-          accessToken: rawToken,
-          accessLevel: "owner",
-          migrated: true,
-        });
-      }
     }
 
     // 4. Reject Explicit Private Request without Token
@@ -197,14 +164,18 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // 5. Unauthenticated Public Query: Return Sanitized Order (Zero PII)
+    // 5. Unauthenticated Public Query: Return Sanitized Order (Strictly Zero PII)
+    const storedHash = (order.metadata?.accessTokenHash as string) || "";
     const sanitized = sanitizeOrderForPublic(order);
     return NextResponse.json({
       success: true,
       order: sanitized,
       isSanitized: true,
       accessLevel: "public",
-      message: "Public tracking summary. Private customer details and uploaded assets require the order access token.",
+      isLegacyUnclaimed: !storedHash,
+      message: !storedHash
+        ? "Public tracking summary. This legacy order requires verified customer identity (Firebase Auth or Email OTP) to claim access."
+        : "Public tracking summary. Private customer details and uploaded assets require the order access token.",
     });
   } catch (error) {
     console.error("[VideoOrderAPI] Fetch error:", error);

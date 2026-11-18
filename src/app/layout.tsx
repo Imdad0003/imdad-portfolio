@@ -6,6 +6,7 @@ import { Footer } from "@/components/sections/Footer";
 import { Chatbot } from "@/components/chatbot/Chatbot";
 import { LiquidBackground } from "@/components/ui/LiquidBackground";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { UrlTokenSanitizer } from "@/components/ui/UrlTokenSanitizer";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -174,6 +175,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col bg-[#F8FAFC] text-[#0A192F] selection:bg-[#0284C7]/20 selection:text-[#0284C7]">
+        <UrlTokenSanitizer />
         <ScrollProgress />
         <LiquidBackground />
         <Navbar />

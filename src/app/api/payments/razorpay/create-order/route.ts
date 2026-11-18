@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getVideoOrderById } from "@/lib/video-order-service";
+import { getVideoOrderById, updateVideoOrder, verifyOrderAccessToken } from "@/lib/video-order-service";
 import { createRazorpayOrder, getRazorpayCredentials } from "@/lib/razorpay";
+import { verifyAdminRequest } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -101,7 +102,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Determine and Validate Payment Amount
+    // 2. Authorization Check: Require valid customer order access token or verified admin identity
+    const authHeader = req.headers.get("authorization") || "";
+    const orderToken =
+      req.headers.get("x-order-token") ||
+      (authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7).trim() : null) ||
+      (typeof body.token === "string" ? body.token : null);
+
+    const adminAuth = await verifyAdminRequest(req);
+    const isOwner = orderToken ? verifyOrderAccessToken(order, orderToken) : false;
+
+    if (!adminAuth.authorized && !isOwner) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized: A valid customer order access token (in 'x-order-token' header) or administrator credentials are required to initialize payment.",
+        },
+        { status: 401 }
+      );
+    }
+
+    // 3. Determine and Validate Payment Amount
     let targetAmount = 0;
     let description = "";
 
@@ -154,41 +175,81 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Create Razorpay Order via Server-side Engine
-    const razorpayOrder = await createRazorpayOrder({
-      orderId: order.id,
-      orderNumber: `${order.orderNumber}-${paymentType}`,
-      amount: targetAmount,
-      receipt: `${order.orderNumber}-${paymentType}`,
-      currency: "INR",
-      notes: {
+    // 4. Idempotent Order Resolution: Reuse active pending Razorpay order if existing and within 24 hours
+    const pendingOrders =
+      (order.metadata?.pendingRazorpayOrders as Record<
+        string,
+        { razorpayOrderId: string; amount: number; createdAt: number }
+      >) || {};
+    const existingPending = pendingOrders[paymentType];
+    const isFresh =
+      existingPending && Date.now() - existingPending.createdAt < 24 * 60 * 60 * 1000;
+
+    let razorpayOrderId = "";
+    let amountInPaise = targetAmount * 100;
+
+    if (isFresh && existingPending.amount === targetAmount) {
+      razorpayOrderId = existingPending.razorpayOrderId;
+    } else {
+      const razorpayOrder = await createRazorpayOrder({
         orderId: order.id,
-        orderNumber: order.orderNumber,
-        serviceName: order.project.serviceName,
-        paymentType,
-        customerName: order.customer.fullName,
-        customerEmail: order.customer.email,
-        customerPhone: order.customer.mobileNumber,
-      },
-    });
+        orderNumber: `${order.orderNumber}-${paymentType}`,
+        amount: targetAmount,
+        receipt: `${order.orderNumber}-${paymentType}`,
+        currency: "INR",
+        notes: {
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          serviceName: order.project.serviceName,
+          paymentType,
+          customerName: order.customer.fullName,
+          customerEmail: order.customer.email,
+          customerPhone: order.customer.mobileNumber,
+        },
+      });
+
+      razorpayOrderId = razorpayOrder.id;
+      amountInPaise = razorpayOrder.amount;
+
+      // Save pending Razorpay order reference to avoid duplicate entity creation
+      await updateVideoOrder(order.id, {
+        metadata: {
+          ...(order.metadata || {}),
+          pendingRazorpayOrders: {
+            ...pendingOrders,
+            [paymentType]: {
+              razorpayOrderId: razorpayOrder.id,
+              amount: targetAmount,
+              createdAt: Date.now(),
+            },
+          },
+        },
+      });
+    }
 
     const { keyId } = getRazorpayCredentials();
 
+    // 5. Strict Response Sanitization: Return ONLY minimum payment checkout parameters (Zero PII)
     return NextResponse.json({
       success: true,
-      razorpayOrderId: razorpayOrder.id,
+      razorpayOrderId,
       amount: targetAmount, // in INR for frontend display
-      amountInPaise: razorpayOrder.amount, // in paise for Razorpay Checkout
-      currency: razorpayOrder.currency,
-      receipt: razorpayOrder.receipt,
+      amountInPaise, // in paise for Razorpay Checkout
+      currency: "INR",
+      receipt: `${order.orderNumber}-${paymentType}`,
       description,
       keyId, // Safe public key ID for checkout
       paymentType,
+      isReused: Boolean(isFresh && existingPending?.razorpayOrderId === razorpayOrderId),
       order: {
         id: order.id,
         orderNumber: order.orderNumber,
-        customer: order.customer,
-        pricing: order.pricing,
+        pricing: {
+          totalAmount: order.pricing.totalAmount,
+          advanceAmount: order.pricing.advanceAmount,
+          remainingAmount: order.pricing.remainingAmount,
+          currency: order.pricing.currency,
+        },
         projectStatus: order.projectStatus,
       },
     });
