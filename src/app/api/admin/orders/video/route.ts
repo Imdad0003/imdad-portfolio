@@ -5,6 +5,7 @@ import {
   updateVideoOrder,
 } from "@/lib/video-order-service";
 import { ProjectStatus, AssignedEditor, VideoOrder } from "@/types/video-order";
+import { verifyAdminRequest } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,19 +14,16 @@ export const dynamic = "force-dynamic";
  * IMDAD.BUILDS — Agent 03 Specification
  *
  * Capabilities:
- * - GET: List all video orders, calculate revenue metrics and pipeline status counts
- * - PATCH: Assign/reassign editors, update project lifecycle status, and manage admin notes
+ * - GET: List all video orders, calculate revenue metrics and pipeline status counts (Admin Only)
+ * - PATCH: Assign/reassign editors, update project lifecycle status, and manage admin notes (Admin Only)
  */
 export async function GET(req: NextRequest) {
   try {
-    const adminSecret = req.headers.get("x-admin-secret");
-    const configuredSecret = process.env.ADMIN_SECRET_KEY;
-
-    // Optional admin header check or allow if request originates from authenticated admin session
-    if (configuredSecret && adminSecret && adminSecret !== configuredSecret) {
+    const authResult = await verifyAdminRequest(req);
+    if (!authResult.authorized) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized. Invalid admin credentials." },
-        { status: 401 }
+        { success: false, error: authResult.error || "Unauthorized: Administrator credentials required." },
+        { status: authResult.statusCode }
       );
     }
 
@@ -86,6 +84,14 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const authResult = await verifyAdminRequest(req);
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { success: false, error: authResult.error || "Unauthorized: Administrator credentials required." },
+        { status: authResult.statusCode }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object") {
       return NextResponse.json(

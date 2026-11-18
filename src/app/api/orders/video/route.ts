@@ -6,8 +6,13 @@ import {
   preparePaymentHandoffContract,
   persistVideoOrder,
   getVideoOrderById,
+  updateVideoOrder,
+  verifyOrderAccessToken,
+  sanitizeOrderForPublic,
+  generateOrderAccessToken,
 } from "@/lib/video-order-service";
 import { VideoOrderCustomerInfo, VideoOrderProjectDetails } from "@/types/video-order";
+import { verifyAdminRequest } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -99,12 +104,20 @@ export async function POST(req: NextRequest) {
 }
 
 /**
- * Retrieve Order by Order ID or Order Number
+ * Retrieve Order with Strict Access Control & PII Protection
+ *
+ * Rules:
+ * 1. Authenticated administrators receive the complete order.
+ * 2. Authorized customers with valid cryptographic accessToken receive the complete order.
+ * 3. Legacy orders without accessToken can be securely claimed by matching registered email.
+ * 4. Unauthenticated public queries receive strictly sanitized tracking data (zero PII, no phone/email/requirements/file keys).
  */
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get("orderId");
+    const token = searchParams.get("token") || req.headers.get("x-order-token");
+    const format = searchParams.get("format");
 
     if (!orderId) {
       return NextResponse.json(
@@ -121,9 +134,77 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // 1. Authenticated Admin Authorization Check
+    const adminAuth = await verifyAdminRequest(req);
+    if (adminAuth.authorized) {
+      return NextResponse.json({
+        success: true,
+        order,
+        accessLevel: "admin",
+      });
+    }
+
+    // 2. Cryptographic Order Access Token Verification
+    if (token && verifyOrderAccessToken(order, token)) {
+      return NextResponse.json({
+        success: true,
+        order,
+        accessLevel: "owner",
+      });
+    }
+
+    // 3. Backward-Compatible Migration Path for Legacy Orders without Access Token
+    const storedHash = (order.metadata?.accessTokenHash as string) || "";
+    if (!storedHash) {
+      const email =
+        searchParams.get("email")?.trim().toLowerCase() ||
+        req.headers.get("x-customer-email")?.trim().toLowerCase();
+
+      if (email && email === order.customer.email.toLowerCase()) {
+        const { rawToken, tokenHash } = generateOrderAccessToken();
+        const updated = await updateVideoOrder(order.id, {
+          metadata: {
+            ...(order.metadata || {}),
+            accessTokenHash: tokenHash,
+            legacyMigratedAt: new Date().toISOString(),
+          },
+        });
+
+        const activeOrder = updated || {
+          ...order,
+          metadata: { ...(order.metadata || {}), accessTokenHash: tokenHash },
+        };
+        activeOrder.accessToken = rawToken;
+
+        return NextResponse.json({
+          success: true,
+          order: activeOrder,
+          accessToken: rawToken,
+          accessLevel: "owner",
+          migrated: true,
+        });
+      }
+    }
+
+    // 4. Reject Explicit Private Request without Token
+    if (format === "private" || format === "full") {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Unauthorized: Valid customer order access token required to view private details.",
+        },
+        { status: 401 }
+      );
+    }
+
+    // 5. Unauthenticated Public Query: Return Sanitized Order (Zero PII)
+    const sanitized = sanitizeOrderForPublic(order);
     return NextResponse.json({
       success: true,
-      order,
+      order: sanitized,
+      isSanitized: true,
+      accessLevel: "public",
+      message: "Public tracking summary. Private customer details and uploaded assets require the order access token.",
     });
   } catch (error) {
     console.error("[VideoOrderAPI] Fetch error:", error);

@@ -1273,7 +1273,7 @@ export default function AdminPortalPage() {
         {/* TAB: VIDEO ORDERS & RAZORPAY AUTOMATION                   */}
         {/* ======================================================== */}
         {activeTab === "video-orders" && (
-          <VideoOrderAdminManager />
+          <VideoOrderAdminManager currentUser={currentUser} />
         )}
 
         {/* ======================================================== */}

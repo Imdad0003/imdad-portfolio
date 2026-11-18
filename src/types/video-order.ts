@@ -139,6 +139,31 @@ export interface VideoOrder {
   createdAt: string;
   updatedAt: string;
   metadata?: Record<string, unknown>;
+  accessToken?: string; // Cryptographic customer access token (transient or client-facing only)
+}
+
+/**
+ * Public Sanitized Video Order representation (zero customer PII, no private requirements, no internal file keys)
+ */
+export interface SanitizedVideoOrder {
+  id: string;
+  orderNumber: string;
+  serviceCategory: "video-editing";
+  project: {
+    serviceName: string;
+    videoType: string;
+    videoFormat?: string;
+    aspectRatio?: string;
+    approxDuration?: string;
+    deliveryDate?: string;
+  };
+  pricing: VideoOrderPricing;
+  status: OrderStatus;
+  paymentStatus: OrderPaymentStatus;
+  projectStatus?: ProjectStatus;
+  createdAt: string;
+  updatedAt: string;
+  isSanitized: true;
 }
 
 /**
@@ -165,6 +190,7 @@ export interface PaymentInitiationContract {
     filesCount: number;
   };
   createdAt: string;
+  accessToken?: string;
 }
 
 /**

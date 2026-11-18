@@ -13,10 +13,12 @@ import {
   VideoOrderPricing,
   PaymentInitiationContract,
   UploadedFileReference,
+  SanitizedVideoOrder,
 } from "@/types/video-order";
 import { defaultVideoOrderConfig } from "@/data/video-order-config";
 import { db } from "@/lib/firebase";
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import crypto from "crypto";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -138,7 +140,9 @@ export function calculateOrderPricing(
 }
 
 /**
- * Generates human-friendly order numbers, e.g. IMD-VID-202611-9842 or IMD-VID-001
+ * Generates human-friendly, high-entropy cryptographic order numbers.
+ * Format: IMD-VID-YYYYMM-<8 HEX DIGITS> (e.g. IMD-VID-202611-F8A29B3C)
+ * Entropy: 4.29+ billion combinations per month.
  */
 export function generateOrderNumber(sequence?: number): string {
   const date = new Date();
@@ -147,12 +151,73 @@ export function generateOrderNumber(sequence?: number): string {
     const formattedSeq = String(sequence).padStart(3, "0");
     return `IMD-VID-${formattedSeq}`;
   }
-  const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+  // Cryptographically secure 8-character hex string (4 random bytes)
+  const randomSuffix = crypto.randomBytes(4).toString("hex").toUpperCase();
   return `IMD-VID-${yearMonth}-${randomSuffix}`;
 }
 
 /**
- * Builds the complete verified VideoOrder model
+ * Generates a cryptographically secure customer order access token and its SHA-256 storage hash.
+ */
+export function generateOrderAccessToken(): { rawToken: string; tokenHash: string } {
+  const rawToken = "ord_tok_" + crypto.randomBytes(24).toString("base64url");
+  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  return { rawToken, tokenHash };
+}
+
+/**
+ * Computes SHA-256 hash of an order access token.
+ */
+export function hashOrderAccessToken(rawToken: string): string {
+  return crypto.createHash("sha256").update(rawToken).digest("hex");
+}
+
+/**
+ * Verifies whether a provided access token matches an order's stored token hash.
+ * Uses timing-safe string comparison to protect against side-channel attacks.
+ */
+export function verifyOrderAccessToken(order: VideoOrder, rawToken?: string | null): boolean {
+  if (!rawToken || typeof rawToken !== "string") return false;
+  const storedHash = (order.metadata?.accessTokenHash as string) || "";
+  if (!storedHash || typeof storedHash !== "string") return false;
+
+  const candidateHash = hashOrderAccessToken(rawToken);
+  const bufA = Buffer.from(storedHash);
+  const bufB = Buffer.from(candidateHash);
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+/**
+ * Sanitizes an order for public/unauthenticated queries.
+ * Completely strips all customer PII (phone, email, name), creative requirements,
+ * uploaded file storage paths, and internal file keys.
+ */
+export function sanitizeOrderForPublic(order: VideoOrder): SanitizedVideoOrder {
+  return {
+    id: order.id,
+    orderNumber: order.orderNumber,
+    serviceCategory: "video-editing",
+    project: {
+      serviceName: order.project.serviceName,
+      videoType: order.project.videoType,
+      videoFormat: order.project.videoFormat,
+      aspectRatio: order.project.aspectRatio,
+      approxDuration: order.project.approxDuration,
+      deliveryDate: order.project.deliveryDate,
+    },
+    pricing: order.pricing,
+    status: order.status,
+    paymentStatus: order.paymentStatus,
+    projectStatus: order.projectStatus,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    isSanitized: true,
+  };
+}
+
+/**
+ * Builds the complete verified VideoOrder model with cryptographic access control.
  */
 export function buildVideoOrder(
   customer: VideoOrderCustomerInfo,
@@ -170,7 +235,9 @@ export function buildVideoOrder(
 
   const now = new Date().toISOString();
   const orderNumber = generateOrderNumber();
-  const orderId = orderNumber; // Standardized uniform Order ID (e.g. IMD-VID-202611-1234)
+  const orderId = orderNumber; // Standardized uniform Order ID
+
+  const { rawToken, tokenHash } = generateOrderAccessToken();
 
   return {
     id: orderId,
@@ -197,7 +264,9 @@ export function buildVideoOrder(
     metadata: {
       source: "integrated_ai_agent",
       advanceRequirement: "50_percent",
+      accessTokenHash: tokenHash,
     },
+    accessToken: rawToken,
   };
 }
 
@@ -229,6 +298,7 @@ export function preparePaymentHandoffContract(order: VideoOrder): PaymentInitiat
       filesCount: order.project.uploadedFiles?.length || 0,
     },
     createdAt: order.createdAt,
+    accessToken: order.accessToken,
   };
 }
 

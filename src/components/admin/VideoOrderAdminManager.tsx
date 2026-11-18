@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { User } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import {
   VideoOrder,
   ProjectStatus,
@@ -72,7 +74,11 @@ const PROJECT_STATUS_LABELS: Record<ProjectStatus, { label: string; color: strin
   },
 };
 
-export function VideoOrderAdminManager() {
+interface VideoOrderAdminManagerProps {
+  currentUser?: User | null;
+}
+
+export function VideoOrderAdminManager({ currentUser }: VideoOrderAdminManagerProps = {}) {
   const [orders, setOrders] = useState<VideoOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -98,11 +104,26 @@ export function VideoOrderAdminManager() {
   const [savingStatus, setSavingStatus] = useState(false);
   const [statusSuccessMsg, setStatusSuccessMsg] = useState<string | null>(null);
 
+  const getAuthHeaders = async (): Promise<Record<string, string>> => {
+    const user = currentUser || auth?.currentUser;
+    if (!user) return { "Content-Type": "application/json" };
+    try {
+      const token = await user.getIdToken();
+      return {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+    } catch {
+      return { "Content-Type": "application/json" };
+    }
+  };
+
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/admin/orders/video");
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/orders/video", { headers });
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || "Failed to load orders.");
@@ -123,7 +144,7 @@ export function VideoOrderAdminManager() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [currentUser]);
 
   // Sync drawer fields when selected order changes
   useEffect(() => {
@@ -151,9 +172,10 @@ export function VideoOrderAdminManager() {
     if (!selectedOrder) return;
     setSavingEditor(true);
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/orders/video", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           orderId: selectedOrder.id,
           assignedEditor: {
@@ -186,9 +208,10 @@ export function VideoOrderAdminManager() {
     setSavingStatus(true);
     setStatusSuccessMsg(null);
     try {
+      const headers = await getAuthHeaders();
       const res = await fetch("/api/admin/orders/video", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           orderId: selectedOrder.id,
           projectStatus: targetStatus,

@@ -732,9 +732,9 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Video Orders Collection: Individual order retrieval for customers; Strict payment-state segregation on create; Admin-only updates/list/delete
+    // Video Orders Collection: Server-side tokenized access for customers; Admin read/update/list/delete; Strict payment-state segregation on create
     match /videoOrders/{orderId} {
-      allow get: if true;
+      allow get: if isAdmin();
       allow list: if isAdmin();
       allow create: if (
         request.resource.data.serviceCategory == 'video-editing' &&
