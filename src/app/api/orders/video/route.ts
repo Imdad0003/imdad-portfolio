@@ -116,7 +116,20 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const orderId = searchParams.get("orderId");
-    const token = searchParams.get("token") || req.headers.get("x-order-token");
+
+    // SEC-07: Explicitly reject requests attempting to pass access tokens in query parameters to prevent URL leakage
+    if (searchParams.has("token")) {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            "Access tokens in query parameters are strictly forbidden for security reasons. Provide the token exclusively in the 'x-order-token' header.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const token = req.headers.get("x-order-token");
     const format = searchParams.get("format");
 
     if (!orderId) {

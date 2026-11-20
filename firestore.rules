@@ -48,7 +48,7 @@ service cloud.firestore {
     //   - name: string (required, 1-100 chars)
     //   - slug: string (required, 1-100 chars)
     //   - category: string (required, 1-50 chars)
-    //   - tagline: string (required, 1-250 chars)
+    //   - tagline: string (optional, 1-250 chars)
     //   - description: string (required, 1-5000 chars)
     //   - shortDescription: string (optional, 1-2000 chars)
     //   - published: bool (required) - Controls public visibility
@@ -86,7 +86,7 @@ service cloud.firestore {
     //   - title: string (optional, 1-100 chars)
     //   - name: string (optional, 1-100 chars) - alias for title
     //   - slug: string (required, 1-100 chars)
-    //   - tagline: string (required, 1-250 chars)
+    //   - tagline: string (optional, 1-250 chars)
     //   - shortDescription: string (required, 1-1000 chars)
     //   - fullDescription: string (optional, 1-5000 chars)
     //   - iconName: string (optional, 1-50 chars)
@@ -145,6 +145,17 @@ service cloud.firestore {
     //   - contact: map (optional)
     //   - socialLinks: map | list (optional)
     //   - footer: map (optional)
+    //   - navigation: map | list (optional)
+    //   - appsSection: map (optional)
+    //   - servicesSection: map (optional)
+    //   - projectsSection: map (optional)
+    //   - reviewsSection: map (optional)
+    //   - packagesSection: map (optional)
+    //   - aboutSection: map (optional)
+    //   - aiAssistantSection: map (optional)
+    //   - draftModifiedAt: timestamp | string (optional)
+    //   - publishedAt: timestamp | string (optional)
+    //   - publishedBy: string (optional, max 150 chars)
     //   - published: bool (required) - Controls public visibility
     //   - createdAt: timestamp | string (optional)
     //   - updatedAt: timestamp | string (optional)
@@ -165,6 +176,7 @@ service cloud.firestore {
     //   - config: map (optional)
     //   - maintenanceMode: bool (optional)
     //   - allowPublicReviews: bool (optional)
+    //   - resumeBuilder: map (optional)
     //   - published: bool (required) - Controls public visibility
     //   - createdAt: timestamp | string (optional)
     //   - updatedAt: timestamp | string (optional)
@@ -296,6 +308,18 @@ service cloud.firestore {
     //   - orderFormFields: list (order form definitions)
     //   - updatedAt: timestamp | string (optional)
     //
+    // Collection: mediaAssets
+    // Document ID: {assetId}
+    // Fields:
+    //   - id: string (optional, max 100 chars)
+    //   - name: string (optional, max 255 chars)
+    //   - url: string (optional, max 1000 chars)
+    //   - path: string (optional, max 1000 chars)
+    //   - size: number (optional, >= 0)
+    //   - type: string (optional, max 100 chars)
+    //   - createdAt: timestamp | string (optional)
+    //   - updatedAt: timestamp | string (optional)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -305,7 +329,7 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null && (
         request.auth.token.admin == true ||
-        request.auth.token.email == 'imdad.builds@gmail.com' ||
+        (request.auth.token.email == 'imdad.builds@gmail.com' && request.auth.token.email_verified == true) ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
       );
     }
@@ -393,11 +417,11 @@ service cloud.firestore {
         'videoUrl', 'videos', 'publishingStatus'
       ];
       return data.keys().hasOnly(allowedFields) &&
-        data.keys().hasAll(['name', 'slug', 'category', 'tagline', 'description', 'published']) &&
+        data.keys().hasAll(['name', 'slug', 'category', 'description', 'published']) &&
         data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
         data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 &&
         data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
-        data.tagline is string && data.tagline.size() >= 1 && data.tagline.size() <= 250 &&
+        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 250)) &&
         data.description is string && data.description.size() >= 1 && data.description.size() <= 5000 &&
         data.published is bool &&
         (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
@@ -502,7 +526,10 @@ service cloud.firestore {
     function isValidSiteContent(data) {
       let allowedFields = [
         'id', 'section', 'title', 'content', 'metadata', 'hero', 'about',
-        'finalCta', 'contact', 'socialLinks', 'footer', 'published',
+        'finalCta', 'contact', 'socialLinks', 'footer', 'navigation',
+        'appsSection', 'servicesSection', 'projectsSection', 'reviewsSection',
+        'packagesSection', 'aboutSection', 'aiAssistantSection',
+        'draftModifiedAt', 'publishedAt', 'publishedBy', 'published',
         'createdAt', 'updatedAt'
       ];
       return data.keys().hasOnly(allowedFields) &&
@@ -519,6 +546,17 @@ service cloud.firestore {
         (!('contact' in data) || data.contact is map) &&
         (!('socialLinks' in data) || data.socialLinks is map || data.socialLinks is list) &&
         (!('footer' in data) || data.footer is map) &&
+        (!('navigation' in data) || data.navigation is map || data.navigation is list) &&
+        (!('appsSection' in data) || data.appsSection is map) &&
+        (!('servicesSection' in data) || data.servicesSection is map) &&
+        (!('projectsSection' in data) || data.projectsSection is map) &&
+        (!('reviewsSection' in data) || data.reviewsSection is map) &&
+        (!('packagesSection' in data) || data.packagesSection is map) &&
+        (!('aboutSection' in data) || data.aboutSection is map) &&
+        (!('aiAssistantSection' in data) || data.aiAssistantSection is map) &&
+        (!('draftModifiedAt' in data) || data.draftModifiedAt is timestamp || (data.draftModifiedAt is string && data.draftModifiedAt.size() <= 50)) &&
+        (!('publishedAt' in data) || data.publishedAt is timestamp || (data.publishedAt is string && data.publishedAt.size() <= 50)) &&
+        (!('publishedBy' in data) || (data.publishedBy is string && data.publishedBy.size() <= 150)) &&
         (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
         (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
     }
@@ -527,7 +565,8 @@ service cloud.firestore {
       let allowedFields = [
         'id', 'name', 'studioName', 'tagline', 'contact', 'contactEmail',
         'whatsappNumber', 'instagramHandle', 'liveUrl', 'socials', 'config',
-        'maintenanceMode', 'allowPublicReviews', 'published', 'createdAt', 'updatedAt'
+        'maintenanceMode', 'allowPublicReviews', 'published', 'createdAt', 'updatedAt',
+        'resumeBuilder'
       ];
       return data.keys().hasOnly(allowedFields) &&
         data.keys().hasAll(['published']) &&
@@ -545,8 +584,31 @@ service cloud.firestore {
         (!('config' in data) || data.config is map) &&
         (!('maintenanceMode' in data) || data.maintenanceMode is bool) &&
         (!('allowPublicReviews' in data) || data.allowPublicReviews is bool) &&
+        (!('resumeBuilder' in data) || data.resumeBuilder is map) &&
         (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
         (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    function isValidMediaAsset(data) {
+      let allowedFields = [
+        'id', 'url', 'name', 'alt', 'category', 'fileSize', 'width', 'height',
+        'format', 'publicId', 'createdAt', 'updatedAt', 'usedIn'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['id', 'url', 'name', 'alt', 'category', 'fileSize', 'createdAt']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 128 &&
+        data.url is string && data.url.matches('https://res\\.cloudinary\\.com/[^/]+/.+') && data.url.size() <= 1500 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 255 &&
+        data.alt is string && data.alt.size() <= 500 &&
+        data.category is string && data.category in ['logos', 'hero', 'apps', 'projects', 'services', 'general'] &&
+        data.fileSize is number && data.fileSize >= 0 && data.fileSize <= 52428800 &&
+        (!('width' in data) || (data.width is int && data.width >= 0 && data.width <= 20000)) &&
+        (!('height' in data) || (data.height is int && data.height >= 0 && data.height <= 20000)) &&
+        (!('format' in data) || (data.format is string && data.format in ['jpeg', 'jpg', 'png', 'webp', 'svg', 'mp4', 'webm'])) &&
+        (!('publicId' in data) || (data.publicId is string && data.publicId.size() >= 1 && data.publicId.size() <= 500)) &&
+        (data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
+        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50)) &&
+        (!('usedIn' in data) || (data.usedIn is list && data.usedIn.size() <= 100));
     }
 
     function isValidReviewData(data) {
@@ -732,10 +794,9 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // Video Orders Collection: Order retrieval for customers; Admin list/delete; Immutable-guarded updates & webhook sync
+    // Video Orders Collection: Admin-only read, update, delete; Constrained client create
     match /videoOrders/{orderId} {
-      allow get: if true;
-      allow list: if isAdmin();
+      allow read: if isAdmin();
       allow create: if (
         request.resource.data.serviceCategory == 'video-editing' &&
         request.resource.data.customer.email is string &&
@@ -746,15 +807,14 @@ service cloud.firestore {
         request.resource.data.payments is list &&
         request.resource.data.payments.size() == 0
       ) || isAdmin();
-      allow update: if isAdmin() || (
-        request.resource.data.id == resource.data.id &&
-        request.resource.data.orderNumber == resource.data.orderNumber &&
-        request.resource.data.serviceCategory == resource.data.serviceCategory &&
-        request.resource.data.pricing == resource.data.pricing &&
-        (resource.data.assignedEditor == null && request.resource.data.assignedEditor == null) &&
-        request.resource.data.payments is list &&
-        request.resource.data.payments.size() >= resource.data.payments.size()
-      );
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Media Assets Collection: Admin read and write only
+    match /mediaAssets/{assetId} {
+      allow read: if isAdmin();
+      allow create, update: if isAdmin() && isValidMediaAsset(request.resource.data);
       allow delete: if isAdmin();
     }
 

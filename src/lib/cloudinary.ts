@@ -1,13 +1,10 @@
 /**
- * Direct client-side unsigned upload to Cloudinary.
- * Used for admin media assets (app logos, project covers, screenshots, etc.)
- * eliminating Firebase Storage Blaze dependencies.
+ * Authenticated, server-validated Cloudinary upload for admin media assets.
  */
 
 export const CLOUDINARY_CONFIG = {
   cloudName: "fhyy9rxd",
-  uploadPreset: "imdad_unsigned",
-  uploadEndpoint: "https://api.cloudinary.com/v1_1/fhyy9rxd/image/upload",
+  uploadEndpoint: "/api/admin/media",
 } as const;
 
 export interface CloudinaryUploadResponse {
@@ -31,15 +28,24 @@ export async function uploadToCloudinary(
 ): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("upload_preset", CLOUDINARY_CONFIG.uploadPreset);
-  if (options?.folder) {
-    formData.append("folder", options.folder);
+  const folderParts = options?.folder?.split("/").filter(Boolean) || [];
+  const studioAssetsIndex = folderParts.indexOf("studio-assets");
+  const category = (studioAssetsIndex >= 0 ? folderParts[studioAssetsIndex + 1] : folderParts[0]) || "general";
+  formData.append("category", category);
+
+  // The API is intentionally admin-only. Obtain a fresh Firebase ID token at the
+  // boundary instead of trusting a client-supplied user identity in the body.
+  const { auth } = await import("@/lib/firebase");
+  const idToken = await auth?.currentUser?.getIdToken();
+  if (!idToken) {
+    throw new Error("Administrator authentication is required to upload media.");
   }
 
   if (options?.onProgress && typeof window !== "undefined" && typeof XMLHttpRequest !== "undefined") {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", CLOUDINARY_CONFIG.uploadEndpoint);
+      xhr.setRequestHeader("Authorization", `Bearer ${idToken}`);
 
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable && options.onProgress) {
@@ -50,11 +56,11 @@ export async function uploadToCloudinary(
 
       xhr.onload = () => {
         try {
-          const data: CloudinaryUploadResponse = JSON.parse(xhr.responseText);
-          if (xhr.status >= 200 && xhr.status < 300 && data.secure_url) {
-            resolve(data.secure_url);
+          const data = JSON.parse(xhr.responseText) as { asset?: { url?: string }; error?: string };
+          if (xhr.status >= 200 && xhr.status < 300 && data.asset?.url) {
+            resolve(data.asset.url);
           } else {
-            const msg = data.error?.message || `Upload failed with status ${xhr.status}`;
+            const msg = data.error || `Upload failed with status ${xhr.status}`;
             reject(new Error(msg));
           }
         } catch (err) {
@@ -72,18 +78,19 @@ export async function uploadToCloudinary(
 
   const res = await fetch(CLOUDINARY_CONFIG.uploadEndpoint, {
     method: "POST",
+    headers: { Authorization: `Bearer ${idToken}` },
     body: formData,
   });
 
-  const data: CloudinaryUploadResponse = await res.json().catch(() => ({}));
+  const data = await res.json().catch(() => ({})) as { asset?: { url?: string }; error?: string };
   if (!res.ok) {
-    const errorMsg = data?.error?.message || `Cloudinary upload failed with status ${res.status}`;
+    const errorMsg = data?.error || `Cloudinary upload failed with status ${res.status}`;
     throw new Error(errorMsg);
   }
 
-  if (!data.secure_url) {
+  if (!data.asset?.url) {
     throw new Error("Cloudinary response missing secure_url");
   }
 
-  return data.secure_url;
+  return data.asset.url;
 }

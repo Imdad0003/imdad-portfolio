@@ -3,6 +3,7 @@ import { defaultVideoOrderConfig } from "@/data/video-order-config";
 import { VideoOrderAdminConfig } from "@/types/video-order";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { verifyAdminRequest } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -57,13 +58,11 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const adminSecret = req.headers.get("x-admin-secret");
-    const configuredSecret = process.env.ADMIN_SECRET_KEY;
-
-    if (!configuredSecret || adminSecret !== configuredSecret) {
+    const authResult = await verifyAdminRequest(req);
+    if (!authResult.authorized) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized. Admin credentials required." },
-        { status: 401 }
+        { success: false, error: authResult.error || "Unauthorized. Admin credentials required." },
+        { status: authResult.statusCode }
       );
     }
 

@@ -174,6 +174,8 @@ export interface MediaAssetDocument {
   width?: number;
   height?: number;
   format?: string;
+  /** Cloudinary public identifier required for a verified server-side deletion. */
+  publicId?: string;
   createdAt: string;
   updatedAt?: string;
   usedIn?: string[];

@@ -436,22 +436,22 @@ export async function getPublishedPackages(): Promise<WebsitePackageDocument[]> 
 export const defaultSiteContent: SiteContentDocument = {
   id: "main",
   hero: {
-    badge: "DIGITAL PRODUCT STUDIO",
-    headline: "Apps, Platforms & Digital Commerce.",
-    highlightedText: "Digital Commerce.",
+    badge: "CREATIVE & TECH STUDIO",
+    headline: "We Build Ideas Into Digital Experiences.",
+    highlightedText: "Digital Experiences.",
     subheadline:
-      "Independent studio engineering high-performance mobile apps, web applications, conversion-engineered e-commerce engines, and retention media.",
-    primaryCtaText: "Explore New Apps",
-    primaryCtaLink: "/apps",
-    secondaryCtaText: "Studio Services",
-    secondaryCtaLink: "/services",
-    announcement: "Now building: WishMusic & WishTracking for iOS/Android",
+      "Creative solutions, smart technology, and professional services to help businesses grow.",
+    primaryCtaText: "Explore Our Services",
+    primaryCtaLink: "/services",
+    secondaryCtaText: "View Our Work",
+    secondaryCtaLink: "/projects",
+    announcement: "Now building: Video Media, Web Apps & D2C Systems",
     heroImage: "/imdad-logo.png",
-    heroImageAlt: "IMDAD.BUILDS Product Lab",
+    heroImageAlt: "IMDAD.BUILDS Creative & Tech Studio",
     backgroundImage: "",
     backgroundImageOpacity: 20,
-    viewportHeader: "STUDIO VIEWPORT // INTERACTIVE PROTOTYPE",
-    viewportBadge: "UI PROTOTYPE",
+    viewportHeader: "STUDIO VIEWPORT // INTERACTIVE SHOWCASE",
+    viewportBadge: "LIQUID GLASS UI",
     prototypeApps: [
       {
         id: "wishmusic",
@@ -503,15 +503,15 @@ export const defaultSiteContent: SiteContentDocument = {
   navigation: {
     logo: "/imdad-logo.png",
     brandName: "IMDAD.BUILDS",
-    badgeText: "PRODUCT STUDIO // LAB",
+    badgeText: "CREATIVE & TECH STUDIO",
     navLinks: [
-      { label: "Apps", href: "/apps" },
+      { label: "Home", href: "/" },
       { label: "Services", href: "/services" },
-      { label: "Projects", href: "/projects" },
-      { label: "Pricing", href: "/pricing" },
+      { label: "Our Work", href: "/projects" },
       { label: "About", href: "/about" },
+      { label: "Contact", href: "/contact" },
     ],
-    ctaText: "Start a Project",
+    ctaText: "Get Started",
     ctaLink: "/contact",
   },
   appsSection: {
@@ -566,14 +566,14 @@ export const defaultSiteContent: SiteContentDocument = {
     ],
   },
   finalCta: {
-    eyebrow: "DIRECT FOUNDER COLLABORATION // Q2-Q3 2026",
-    headline: "Have an ambitious product idea or digital service need?",
+    eyebrow: "COLLABORATE WITH IMDAD.BUILDS // OPEN FOR PROJECTS",
+    headline: "Have an Idea? Let’s Make It Happen.",
     description:
-      "From early conceptual wireframes to high-conversion stores and consumer apps, let's build something enduring together.",
+      "Creative solutions, smart technology, and professional services to help businesses grow. Let's discuss your project goals and build something exceptional together.",
     primaryCtaText: "Start a Project",
     primaryCtaLink: "/contact",
-    secondaryCtaText: "Explore the Studio",
-    secondaryCtaLink: "/about",
+    secondaryCtaText: "Order Video Editing",
+    secondaryCtaLink: "/services/video-editing",
     badgeText: "STUDIO OPEN FOR PROJECTS",
     footnote:
       "ESTIMATED TIMELINES: 3–14 DAYS • SCOPED FIXED RATES • ZERO RETAINER TRAPS",
@@ -615,22 +615,28 @@ export const defaultSiteContent: SiteContentDocument = {
   metadata: {
     sectionOrder: [
       "hero",
-      "apps",
+      "overview",
       "services",
       "projects",
-      "about",
+      "why-us",
+      "team",
+      "process",
       "final-cta",
     ],
     sectionVisibility: {
       hero: true,
-      packages: false,
-      apps: true,
+      overview: true,
       services: true,
       projects: true,
-      about: true,
+      "why-us": true,
+      team: true,
+      process: true,
+      "final-cta": true,
+      packages: false,
+      apps: false,
+      about: false,
       reviews: false,
       "ai-assistant": false,
-      "final-cta": true,
     },
     skills: [
       {
@@ -797,11 +803,11 @@ export async function saveAppAdmin(app: Partial<AppDocument> & { id: string }): 
   const now = new Date().toISOString();
   await setDoc(
     docRef,
-    {
+    cleanUndefined({
       ...app,
       updatedAt: now,
       createdAt: app.createdAt || now,
-    },
+    }),
     { merge: true }
   );
 }
@@ -818,14 +824,33 @@ export async function getAllProjectsAdmin(): Promise<ProjectDocument[]> {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as ProjectDocument));
 }
 
-function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+function isSpecialFirestoreValue(val: any): boolean {
+  if (val === null || typeof val !== "object") return false;
+  if (val instanceof Date) return true;
+  // Firestore Timestamp (duck-typed)
+  if (typeof val.toDate === "function" && typeof val.toMillis === "function") return true;
+  // Firestore FieldValue sentinel (serverTimestamp, deleteField, etc.)
+  if (val._methodName !== undefined) return true;
+  return false;
+}
+
+export function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+  if (obj === null || typeof obj !== "object" || isSpecialFirestoreValue(obj)) {
+    return obj;
+  }
   const cleaned: Record<string, any> = {};
   for (const [k, v] of Object.entries(obj)) {
     if (v !== undefined) {
       if (Array.isArray(v)) {
-        cleaned[k] = v.map((item) =>
-          typeof item === "object" && item !== null ? cleanUndefined(item) : item
-        );
+        cleaned[k] = v
+          .filter((item) => item !== undefined)
+          .map((item) =>
+            typeof item === "object" && item !== null && !isSpecialFirestoreValue(item)
+              ? cleanUndefined(item)
+              : item
+          );
+      } else if (typeof v === "object" && v !== null && !isSpecialFirestoreValue(v)) {
+        cleaned[k] = cleanUndefined(v);
       } else {
         cleaned[k] = v;
       }
@@ -868,11 +893,11 @@ export async function saveServiceAdmin(
   const now = new Date().toISOString();
   await setDoc(
     docRef,
-    {
+    cleanUndefined({
       ...service,
       updatedAt: now,
       createdAt: service.createdAt || now,
-    },
+    }),
     { merge: true }
   );
 }
@@ -897,11 +922,11 @@ export async function savePackageAdmin(
   const now = new Date().toISOString();
   await setDoc(
     docRef,
-    {
+    cleanUndefined({
       ...pkg,
       updatedAt: now,
       createdAt: pkg.createdAt || now,
-    },
+    }),
     { merge: true }
   );
 }
@@ -914,31 +939,26 @@ export async function deletePackageAdmin(id: string): Promise<void> {
 export async function saveSiteContentAdmin(content: Partial<SiteContentDocument>): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   const docRef = doc(db, "siteContent", "main");
-  await setDoc(
-    docRef,
-    {
-      ...content,
-      id: "main",
-      updatedAt: new Date().toISOString(),
-    },
-    { merge: true }
-  );
+  const now = new Date().toISOString();
+  const payload = cleanUndefined({
+    ...content,
+    id: "main",
+    updatedAt: now,
+  });
+  await setDoc(docRef, payload, { merge: true });
 }
 
 export async function saveSiteContentDraft(content: Partial<SiteContentDocument>): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   const docRef = doc(db, "siteContent", "draft");
   const now = new Date().toISOString();
-  await setDoc(
-    docRef,
-    {
-      ...content,
-      id: "draft",
-      draftModifiedAt: now,
-      updatedAt: now,
-    },
-    { merge: true }
-  );
+  const payload = cleanUndefined({
+    ...content,
+    id: "draft",
+    draftModifiedAt: now,
+    updatedAt: now,
+  });
+  await setDoc(docRef, payload, { merge: true });
 }
 
 export async function publishSiteContent(
@@ -947,20 +967,20 @@ export async function publishSiteContent(
 ): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   const now = new Date().toISOString();
-  const payload = {
+  const payload = cleanUndefined({
     ...content,
     id: "main",
     published: true,
     publishedAt: now,
     publishedBy: publisherEmail || "admin",
     updatedAt: now,
-  };
+  });
 
   // Promote to public main document
   await setDoc(doc(db, "siteContent", "main"), payload, { merge: true });
 
   // Keep draft in sync
-  await setDoc(doc(db, "siteContent", "draft"), { ...payload, id: "draft" }, { merge: true });
+  await setDoc(doc(db, "siteContent", "draft"), cleanUndefined({ ...payload, id: "draft" }), { merge: true });
 }
 
 // ==========================================
@@ -992,11 +1012,12 @@ export async function saveMediaAssetAdmin(asset: Partial<MediaAssetDocument> & {
   const now = new Date().toISOString();
   await setDoc(
     docRef,
-    {
+    cleanUndefined({
       ...asset,
+      publicId: asset.publicId || extractCloudinaryPublicId(asset.url),
       updatedAt: now,
       createdAt: asset.createdAt || now,
-    },
+    }),
     { merge: true }
   );
 }
@@ -1006,12 +1027,20 @@ export async function checkAssetUsage(url: string): Promise<{ inUse: boolean; lo
   if (!db || !url) return { inUse: false, locations };
 
   try {
-    // 1. Check site content
+    // 1. Check site content (published main and draft)
     const siteSnap = await getDoc(doc(db, "siteContent", "main"));
     if (siteSnap.exists()) {
       const siteStr = JSON.stringify(siteSnap.data());
       if (siteStr.includes(url)) {
         locations.push("Published Homepage");
+      }
+    }
+
+    const draftSnap = await getDoc(doc(db, "siteContent", "draft"));
+    if (draftSnap.exists()) {
+      const draftStr = JSON.stringify(draftSnap.data());
+      if (draftStr.includes(url)) {
+        locations.push("Draft Homepage Content");
       }
     }
 
@@ -1032,6 +1061,32 @@ export async function checkAssetUsage(url: string): Promise<{ inUse: boolean; lo
         locations.push(`Project: ${data.name || d.id}`);
       }
     });
+
+    // 4. Check appVisualContent
+    try {
+      const visualSnap = await getDocs(collection(db, "appVisualContent"));
+      visualSnap.docs.forEach((d) => {
+        const data = d.data();
+        if (JSON.stringify(data).includes(url)) {
+          locations.push(`Visual Content: ${d.id}`);
+        }
+      });
+    } catch {
+      // safe fallback if not present
+    }
+
+    // 5. Check amazonPortfolio
+    try {
+      const amazonSnap = await getDocs(collection(db, "amazonPortfolio"));
+      amazonSnap.docs.forEach((d) => {
+        const data = d.data();
+        if (JSON.stringify(data).includes(url)) {
+          locations.push(`Amazon Portfolio: ${data.title || d.id}`);
+        }
+      });
+    } catch {
+      // safe fallback if not present
+    }
   } catch (err) {
     console.warn("Error checking asset usage:", err);
   }
@@ -1058,8 +1113,35 @@ export async function deleteMediaAssetAdmin(
     }
   }
 
+  const existing = await getDoc(doc(db, "mediaAssets", id));
+  const publicId = existing.exists()
+    ? (existing.data().publicId as string | undefined) || extractCloudinaryPublicId(url || String(existing.data().url || ""))
+    : extractCloudinaryPublicId(url || "");
+  if (publicId) {
+    const { auth } = await import("@/lib/firebase");
+    const idToken = await auth?.currentUser?.getIdToken();
+    if (!idToken) return { success: false, error: "Administrator authentication is required to delete media." };
+    const response = await fetch("/api/admin/media", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ publicId, resourceType: /\/video\/upload\//.test(url || "") ? "video" : "image" }),
+    });
+    const result = await response.json().catch(() => null) as { success?: boolean; error?: string } | null;
+    if (!response.ok || !result?.success) {
+      return { success: false, error: result?.error || "CDN deletion failed; media metadata was kept." };
+    }
+  } else if ((url || "").includes("cloudinary.com")) {
+    return { success: false, error: "Cannot verify the Cloudinary asset identity; media metadata was kept." };
+  }
+
   await deleteDoc(doc(db, "mediaAssets", id));
   return { success: true };
+}
+
+function extractCloudinaryPublicId(url?: string): string | undefined {
+  if (!url || !url.includes("res.cloudinary.com")) return undefined;
+  const match = url.match(/\/(?:image|video)\/upload(?:\/[^/]+)*\/(studio-assets\/[^?#]+?)(?:\.[a-z0-9]+)?(?:[?#].*)?$/i);
+  return match?.[1];
 }
 
 export async function saveSettingsAdmin(settings: Partial<SettingsDocument>): Promise<void> {
@@ -1067,11 +1149,11 @@ export async function saveSettingsAdmin(settings: Partial<SettingsDocument>): Pr
   const docRef = doc(db, "settings", "global");
   await setDoc(
     docRef,
-    {
+    cleanUndefined({
       ...settings,
       id: "global",
       updatedAt: new Date().toISOString(),
-    },
+    }),
     { merge: true }
   );
 }
@@ -1146,4 +1228,3 @@ export async function getAllReleaseAuditLogsAdmin(appId?: string): Promise<Relea
     return [];
   }
 }
-
