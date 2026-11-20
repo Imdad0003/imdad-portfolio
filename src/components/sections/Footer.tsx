@@ -65,7 +65,7 @@ export function Footer() {
                   {footerData.studioName}
                 </span>
                 <span className="studio-tag text-[8px] text-[#0284C7] font-mono font-bold uppercase tracking-wider">
-                  PRODUCT STUDIO // LAB
+                  CREATIVE &amp; TECH STUDIO
                 </span>
               </div>
             </div>
@@ -117,15 +117,33 @@ export function Footer() {
           {/* Column 2: Studio Services (3 Cols) */}
           <div className="lg:col-span-3 space-y-3">
             <div className="studio-tag text-xs text-[#0A192F] font-mono font-bold uppercase tracking-wider">
-              STUDIO SERVICES
+              CORE SERVICES
             </div>
             <ul className="space-y-2 text-xs sm:text-sm">
+              <li>
+                <Link
+                  href="/services/video-editing"
+                  className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
+                >
+                  <span>Video Editing</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/services/amazon-listing"
+                  className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
+                >
+                  <span>E-commerce Creative</span>
+                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/services/website-development"
                   className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
                 >
-                  <span>01 Website Development</span>
+                  <span>Web Development</span>
                   <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
@@ -134,55 +152,16 @@ export function Footer() {
                   href="/services/app-development"
                   className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
                 >
-                  <span>02 App Development</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/services/ecommerce"
-                  className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
-                >
-                  <span>03 E-commerce</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/services/video-editing"
-                  className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
-                >
-                  <span>04 Video Editing</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/services/social-media"
-                  className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
-                >
-                  <span>05 Social Media</span>
-                  <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/services/ai-resume-builder"
-                  className="text-slate-600 hover:text-[#0284C7] transition-colors focus-ring rounded font-medium flex items-center justify-between group"
-                >
-                  <span className="flex items-center gap-1.5">
-                    06 AI Resume Builder
-                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-sky-100 text-sky-700 font-bold">BETA</span>
-                  </span>
+                  <span>Digital Solutions</span>
                   <ArrowRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               </li>
               <li className="pt-1">
                 <Link
-                  href="/pricing"
+                  href="/services"
                   className="text-[11px] font-mono text-[#0284C7] hover:underline font-bold"
                 >
-                  View Fixed Pricing Packages →
+                  Explore All Capabilities →
                 </Link>
               </li>
             </ul>

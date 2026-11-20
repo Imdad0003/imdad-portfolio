@@ -8,28 +8,16 @@ export interface NavItem {
 export const navItems: NavItem[] = [
   { label: "Home", href: "/" },
   {
-    label: "Apps",
-    href: "/apps",
-    badge: "Lab",
-    subItems: [
-      { label: "New Apps", href: "/apps#new-apps", description: "Currently launching & in development" },
-      { label: "All Apps", href: "/apps#all-apps", description: "Complete digital product catalog" },
-    ],
-  },
-  {
     label: "Services",
     href: "/services",
     subItems: [
-      { label: "01 Website Development", href: "/services/website-development", description: "Business sites, landing pages & custom web" },
-      { label: "02 App Development", href: "/services/app-development", description: "Cross-platform mobile apps & web applications" },
-      { label: "03 E-commerce", href: "/services/ecommerce", description: "Marketplace cataloging & D2C storefronts" },
-      { label: "04 Video Editing", href: "/services/video-editing", description: "Reels, Shorts, product demos & UGC ads" },
-      { label: "05 Social Media", href: "/services/social-media", description: "Content planning, strategy & post creative" },
-      { label: "06 AI Resume Builder", href: "/services/ai-resume-builder", description: "ATS-friendly AI resume creator (Free Beta)" },
+      { label: "Video Editing", href: "/services/video-editing", description: "Reels, Shorts, YouTube videos & commercial ads" },
+      { label: "E-commerce Creative", href: "/services/amazon-listing", description: "Amazon listing images, product creatives & A+ content" },
+      { label: "Web Development", href: "/services/website-development", description: "Business websites, web applications & digital platforms" },
+      { label: "Digital Solutions", href: "/services/app-development", description: "Custom digital tools & technology solutions" },
     ],
   },
-  { label: "Projects", href: "/projects" },
-  { label: "Pricing", href: "/pricing" },
+  { label: "Our Work", href: "/projects" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];

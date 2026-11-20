@@ -4,30 +4,90 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
-import type { SiteContentDocument, AppDocument, HeroPrototypeApp } from "@/types/cms";
+import type { SiteContentDocument, AppDocument } from "@/types/cms";
 import { getSiteContent, getPublishedApps, defaultSiteContent } from "@/lib/cms";
 import {
   ArrowRight,
   Music,
-  Target,
   ShoppingBag,
+  Video,
+  Globe,
   ExternalLink,
-  CheckCircle2,
   Play,
   Pause,
   Sparkles,
+  CheckCircle2,
 } from "lucide-react";
 
 interface HeroProps {
   initialContent?: SiteContentDocument["hero"];
 }
 
+interface ShowcaseTab {
+  id: string;
+  label: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  statusLabel: string;
+  inspectLink: string;
+  inspectLabel: string;
+  type: "video" | "store" | "audio" | "web";
+}
+
+const defaultShowcaseTabs: ShowcaseTab[] = [
+  {
+    id: "video",
+    label: "Video",
+    title: "Product Reel & Commercial Cuts",
+    subtitle: "High-retention social reels & commercial advertisements",
+    badge: "VIDEO CREATIVE LAB",
+    statusLabel: "Active Production",
+    inspectLink: "/services/video-editing",
+    inspectLabel: "Order Video Editing",
+    type: "video",
+  },
+  {
+    id: "easyxo",
+    label: "EasyXo",
+    title: "EasyXo Brand Platform",
+    subtitle: "Founder-operated direct-to-consumer commerce venture",
+    badge: "EASYXO D2C ENGINE",
+    statusLabel: "Live Brand",
+    inspectLink: "/apps/easyxo",
+    inspectLabel: "Inspect Brand",
+    type: "store",
+  },
+  {
+    id: "wishmusic",
+    label: "WishMusic",
+    title: "WishMusic Audio Experience",
+    subtitle: "Tactile, distraction-free player interface for iOS & Android",
+    badge: "AUDIOENGINE v0.8.2",
+    statusLabel: "In Development",
+    inspectLink: "/apps/wishmusic",
+    inspectLabel: "Inspect App",
+    type: "audio",
+  },
+  {
+    id: "web",
+    label: "Web",
+    title: "Full-Stack Web Architecture",
+    subtitle: "Sub-second Next.js web platforms with integrated payments",
+    badge: "HIGH-SPEED WEB",
+    statusLabel: "Production Ready",
+    inspectLink: "/services/website-development",
+    inspectLabel: "View Web Services",
+    type: "web",
+  },
+];
+
 export function Hero({ initialContent }: HeroProps) {
   const [heroContent, setHeroContent] = useState<SiteContentDocument["hero"]>(
     initialContent || defaultSiteContent.hero
   );
   const [apps, setApps] = useState<AppDocument[]>([]);
-  const [activeTab, setActiveTab] = useState<string>("wishmusic");
+  const [activeTab, setActiveTab] = useState<string>("video");
   const [isPlaying, setIsPlaying] = useState(true);
 
   useEffect(() => {
@@ -35,9 +95,6 @@ export function Hero({ initialContent }: HeroProps) {
       .then((content) => {
         if (content && content.hero) {
           setHeroContent(content.hero);
-          if (content.hero.prototypeApps && content.hero.prototypeApps.length > 0) {
-            setActiveTab(content.hero.prototypeApps[0].id);
-          }
         }
       })
       .catch(() => {});
@@ -51,46 +108,44 @@ export function Hero({ initialContent }: HeroProps) {
       .catch(() => {});
   }, []);
 
-  const prototypeApps: HeroPrototypeApp[] =
-    heroContent.prototypeApps && heroContent.prototypeApps.length > 0
-      ? heroContent.prototypeApps
-      : defaultSiteContent.hero.prototypeApps || [];
+  // Determine headline and copy: align with explicit user specifications
+  const isOldDefaultHeadline =
+    !heroContent.headline ||
+    heroContent.headline === "Apps, Platforms & Digital Commerce.";
 
-  const currentApp = prototypeApps.find((a) => a.id === activeTab) || prototypeApps[0] || {
-    id: "wishmusic",
-    tabLabel: "WishMusic",
-    name: "WishMusic Player",
-    tagline: "Tactile audio architecture • iOS, Android, Web",
-    badge: "AUDIOENGINE PROTOTYPE v0.8.2",
-    statusLabel: "In Development",
-    statusVariant: "amber",
-    previewTitle: "Midnight Resonance — Chapter IV",
-    previewSubtitle: "Sample Track • Simulated Waveform Scrubber",
-    inspectLink: "/apps/wishmusic",
-    inspectLabel: "Inspect App",
-    type: "audio",
-  };
+  const headline = isOldDefaultHeadline
+    ? "We Build Ideas Into Digital Experiences."
+    : heroContent.headline;
 
-  const getAppLogo = (appItem: HeroPrototypeApp): string | undefined => {
-    if (appItem.logo && appItem.logo.trim() !== "") return appItem.logo;
-    const matched = apps.find(
-      (a) => a.id === appItem.id || a.slug === appItem.id || a.name.toLowerCase() === appItem.tabLabel.toLowerCase()
-    );
-    return matched?.logo;
-  };
+  const subheadline = isOldDefaultHeadline
+    ? "Creative solutions, smart technology, and professional services to help businesses grow."
+    : heroContent.subheadline;
 
-  const currentMatched = apps.find(
-    (a) => a.id === currentApp.id || a.slug === currentApp.id
-  );
-  const currentLogo = getAppLogo(currentApp);
+  const primaryCtaText = isOldDefaultHeadline
+    ? "Explore Our Services"
+    : heroContent.primaryCtaText || "Explore Our Services";
+
+  const primaryCtaLink = isOldDefaultHeadline
+    ? "/services"
+    : heroContent.primaryCtaLink || "/services";
+
+  const secondaryCtaText = isOldDefaultHeadline
+    ? "View Our Work"
+    : heroContent.secondaryCtaText || "View Our Work";
+
+  const secondaryCtaLink = isOldDefaultHeadline
+    ? "/projects"
+    : heroContent.secondaryCtaLink || "/projects";
+
+  const currentTab = defaultShowcaseTabs.find((t) => t.id === activeTab) || defaultShowcaseTabs[0];
 
   return (
     <section
       id="hero"
-      className="relative min-h-[85vh] lg:min-h-[88vh] flex flex-col justify-center pt-6 pb-16 sm:pt-12 sm:pb-20 overflow-hidden"
+      className="relative min-h-[85vh] lg:min-h-[88vh] flex flex-col justify-center pt-8 pb-16 sm:pt-14 sm:pb-22 overflow-hidden"
     >
       {/* Background Architectural Grid Lines */}
-      <div className="absolute inset-0 pointer-events-none opacity-[0.035] bg-[radial-gradient(#180D1D_1px,transparent_1px)] [background-size:28px_28px] z-0" />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.035] bg-[radial-gradient(#0A192F_1px,transparent_1px)] [background-size:28px_28px] z-0" />
 
       {/* Editable Hero Background Image (Configurable via Admin CMS) */}
       {heroContent.backgroundImage ? (
@@ -104,360 +159,262 @@ export function Hero({ initialContent }: HeroProps) {
       ) : null}
 
       <Container>
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
-          
-          {/* Left Column: Asymmetric Editorial Studio Identity (7 Cols) */}
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          {/* Left Column: Creative & Tech Studio Display (7 Cols) */}
           <div className="lg:col-span-7 flex flex-col items-start text-left">
-            
-            {/* Studio Monospace Metadata Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 border border-slate-200 text-[10px] sm:text-[11px] font-mono text-slate-600 mb-5 backdrop-blur-md shadow-2xs">
+            {/* Studio Eyebrow Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/90 border border-slate-200/90 text-[10px] sm:text-[11px] font-mono text-slate-600 mb-5 backdrop-blur-md shadow-2xs">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
               <span className="font-bold text-[#0A192F]">IMDAD.BUILDS</span>
               <span className="text-[#0284C7]">•</span>
-              <span className="text-slate-500 uppercase">{heroContent.badge || "INDEPENDENT PRODUCT LAB"}</span>
+              <span className="text-slate-500 uppercase">
+                {heroContent.badge || "CREATIVE & TECH STUDIO"}
+              </span>
             </div>
 
-            {/* Main Display Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-[4.25rem] font-black tracking-[-0.03em] text-[#0A192F] leading-[1.06]">
-              {heroContent.highlightedText && heroContent.headline.includes(heroContent.highlightedText) ? (
+            {/* Main Headline */}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl xl:text-[4.15rem] font-black tracking-[-0.03em] text-[#0A192F] leading-[1.08]">
+              {headline.includes("Digital Experiences.") ? (
                 <>
-                  {heroContent.headline.split(heroContent.highlightedText)[0]}
-                  <span className="text-[#0284C7]">{heroContent.highlightedText}</span>
-                  {heroContent.headline.split(heroContent.highlightedText).slice(1).join(heroContent.highlightedText)}
+                  {headline.split("Digital Experiences.")[0]}
+                  <span className="text-[#0284C7]">Digital Experiences.</span>
                 </>
               ) : (
-                heroContent.headline
+                headline
               )}
             </h1>
 
-            {/* Supporting Editorial Copy */}
+            {/* Supporting Text */}
             <p className="mt-5 sm:mt-6 text-base sm:text-lg lg:text-xl text-slate-600 max-w-xl leading-relaxed font-normal">
-              {heroContent.subheadline}
+              {subheadline}
             </p>
 
-            {/* Primary & Secondary Studio CTAs */}
-            <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+            {/* Primary & Secondary CTAs */}
+            <div className="mt-7 sm:mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 sm:gap-4 w-full sm:w-auto">
               <Button
-                href={heroContent.primaryCtaLink || "/apps"}
+                href={primaryCtaLink}
                 variant="primary"
                 size="lg"
                 className="justify-center min-h-[48px] font-bold shadow-xs px-7 bg-[#0284C7] hover:bg-[#0369A1] text-white"
               >
-                {heroContent.primaryCtaText || "Explore Apps"}
+                {primaryCtaText}
                 <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
               <Button
-                href={heroContent.secondaryCtaLink || "/services"}
+                href={secondaryCtaLink}
                 variant="secondary"
                 size="lg"
                 className="justify-center min-h-[48px] font-bold px-7 border-slate-200 text-[#0A192F] hover:bg-slate-50"
               >
-                {heroContent.secondaryCtaText || "View Services"}
+                {secondaryCtaText}
               </Button>
             </div>
 
             {/* Technical Proof Points Strip */}
-            <div className="mt-10 pt-6 border-t border-slate-200 grid grid-cols-3 gap-4 sm:gap-8 w-full max-w-lg">
+            <div className="mt-10 pt-6 border-t border-slate-200/90 grid grid-cols-3 gap-3 sm:gap-8 w-full max-w-lg">
               <div>
-                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">DISCIPLINE</span>
-                <span className="font-black text-sm sm:text-base text-[#0A192F]">Product Lab</span>
-                <span className="block text-[11px] text-slate-500">Real code &amp; tools</span>
+                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">
+                  CREATIVE
+                </span>
+                <span className="font-black text-sm sm:text-base text-[#0A192F]">Video &amp; Ads</span>
+                <span className="block text-[11px] text-slate-500">Reels &amp; Creatives</span>
               </div>
-              <div className="border-l border-slate-200 pl-4">
-                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">ECOSYSTEM</span>
-                <span className="font-black text-sm sm:text-base text-[#0A192F]">Apps &amp; Web</span>
-                <span className="block text-[11px] text-slate-500">Mobile, D2C, Video</span>
+              <div className="border-l border-slate-200 pl-3 sm:pl-5">
+                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">
+                  TECHNOLOGY
+                </span>
+                <span className="font-black text-sm sm:text-base text-[#0A192F]">Web &amp; Apps</span>
+                <span className="block text-[11px] text-slate-500">Next.js &amp; Mobile</span>
               </div>
-              <div className="border-l border-slate-200 pl-4">
-                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">OPERATOR</span>
-                <span className="font-black text-sm sm:text-base text-[#0A192F]">EasyXo</span>
-                <span className="block text-[11px] text-slate-500">Live brand founder</span>
+              <div className="border-l border-slate-200 pl-3 sm:pl-5">
+                <span className="studio-tag text-[9px] text-slate-400 font-mono font-bold block mb-0.5 uppercase tracking-wider">
+                  SOLUTIONS
+                </span>
+                <span className="font-black text-sm sm:text-base text-[#0A192F]">Live Brands</span>
+                <span className="block text-[11px] text-slate-500">Active Operator</span>
               </div>
             </div>
-
           </div>
 
-          {/* Right Column: Interactive Product Stage Preview (5 Cols) */}
-          <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl bg-white/95 border border-slate-200 backdrop-blur-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(10,25,47,0.08)] overflow-hidden">
-              
+          {/* Right Column: Interactive Liquid Glass Studio Viewport (5 Cols) */}
+          <div className="lg:col-span-5 relative w-full">
+            <div className="relative rounded-3xl bg-white/85 border border-sky-100/90 backdrop-blur-2xl p-5 sm:p-6 shadow-[0_20px_50px_rgba(2,132,199,0.08)] overflow-hidden">
               {/* Product Stage Header */}
               <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#0284C7]" />
                   <span className="studio-tag text-[9px] text-slate-500 font-bold font-mono uppercase tracking-wider">
-                    {heroContent.viewportHeader || "STUDIO VIEWPORT // INTERACTIVE PROTOTYPE"}
+                    STUDIO VIEWPORT // INTERACTIVE SHOWCASE
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-[#0284C7] bg-sky-50 border border-sky-200/80 px-2 py-0.5 rounded-full font-bold">
-                  {heroContent.viewportBadge || "UI PROTOTYPE"}
+                  LIQUID GLASS UI
                 </span>
               </div>
 
-              {/* Product Selector Segment Tabs (Editable via CMS & using original uploaded logos) */}
-              <div className="grid grid-cols-3 gap-1.5 p-1 rounded-xl bg-slate-50 border border-slate-200 mb-4">
-                {prototypeApps.map((item) => {
-                  const logoUrl = getAppLogo(item);
-                  const isSelected = activeTab === item.id;
+              {/* Segmented Showcase Switcher */}
+              <div className="grid grid-cols-4 gap-1 p-1 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+                {defaultShowcaseTabs.map((tab) => {
+                  const isSelected = activeTab === tab.id;
 
                   return (
                     <button
-                      key={item.id}
+                      key={tab.id}
                       type="button"
-                      onClick={() => setActiveTab(item.id)}
-                      className={`py-2 px-2 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                      onClick={() => setActiveTab(tab.id)}
+                      className={`py-2 px-1 rounded-lg text-xs font-semibold transition-all flex items-center justify-center gap-1 cursor-pointer ${
                         isSelected
                           ? "bg-white text-[#0A192F] shadow-xs font-bold"
                           : "text-slate-500 hover:text-[#0A192F]"
                       }`}
                     >
-                      {logoUrl ? (
-                        <div className="w-3.5 h-3.5 rounded-xs overflow-hidden shrink-0 bg-slate-100">
-                          <img
-                            src={logoUrl}
-                            alt={item.tabLabel}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ) : item.id === "wishmusic" ? (
-                        <Music className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
-                      ) : item.id === "wishtracking" ? (
-                        <Target className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
-                      ) : item.id === "easyxo" ? (
-                        <ShoppingBag className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
-                      ) : (
-                        <Sparkles className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />
-                      )}
-                      <span className="truncate">{item.tabLabel}</span>
+                      {tab.type === "video" && <Video className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
+                      {tab.type === "store" && <ShoppingBag className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
+                      {tab.type === "audio" && <Music className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
+                      {tab.type === "web" && <Globe className="w-3.5 h-3.5 text-[#0284C7] shrink-0" />}
+                      <span className="truncate">{tab.label}</span>
                     </button>
                   );
                 })}
               </div>
 
-              {/* ACTIVE PROTOTYPE VIEWPORT */}
+              {/* Active Tab Viewport */}
               <div className="space-y-3.5 animate-in fade-in duration-200">
-                <div className={`p-4 rounded-2xl text-white shadow-inner relative overflow-hidden border border-white/10 ${
-                  currentApp.type === "tracker"
-                    ? "bg-gradient-to-br from-[#120A17] to-[#2B1435]"
-                    : currentApp.type === "store"
-                    ? "bg-gradient-to-br from-[#1C1008] to-[#381E10]"
-                    : "bg-gradient-to-br from-[#180D1D] via-[#24132B] to-[#120816]"
-                }`}>
-                  
-                  {/* Status & Engine Badge */}
-                  <div className="flex items-center justify-between text-[10px] font-mono text-[#F6DBC0]/80 mb-3">
-                    <span className="flex items-center gap-1">
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        currentApp.statusVariant === "emerald"
-                          ? "bg-emerald-400"
-                          : currentApp.statusVariant === "purple"
-                          ? "bg-purple-400"
-                          : "bg-amber-400"
-                      }`} />
-                      {currentApp.badge || "AUDIOENGINE PROTOTYPE v0.8.2"}
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-[#0A192F] via-[#0F172A] to-[#1E293B] text-white shadow-inner relative overflow-hidden border border-white/10">
+                  {/* Badge & Status */}
+                  <div className="flex items-center justify-between text-[10px] font-mono text-sky-200 mb-3">
+                    <span className="flex items-center gap-1.5 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                      {currentTab.badge}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
-                      currentApp.statusVariant === "emerald"
-                        ? "bg-emerald-400/20 text-emerald-300 border-emerald-300/30"
-                        : currentApp.statusVariant === "purple"
-                        ? "bg-purple-400/20 text-purple-200 border-purple-300/30"
-                        : "bg-amber-400/20 text-amber-300 border-amber-300/30"
-                    }`}>
-                      {currentApp.statusLabel || "In Development"}
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-bold border bg-emerald-400/20 text-emerald-300 border-emerald-300/30">
+                      {currentTab.statusLabel}
                     </span>
                   </div>
 
-                  {/* App Original Logo + Title */}
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shadow-md shrink-0 overflow-hidden border border-white/20">
-                      {currentLogo ? (
-                        <img
-                          src={currentLogo}
-                          alt={currentApp.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : currentApp.id === "wishmusic" ? (
-                        <div className="w-full h-full bg-gradient-to-br from-[#935073] to-[#F6DBC0] flex items-center justify-center">
-                          <Music className="w-6 h-6 text-white" />
-                        </div>
-                      ) : currentApp.id === "wishtracking" ? (
-                        <div className="w-full h-full bg-gradient-to-br from-[#6B21A8] to-[#935073] flex items-center justify-center">
-                          <Target className="w-6 h-6 text-white" />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#0284C7] to-[#0369A1] flex items-center justify-center">
-                          <ShoppingBag className="w-6 h-6 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="overflow-hidden">
-                      <h4 className="font-bold text-sm tracking-tight text-white truncate">
-                        {currentApp.previewTitle || currentApp.name}
-                      </h4>
-                      <p className="text-[11px] text-[#d8cfc4] truncate">
-                        {currentApp.previewSubtitle || currentApp.tagline}
-                      </p>
-                    </div>
+                  {/* Header Info */}
+                  <div className="mb-3">
+                    <h4 className="font-bold text-base tracking-tight text-white">
+                      {currentTab.title}
+                    </h4>
+                    <p className="text-[11px] text-slate-300 mt-0.5">
+                      {currentTab.subtitle}
+                    </p>
                   </div>
 
-                  {/* SUB-VIEW 1: AUDIO WAVEFORM (for audio apps) */}
-                  {currentApp.type === "audio" && (
-                    <>
-                      <div className="space-y-1.5 pt-1">
-                        <div className="h-7 flex items-center justify-between gap-1 px-1">
-                          {[40, 65, 80, 45, 90, 75, 30, 85, 95, 60, 40, 70, 85, 50, 65, 90, 40, 80, 55, 70, 35, 60].map((h, i) => (
-                            <div
-                              key={i}
-                              className={`w-1 rounded-full transition-all duration-300 ${
-                                i < 13
-                                  ? "bg-[#F6DBC0]"
-                                  : isPlaying
-                                  ? "bg-white/20"
-                                  : "bg-white/10"
-                              }`}
-                              style={{ height: `${isPlaying ? h : Math.max(20, h * 0.5)}%` }}
-                            />
-                          ))}
-                        </div>
-                        <div className="flex justify-between text-[9px] font-mono text-[#d8cfc4]/70">
-                          <span>02:14</span>
-                          <span>04:38</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setIsPlaying(!isPlaying)}
-                            className="w-7 h-7 rounded-full bg-white text-[#180D1D] flex items-center justify-center cursor-pointer hover:scale-105 transition-transform"
-                            aria-label={isPlaying ? "Pause simulated preview" : "Play simulated preview"}
-                          >
-                            {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
-                          </button>
-                          <span className="text-[10px] font-mono text-[#d8cfc4]">
-                            {isPlaying ? "SIMULATED PLAY" : "PAUSED"}
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-mono text-[#F6DBC0]/80">
-                          LOCAL-FIRST CONCEPT
+                  {/* Dynamic Sub-View depending on Tab */}
+                  {currentTab.type === "video" && (
+                    <div className="space-y-3 pt-1">
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10 flex items-center justify-between text-xs">
+                        <span className="flex items-center gap-1.5 font-mono text-[11px] text-sky-200">
+                          <span className="w-2 h-2 rounded-full bg-[#0284C7]" />
+                          9:16 Vertical Reel Master
+                        </span>
+                        <span className="font-mono text-[10px] bg-white/15 px-2 py-0.5 rounded text-white">
+                          ₹999 Package
                         </span>
                       </div>
-                    </>
-                  )}
 
-                  {/* SUB-VIEW 2: STREAK / HABIT TRACKER (for tracker apps) */}
-                  {currentApp.type === "tracker" && (
-                    <>
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <div className="text-2xl font-black text-white">Day 42</div>
-                          <div className="text-[10px] font-mono text-[#d8cfc4]">Simulated Streak Metric</div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-xs font-mono text-[#10B981] font-bold">Consistency Model</div>
-                          <div className="text-[9px] text-[#d8cfc4]">Compound Curve</div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-7 gap-1 pt-1 mb-2">
-                        {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-                          <div key={i} className="flex flex-col items-center gap-1">
-                            <span className="text-[8px] font-mono text-[#d8cfc4]/60">{d}</span>
-                            <div className={`w-full h-6 rounded-md flex items-center justify-center ${i < 6 ? "bg-[#935073] text-white" : "bg-white/10 text-white/40"}`}>
-                              <CheckCircle2 className="w-3 h-3" />
-                            </div>
-                          </div>
+                      <div className="h-6 flex items-center gap-1 px-1">
+                        {[40, 70, 95, 60, 85, 100, 50, 75, 90, 45, 80, 60, 95, 70, 40, 85, 90, 50, 75, 60, 90].map((h, i) => (
+                          <div
+                            key={i}
+                            className={`w-1 rounded-full transition-all duration-300 ${
+                              i < 12 ? "bg-sky-400" : isPlaying ? "bg-white/30" : "bg-white/15"
+                            }`}
+                            style={{ height: `${isPlaying ? h : Math.max(20, h * 0.4)}%` }}
+                          />
                         ))}
                       </div>
 
-                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
-                        <span>ZERO ADS &bull; LOCAL FIRST</span>
-                        <span className="text-[#10B981]">100% PRIVATE</span>
-                      </div>
-                    </>
-                  )}
-
-                  {/* SUB-VIEW 3: STORE ENGINE METRICS (for store apps) */}
-                  {currentApp.type === "store" && (
-                    <>
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <div className="text-xl font-bold text-white">easyxo.in</div>
-                          <div className="text-[10px] text-[#F6DBC0]">Direct-to-Consumer Storefront</div>
-                        </div>
-                        <a
-                          href="https://easyxo.in"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-                          aria-label="Visit Storefront"
+                      <div className="flex items-center justify-between text-[10px] font-mono text-slate-300 pt-1 border-t border-white/10">
+                        <button
+                          type="button"
+                          onClick={() => setIsPlaying(!isPlaying)}
+                          className="flex items-center gap-1.5 hover:text-white transition-colors cursor-pointer"
                         >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-[10px] pt-1 mb-2">
-                        <div className="p-2 rounded-lg bg-white/08 border border-white/06">
-                          <span className="text-[#F6DBC0]/70 block">Marketplaces</span>
-                          <span className="font-bold text-white">Amazon &bull; Flipkart &bull; Meesho</span>
-                        </div>
-                        <div className="p-2 rounded-lg bg-white/08 border border-white/06">
-                          <span className="text-[#F6DBC0]/70 block">Checkout Engine</span>
-                          <span className="font-bold text-white">UPI &bull; Razorpay Webhooks</span>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
-                        <span>GATEWAY: RAZORPAY UPI &amp; CARDS</span>
-                        <span className="text-emerald-400">ACTIVE PRODUCTION</span>
-                      </div>
-                    </>
-                  )}
-
-                  {/* SUB-VIEW 4: CUSTOM PREVIEW */}
-                  {currentApp.type === "custom" && (
-                    <div className="py-2 space-y-2">
-                      <div className="p-3 rounded-xl bg-white/10 border border-white/10 text-xs">
-                        <p className="text-white/90 leading-relaxed">
-                          {currentApp.tagline || currentMatched?.shortDescription || "Interactive prototype stage."}
-                        </p>
-                      </div>
-                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-[#d8cfc4]">
-                        <span>ECOSYSTEM COMPONENT</span>
-                        <span className="text-[#0284C7]">ACTIVE DEMO</span>
+                          {isPlaying ? <Pause className="w-3 h-3" /> : <Play className="w-3 h-3" />}
+                          <span>{isPlaying ? "PLAYING AUDIO HOOK" : "PAUSED"}</span>
+                        </button>
+                        <span className="text-emerald-400 font-bold">STOP-SCROLL PACING</span>
                       </div>
                     </div>
                   )}
 
+                  {currentTab.type === "store" && (
+                    <div className="space-y-2.5 pt-1">
+                      <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+                        <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
+                          <span className="text-sky-200 block text-[9px]">STOREFRONT</span>
+                          <span className="font-bold text-white text-xs">easyxo.in</span>
+                        </div>
+                        <div className="p-2.5 rounded-xl bg-white/10 border border-white/10">
+                          <span className="text-sky-200 block text-[9px]">MARKETPLACES</span>
+                          <span className="font-bold text-white text-xs">Amazon &bull; Flipkart</span>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-300">
+                        <span>PAYMENTS: RAZORPAY UPI &amp; CARDS</span>
+                        <span className="text-emerald-400 font-bold">100% OPERATIONAL</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentTab.type === "audio" && (
+                    <div className="space-y-3 pt-1">
+                      <div className="h-6 flex items-center gap-1 px-1">
+                        {[30, 60, 85, 45, 95, 75, 40, 80, 100, 55, 35, 70, 90, 65, 45, 80, 95, 40, 70, 50, 85].map((h, i) => (
+                          <div
+                            key={i}
+                            className={`w-1 rounded-full ${i < 10 ? "bg-sky-400" : "bg-white/20"}`}
+                            style={{ height: `${h}%` }}
+                          />
+                        ))}
+                      </div>
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-300">
+                        <span>OFFLINE-FIRST ENGINE</span>
+                        <span className="text-sky-300 font-bold">LOSSLESS AUDIO</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {currentTab.type === "web" && (
+                    <div className="space-y-2.5 pt-1">
+                      <div className="p-2.5 rounded-xl bg-white/10 border border-white/10 flex items-center justify-between text-xs font-mono">
+                        <span className="text-sky-200">STACK: NEXT.JS 16 &bull; TS</span>
+                        <span className="text-emerald-400 font-bold">SUB-SECOND TTI</span>
+                      </div>
+                      <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[10px] font-mono text-slate-300">
+                        <span>MOBILE-FIRST ARCHITECTURE</span>
+                        <span className="text-sky-300 font-bold">100/100 LIGHTHOUSE</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Bottom App Metadata & Direct Navigation Link */}
-                <div className="flex items-center justify-between text-xs pt-0.5">
+                {/* Inspect Action */}
+                <div className="flex items-center justify-between text-xs pt-1">
                   <div>
-                    <span className="font-bold text-[#180D1D]">{currentApp.name}</span>
-                    <p className="text-[11px] text-[#7A6880] truncate max-w-[220px] sm:max-w-xs">
-                      {currentApp.tagline || currentMatched?.tagline || currentMatched?.shortDescription}
-                    </p>
+                    <span className="font-bold text-[#0A192F] block">{currentTab.title}</span>
+                    <span className="text-[11px] text-slate-500 font-mono">Powered by imdad.builds</span>
                   </div>
                   <Link
-                    href={currentApp.inspectLink || `/apps/${currentApp.id}`}
+                    href={currentTab.inspectLink}
                     className="inline-flex items-center gap-1 text-xs font-bold text-[#0284C7] hover:underline shrink-0"
                   >
-                    <span>{currentApp.inspectLabel || "Inspect App"}</span>
+                    <span>{currentTab.inspectLabel}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>
 
-              {/* Bottom Architectural Stamp */}
-              <div className="mt-3.5 pt-3 border-t border-[#502D55]/08 flex items-center justify-between text-[10px] font-mono text-[#7A6880]">
-                <span>ARCHITECTURE: NEXT.JS &bull; REACT NATIVE</span>
-                <span className="text-[#180D1D] font-bold">POWERED BY IMDAD.BUILDS</span>
+              {/* Bottom Stamp */}
+              <div className="mt-3.5 pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono text-slate-400">
+                <span>IMDAD.BUILDS PRODUCT LAB</span>
+                <span className="text-[#0A192F] font-bold">BUILD &bull; CREATE &bull; SCALE</span>
               </div>
             </div>
           </div>
-
         </div>
       </Container>
     </section>

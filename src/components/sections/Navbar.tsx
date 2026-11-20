@@ -20,9 +20,9 @@ export function Navbar() {
   const [navData, setNavData] = useState({
     logo: "/imdad-logo.png",
     brandName: "IMDAD.BUILDS",
-    badgeText: "PRODUCT STUDIO // LAB",
+    badgeText: "CREATIVE & TECH STUDIO",
     navLinks: navItems,
-    ctaText: "Start a Project",
+    ctaText: "Get Started",
     ctaLink: "/contact",
   });
 
