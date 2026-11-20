@@ -217,9 +217,14 @@ async function runSecurityRemediationSuite() {
     `Response: ${privateDemandRes.status} - "${privateDemandData.error}"`
   );
 
-  // Check 7: Authorized Customer Query with valid token returns full private order
+  // Check 7: Authorized Customer Query with valid token in x-order-token header returns full private order
   const authorizedQueryReq = new NextRequest(
-    `http://localhost:3000/api/orders/video?orderId=${orderA.id}&token=${tokenA}`
+    `http://localhost:3000/api/orders/video?orderId=${orderA.id}`,
+    {
+      headers: {
+        "x-order-token": tokenA,
+      },
+    }
   );
   const authorizedQueryRes = await getOrderRoute(authorizedQueryReq);
   const authorizedQueryData = await authorizedQueryRes.json();
@@ -229,13 +234,29 @@ async function runSecurityRemediationSuite() {
     authorizedQueryData.accessLevel === "owner" &&
     authorizedQueryData.order.customer.fullName === "Alice Johnson" &&
     authorizedQueryData.order.customer.email === "alice@example.com",
-    "Authorized Customer with Valid Token Accesses Complete Order",
+    "Authorized Customer with Valid Token in Header Accesses Complete Order",
     `Verified owner access for ${authorizedQueryData.order.customer.fullName}`
   );
 
-  // Check 8: Customer B with invalid/wrong token CANNOT access Customer A's order
+  // Check 8: SEC-07 Query parameter tokens are strictly rejected
+  const queryParamForbiddenReq = new NextRequest(
+    `http://localhost:3000/api/orders/video?orderId=${orderA.id}&token=${tokenA}`
+  );
+  const queryParamForbiddenRes = await getOrderRoute(queryParamForbiddenReq);
+  assert(
+    queryParamForbiddenRes.status === 400,
+    "SEC-07: Query parameter token is strictly forbidden (HTTP 400)",
+    `Forbidden status: ${queryParamForbiddenRes.status}`
+  );
+
+  // Check 8b: Customer B with invalid/wrong token in header CANNOT access Customer A's order
   const wrongTokenReq = new NextRequest(
-    `http://localhost:3000/api/orders/video?orderId=${orderA.id}&token=ord_tok_wrong_token_of_customer_b&format=private`
+    `http://localhost:3000/api/orders/video?orderId=${orderA.id}&format=private`,
+    {
+      headers: {
+        "x-order-token": "ord_tok_wrong_token_of_customer_b",
+      },
+    }
   );
   const wrongTokenRes = await getOrderRoute(wrongTokenReq);
   assert(

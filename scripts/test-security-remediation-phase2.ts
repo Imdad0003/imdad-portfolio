@@ -479,6 +479,42 @@ async function runSecurityRemediationPhase2Tests() {
     `Clean URL: ${sanitizedUrl}`
   );
 
+  // Test 21: SEC-07 Query Parameter Token Leakage Strictly Forbidden (HTTP 400)
+  const queryParamTokenReq = new NextRequest(
+    `http://localhost:3000/api/orders/video?orderId=${modernOrder.id}&token=${modernToken}`,
+    { method: "GET" }
+  );
+  const queryParamTokenRes = await getOrderRoute(queryParamTokenReq);
+  const queryParamTokenData = await queryParamTokenRes.json();
+  assert(
+    queryParamTokenRes.status === 400 &&
+      queryParamTokenData.success === false &&
+      queryParamTokenData.error.includes("strictly forbidden"),
+    "SEC-07: Query Parameter Token Passing Strictly Rejected (HTTP 400)",
+    `Error returned: "${queryParamTokenData.error}"`
+  );
+
+  // Test 22: SEC-07 Header-based Access Token Transport Functions Correctly (HTTP 200)
+  const headerTokenReq = new NextRequest(
+    `http://localhost:3000/api/orders/video?orderId=${modernOrder.id}`,
+    {
+      method: "GET",
+      headers: {
+        "x-order-token": modernToken,
+      },
+    }
+  );
+  const headerTokenRes = await getOrderRoute(headerTokenReq);
+  const headerTokenData = await headerTokenRes.json();
+  assert(
+    headerTokenRes.status === 200 &&
+      headerTokenData.success === true &&
+      headerTokenData.accessLevel === "owner" &&
+      headerTokenData.order.customer.email === modernOrder.customer.email,
+    "SEC-07: Header-based x-order-token Accepted with Full Owner Access (HTTP 200)",
+    `Customer verified: ${headerTokenData.order.customer.fullName} (${headerTokenData.accessLevel})`
+  );
+
   console.log("\n================================================================================");
   console.log(`🎉 ALL ${passed}/${total} SECURITY REMEDIATION PHASE 2 TESTS PASSED!`);
   console.log("================================================================================\n");
