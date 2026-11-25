@@ -114,7 +114,7 @@ export function Hero({ initialContent }: HeroProps) {
                       <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
                     <div className="min-w-0 w-full">
-                      <div className="text-[11px] sm:text-xs font-bold text-[var(--ink-primary,#332924)] leading-tight truncate">
+                      <div className="text-[10.5px] sm:text-xs font-bold text-[var(--ink-primary,#332924)] leading-tight sm:truncate">
                         {item.label}
                       </div>
                       {item.value && (
