@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Plus_Jakarta_Sans, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { siteConfig } from "@/data/config";
 import { Navbar } from "@/components/sections/Navbar";
@@ -7,6 +8,19 @@ import { Chatbot } from "@/components/chatbot/Chatbot";
 import { LiquidBackground } from "@/components/ui/LiquidBackground";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
 import { UrlTokenSanitizer } from "@/components/ui/UrlTokenSanitizer";
+import { ThemeStyleSync } from "@/components/ui/ThemeStyleSync";
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
+
+const dmSans = DM_Sans({
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -154,7 +168,7 @@ const jsonLd = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#F8FAFC",
+  themeColor: "#FAF7F2",
   colorScheme: "light",
   width: "device-width",
   initialScale: 1,
@@ -167,15 +181,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth h-full antialiased">
+    <html
+      lang="en"
+      className={`${jakarta.variable} ${dmSans.variable} scroll-smooth h-full antialiased`}
+    >
       <head>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-[#F8FAFC] text-[#0A192F] selection:bg-[#0284C7]/20 selection:text-[#0284C7]">
+      <body className="font-sans min-h-full flex flex-col bg-[#FAF7F2] text-[#332924] selection:bg-[#C96A50]/20 selection:text-[#B4583F]">
         <UrlTokenSanitizer />
+        <ThemeStyleSync />
         <ScrollProgress />
         <LiquidBackground />
         <Navbar />

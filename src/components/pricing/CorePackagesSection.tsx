@@ -61,14 +61,14 @@ export function CorePackagesSection({
   return (
     <div className={`w-full ${className}`}>
       <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-12">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200/80 text-[11px] font-mono text-[#0284C7] font-bold uppercase tracking-wider mb-3">
-          <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAECE4] border border-[#EED3C5] text-[11px] font-mono text-[#B4583F] font-bold uppercase tracking-wider mb-3">
+          <Sparkles className="w-3.5 h-3.5 text-[#C96A50]" />
           <span>Most Requested Packages</span>
         </div>
-        <h2 className="text-2xl sm:text-3xl font-black text-[#0A192F] tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-bold text-[#332924] tracking-tight font-display">
           {title}
         </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-600 leading-relaxed">
+        <p className="mt-2 text-xs sm:text-sm text-[#5F534D] leading-relaxed">
           {subtitle}
         </p>
       </div>
@@ -79,10 +79,10 @@ export function CorePackagesSection({
           return (
             <div
               key={pkg.id}
-              className={`relative rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 backdrop-blur-2xl ${
+              className={`relative rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 ${
                 isFeatured
-                  ? "bg-white border-2 border-[#0284C7]/50 shadow-[0_15px_40px_-10px_rgba(2,132,199,0.15)] hover:border-[#0284C7] hover:-translate-y-1"
-                  : "bg-white/85 border border-slate-200/80 shadow-[0_8px_30px_-5px_rgba(10,25,47,0.04)] hover:border-slate-300 hover:bg-white hover:-translate-y-1"
+                  ? "bg-white border-2 border-[#C96A50]/50 shadow-[0_15px_40px_-10px_rgba(201,106,80,0.14)] hover:border-[#C96A50] hover:-translate-y-1"
+                  : "bg-white/95 border border-[#E8DFD5] shadow-[0_8px_30px_-5px_rgba(51,41,36,0.04)] hover:border-[#D8A999] hover:bg-white hover:-translate-y-1"
               }`}
             >
               {/* Optional Top Tag */}
@@ -91,10 +91,10 @@ export function CorePackagesSection({
                   <span
                     className={`inline-flex items-center gap-1 text-[10px] font-mono font-bold px-3 py-0.5 rounded-full uppercase tracking-wider shadow-xs ${
                       pkg.badge === "Best Value"
-                        ? "bg-[#0284C7] text-white"
+                        ? "bg-[#C96A50] text-white"
                         : pkg.popular
-                        ? "bg-slate-900 text-white"
-                        : "bg-sky-100 text-sky-900 border border-sky-200"
+                        ? "bg-[#332924] text-white"
+                        : "bg-[#FAECE4] text-[#B4583F] border border-[#EED3C5]"
                     }`}
                   >
                     {pkg.highlight || pkg.badge}
@@ -104,44 +104,44 @@ export function CorePackagesSection({
 
               <div>
                 <div className="mt-1">
-                  <h3 className="text-lg font-black text-[#0A192F] tracking-tight">
+                  <h3 className="text-lg font-bold text-[#332924] tracking-tight font-display">
                     {pkg.name}
                   </h3>
-                  <p className="mt-1 text-xs text-slate-500 min-h-[32px] leading-relaxed">
+                  <p className="mt-1 text-xs text-[#5F534D] min-h-[32px] leading-relaxed">
                     {pkg.tagline}
                   </p>
                 </div>
 
                 {/* Price Display */}
-                <div className="mt-5 pb-5 border-b border-slate-100">
+                <div className="mt-5 pb-5 border-b border-[#E8DFD5]">
                   <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-black text-[#0A192F] tracking-tight">
+                    <span className="text-3xl font-bold text-[#332924] tracking-tight font-display">
                       ₹{pkg.price.toLocaleString("en-IN")}
                     </span>
-                    <span className="text-xs text-slate-500 font-medium">
+                    <span className="text-xs text-[#8A7C75] font-medium">
                       / package
                     </span>
                   </div>
 
                   {/* Turnaround Badge */}
-                  <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/60 text-[11px] text-slate-600 font-mono">
-                    <Clock className="w-3 h-3 text-[#0284C7]" />
+                  <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#E8DFD5] text-[11px] text-[#5F534D] font-mono">
+                    <Clock className="w-3 h-3 text-[#C96A50]" />
                     <span>{pkg.turnaround}</span>
                   </div>
                 </div>
 
                 {/* Deliverables List */}
                 <div className="mt-5 space-y-2.5">
-                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 block">
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#8A7C75] block">
                     Deliverables:
                   </span>
                   <ul className="space-y-2">
                     {pkg.deliverables.map((item, i) => (
                       <li
                         key={i}
-                        className="flex items-start gap-2 text-xs text-slate-600 leading-snug"
+                        className="flex items-start gap-2 text-xs text-[#5F534D] leading-snug"
                       >
-                        <div className="w-4 h-4 rounded-full bg-sky-50 border border-sky-200/80 flex items-center justify-center shrink-0 mt-0.5 text-[#0284C7]">
+                        <div className="w-4 h-4 rounded-full bg-[#FAECE4] border border-[#EED3C5] flex items-center justify-center shrink-0 mt-0.5 text-[#C96A50]">
                           <Check className="w-2.5 h-2.5" />
                         </div>
                         <span>{item}</span>
@@ -152,13 +152,13 @@ export function CorePackagesSection({
               </div>
 
               {/* Order / Inquire Button */}
-              <div className="mt-8 pt-4 border-t border-slate-100 flex items-center gap-2">
+              <div className="mt-8 pt-4 border-t border-[#E8DFD5] flex items-center gap-2">
                 <Link
                   href="/services/amazon-listing#packages"
-                  className={`flex-1 py-3 px-4 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-ring shadow-xs text-center ${
+                  className={`flex-1 py-3 px-4 rounded-full font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-ring shadow-xs text-center ${
                     isFeatured
-                      ? "bg-[#0284C7] hover:bg-[#0369A1] text-white active:scale-[0.98]"
-                      : "bg-[#0A192F] hover:bg-[#1E293B] text-white active:scale-[0.98]"
+                      ? "bg-[#C96A50] hover:bg-[#B4583F] text-white active:scale-[0.98]"
+                      : "bg-[#332924] hover:bg-[#4A3D36] text-white active:scale-[0.98]"
                   }`}
                 >
                   <span>Explore &amp; Select</span>
@@ -167,7 +167,7 @@ export function CorePackagesSection({
                 <button
                   type="button"
                   onClick={() => handleSelectPackage(pkg)}
-                  className="p-3 rounded-xl border border-slate-200 text-slate-500 hover:text-[#0284C7] hover:bg-slate-50 transition-colors cursor-pointer"
+                  className="p-3 rounded-full border border-[#E8DFD5] text-[#5F534D] hover:text-[#C96A50] hover:bg-[#FAF7F2] transition-colors cursor-pointer"
                   title="Ask AI Assistant about this package"
                   aria-label="Ask AI Assistant about this package"
                 >

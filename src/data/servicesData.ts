@@ -1,3 +1,5 @@
+import type { ServiceDemoItem, ServiceTeamMember } from "@/types/cms";
+
 export interface ServicePackage {
   name: string;
   price: number;
@@ -41,6 +43,8 @@ export interface StudioService {
   packages?: ServicePackage[];
   hasRealPricing: boolean;
   pricingNote?: string;
+  demos?: ServiceDemoItem[];
+  teamMembers?: ServiceTeamMember[];
   faqs: { question: string; answer: string }[];
 }
 
@@ -226,6 +230,39 @@ export const studioServices: StudioService[] = [
     ],
     hasRealPricing: true,
     pricingNote: "Pricing is transparent and scope-based. Domain and third-party hosting fees are paid directly to providers.",
+    demos: [
+      {
+        id: "web-demo-1",
+        title: "EasyXo D2C Storefront",
+        description: "High-speed mobile-first D2C e-commerce site with cart drawer, UPI checkout, and catalog search.",
+        category: "E-Commerce Store",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "https://easyxo.in",
+        metricsLabel: "Live Store",
+      },
+      {
+        id: "web-demo-2",
+        title: "IMDAD.BUILDS Studio Platform",
+        description: "Expressive studio showcase with dynamic CMS builder, Razorpay checkout flows, and AI resume generator.",
+        category: "Studio Platform",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/projects",
+        metricsLabel: "Next.js 16",
+      },
+    ],
+    teamMembers: [
+      {
+        id: "imdad-web",
+        name: "Imdad",
+        role: "Founder & Lead Full-Stack Engineer",
+        bio: "Architects Next.js web apps, Razorpay UPI checkouts, SEO structure, and high-converting storefront layouts.",
+        avatarUrl: "/imdad-logo.png",
+        initials: "IB",
+        specialties: ["Next.js & React", "Razorpay Checkout", "SEO & Speed"],
+      },
+    ],
     faqs: [
       {
         question: "How long does a website take to build?",
@@ -340,6 +377,39 @@ export const studioServices: StudioService[] = [
     hasRealPricing: false,
     pricingNote:
       "Because mobile applications vary widely in complexity, data architecture, and platform dependencies, we scope each app individually. Let's discuss your requirements to map out an accurate MVP timeline and investment.",
+    demos: [
+      {
+        id: "app-demo-1",
+        title: "WishMusic Android App",
+        description: "Offline-first music player & streaming companion built with clean Material 3 navigation and local caching.",
+        category: "Android App",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/apps/wishmusic",
+        metricsLabel: "Live APK",
+      },
+      {
+        id: "app-demo-2",
+        title: "WishTracking Utility",
+        description: "Lightweight personal tracking utility focused on instant logging, clean mobile ergonomics, and zero clutter.",
+        category: "Productivity Utility",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/apps/wishtracking",
+        metricsLabel: "In Studio",
+      },
+    ],
+    teamMembers: [
+      {
+        id: "imdad-app",
+        name: "Imdad",
+        role: "Lead Mobile & Product Architect",
+        bio: "Designs and engineers cross-platform Android & iOS applications, offline persistence, and API backends.",
+        avatarUrl: "/imdad-logo.png",
+        initials: "IB",
+        specialties: ["Android & Flutter", "Offline Sync", "Material 3 UI"],
+      },
+    ],
     faqs: [
       {
         question: "Do you develop for both iOS and Android?",
@@ -511,6 +581,39 @@ export const studioServices: StudioService[] = [
     ],
     hasRealPricing: true,
     pricingNote: "Transparent per-product starting rates. Volume discounts available for larger catalogs.",
+    demos: [
+      {
+        id: "ecom-demo-1",
+        title: "EasyXo Multi-Channel Catalog",
+        description: "Live active marketplace catalog optimized across Amazon, Flipkart, and Meesho seller hubs.",
+        category: "Marketplace Ops",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/apps/easyxo",
+        metricsLabel: "3 Channels",
+      },
+      {
+        id: "ecom-demo-2",
+        title: "Amazon Listing Visual Decks",
+        description: "High-converting 7-image infographic stacks and A+ Brand Story banners built for buyer trust.",
+        category: "Creative Showcase",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/services/amazon-listing",
+        metricsLabel: "10+ Decks",
+      },
+    ],
+    teamMembers: [
+      {
+        id: "imdad-ecom",
+        name: "Imdad",
+        role: "E-Commerce Founder & Catalog Strategist",
+        bio: "Operates EasyXo directly across Amazon, Flipkart, and D2C channels — leading SEO keyword indexing & store growth.",
+        avatarUrl: "/imdad-logo.png",
+        initials: "IB",
+        specialties: ["Amazon A9 SEO", "Flipkart & Meesho", "D2C Funnels"],
+      },
+    ],
     faqs: [
       {
         question: "Do I need GST to sell on Amazon and Flipkart?",
@@ -682,6 +785,45 @@ export const studioServices: StudioService[] = [
     ],
     hasRealPricing: true,
     pricingNote: "Fixed per-video and sprint package pricing. Client supplies raw footage or chooses AI video synthesis.",
+    demos: [
+      {
+        id: "vid-demo-1",
+        title: "9:16 Product Reel Showcase",
+        description: "Fast-paced vertical demonstration reels with kinetic captions, SFX, and 3-second scroll-stopping hooks.",
+        category: "Vertical Reels",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/services/video-editing",
+        metricsLabel: "24-48h Turnaround",
+      },
+    ],
+    teamMembers: [
+      {
+        id: "ray",
+        name: "Ray",
+        role: "Senior Video Editor",
+        bio: "Specializes in high-retention short-form reels, narrative pacing, commercial storytelling, and audio-reactive cuts.",
+        initials: "R",
+        specialties: ["Reels & Shorts", "Pacing & Hooks", "Sound Design"],
+      },
+      {
+        id: "zafar",
+        name: "Zafar",
+        role: "Motion Designer & Video Editor",
+        bio: "Crafts polished motion graphics, kinetic typography, product demonstration reels, and visual effects.",
+        initials: "Z",
+        specialties: ["Motion Graphics", "Kinetic Text", "Color Grading"],
+      },
+      {
+        id: "imdad-vid",
+        name: "Imdad",
+        role: "Creative & Ad Hook Director",
+        bio: "Guides ad script hooks, buyer psychology angles, and conversion review for D2C product creatives.",
+        avatarUrl: "/imdad-logo.png",
+        initials: "IB",
+        specialties: ["Ad Hooks", "Creative Direction", "CTR Strategy"],
+      },
+    ],
     faqs: [
       {
         question: "Do I need to send physical products or raw footage?",
@@ -838,6 +980,37 @@ export const studioServices: StudioService[] = [
     ],
     hasRealPricing: true,
     pricingNote: "Predictable monthly retainer pricing with zero long-term lock-in contracts.",
+    demos: [
+      {
+        id: "social-demo-1",
+        title: "D2C Carousel & Offer Feed Kit",
+        description: "Multi-slide product education carousels and high-contrast feed announcements built for Instagram.",
+        category: "Feed & Carousels",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "https://www.instagram.com/imdad.builds",
+        metricsLabel: "30-Day Grid",
+      },
+    ],
+    teamMembers: [
+      {
+        id: "ray-social",
+        name: "Ray",
+        role: "Short-Form Reels Strategist",
+        bio: "Leads organic hook ideation, audio sync, and Reels pacing for social content calendars.",
+        initials: "R",
+        specialties: ["Reels Strategy", "Hook Writing", "Content Pacing"],
+      },
+      {
+        id: "imdad-social",
+        name: "Imdad",
+        role: "Brand & Content Architect",
+        bio: "Aligns monthly editorial pillars with direct-response offers and storefront conversions.",
+        avatarUrl: "/imdad-logo.png",
+        initials: "IB",
+        specialties: ["Content Pillars", "Copywriting", "Brand Growth"],
+      },
+    ],
     faqs: [
       {
         question: "Do you also schedule and post the content?",
@@ -898,6 +1071,29 @@ export const studioServices: StudioService[] = [
     ],
     hasRealPricing: true,
     pricingNote: "Free Beta Launch. Future pricing: ₹50 / resume.",
+    demos: [
+      {
+        id: "resume-demo-1",
+        title: "Interactive ATS Resume Generator",
+        description: "Live 3-step form wizard, ATS keyword alignment, and instant selectable A4 PDF export.",
+        category: "Live SaaS Tool",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/services/ai-resume-builder",
+        metricsLabel: "Try Free Live",
+      },
+    ],
+    teamMembers: [
+      {
+        id: "imdad-ai",
+        name: "Imdad",
+        role: "Creator & AI Systems Engineer",
+        bio: "Built the Gemini-powered ATS prompt architecture, live preview editor, and zero-hallucination guardrails.",
+        avatarUrl: "/imdad-logo.png",
+        initials: "IB",
+        specialties: ["AI Engineering", "ATS PDF Engine", "Product UX"],
+      },
+    ],
     packages: [
       {
         name: "Free Beta Access",
@@ -928,6 +1124,128 @@ export const studioServices: StudioService[] = [
       {
         question: "Can I use it if I have no work experience?",
         answer: "Absolutely. Our 'Student & Fresher' template prioritizes your university credentials, coursework, and technical projects.",
+      },
+    ],
+  },
+
+  // ==========================================
+  // 07 — AMAZON LISTING & PRODUCT IMAGES
+  // ==========================================
+  {
+    id: "amazon-listing",
+    number: "07",
+    title: "Amazon & Product Images",
+    slug: "amazon-listing",
+    tagline: "Conversion-engineered product listing stacks, infographics & A+ Brand Content.",
+    shortDescription:
+      "Clean white-background hero renders, feature callout infographics, size comparisons, and Amazon A+ (EBC) story modules designed to lift marketplace conversions.",
+    fullDescription:
+      "Marketplace shoppers browse visually before reading a single bullet point. We design full 7–9 image product listing decks and Amazon Enhanced Brand Content (A+) banners built around real Amazon, Flipkart, and Meesho buyer psychology — overcoming size, quality, and usage doubts in seconds.",
+    iconName: "ShoppingBag",
+    accentColor: "#C96A50",
+    capabilities: [
+      "Pure White Background Main Images",
+      "7-Image Conversion Infographic Decks",
+      "Size, Dimension & Feature Callouts",
+      "Lifestyle Staging & Use-Case Visuals",
+      "Amazon A+ Content (EBC) Banners",
+      "Comparison Charts & Brand Story Modules",
+    ],
+    deliverables: [
+      "2000×2000px Zoom-Ready Amazon/Flipkart JPEG/PNG files",
+      "Feature & dimension callout infographic slides",
+      "A+ Brand Story & comparison table modules",
+      "Marketplace thumbnail CTR check",
+    ],
+    suitableFor: [
+      "Amazon India, Flipkart & Meesho sellers",
+      "D2C brands upgrading product imagery",
+      "Private-label product launches",
+    ],
+    process: [
+      { step: "01", title: "Product & Competitor Audit", description: "Analyze top niche listings and customer review complaints to highlight key differentiators." },
+      { step: "02", title: "Storyboard & Callout Copy", description: "Plan each image slot from Main Hero to Feature Stack and Comparison Table." },
+      { step: "03", title: "Visual Design & Infographics", description: "Design crisp, readable graphics tested for mobile marketplace screens." },
+      { step: "04", title: "QC-Ready Final Export", description: "Deliver full high-res assets ready for instant Seller Central upload." },
+    ],
+    hasRealPricing: true,
+    pricingNote: "Transparent per-SKU creative packages. Bulk catalog rates available.",
+    packages: [
+      {
+        name: "Basic Hero + 4 Images",
+        price: 499,
+        priceType: "fixed",
+        unit: "/ SKU",
+        description: "Clean main white-background product image plus 4 crisp feature callout slides.",
+        features: ["Main hero image cleanup", "4 infographic callout slides", "Mobile zoom-ready exports"],
+      },
+      {
+        name: "Full 7-Image Listing Stack",
+        price: 999,
+        priceType: "fixed",
+        unit: "/ SKU",
+        description: "Complete marketplace visual stack with lifestyle compositing and dimension specs.",
+        features: ["Pure white main hero", "Lifestyle & dimension graphics", "Usability & trust badges", "24–48h delivery"],
+        recommended: true,
+      },
+      {
+        name: "Listing Stack + A+ Content",
+        price: 1699,
+        priceType: "fixed",
+        unit: "/ SKU",
+        description: "Full 7-image gallery plus stacked Amazon A+ (EBC) brand modules.",
+        features: ["All 7 listing images", "4–5 Amazon A+ EBC banners", "Comparison chart graphic"],
+      },
+    ],
+    demos: [
+      {
+        id: "amz-demo-1",
+        title: "10+ Product Listing Sample Decks",
+        description: "Browse complete 7–9 image product listing galleries across electronics, home, and lifestyle niches.",
+        category: "Listing Infographics",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/services/amazon-listing#listing-samples",
+        metricsLabel: "10+ Sets",
+      },
+      {
+        id: "amz-demo-2",
+        title: "Stacked Amazon A+ (EBC) Modules",
+        description: "Interactive Brand Story headers, feature quad grids, and comparison modules.",
+        category: "A+ Brand Content",
+        mediaType: "link",
+        thumbnailUrl: "/imdad-logo.png",
+        demoLink: "/services/amazon-listing#aplus-showcase",
+        metricsLabel: "EBC Showcase",
+      },
+    ],
+    teamMembers: [
+      {
+        id: "imdad-amz",
+        name: "Imdad",
+        role: "Marketplace Operator & Conversion Lead",
+        bio: "Guides visual conversion strategy, A9 click-through hooks, and real seller-panel compliance from EasyXo.",
+        avatarUrl: "/imdad-logo.png",
+        initials: "IB",
+        specialties: ["Listing CTR", "Amazon A+", "Seller Compliance"],
+      },
+      {
+        id: "zafar-amz",
+        name: "Zafar",
+        role: "Product Visual & Infographic Designer",
+        bio: "Designs sharp feature callouts, product retouching, lifestyle composites, and clean infographic typography.",
+        initials: "Z",
+        specialties: ["Infographics", "Retouching", "A+ Banners"],
+      },
+    ],
+    faqs: [
+      {
+        question: "What product photos do I need to share?",
+        answer: "Even clear smartphone photos from different angles work well — we clean lighting, remove backgrounds, and build infographics around them.",
+      },
+      {
+        question: "Are the image dimensions Amazon & Flipkart compliant?",
+        answer: "Yes, every asset is exported at 2000×2000px+ sRGB specifications for crisp mobile and desktop zoom.",
       },
     ],
   },

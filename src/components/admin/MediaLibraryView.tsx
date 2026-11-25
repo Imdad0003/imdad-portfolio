@@ -30,7 +30,7 @@ import {
   deleteMediaAssetAdmin,
   checkAssetUsage,
 } from "@/lib/cms";
-import { uploadToCloudinary } from "@/lib/cloudinary";
+import { uploadMediaAssetToCloudinary } from "@/lib/cloudinary";
 
 interface MediaLibraryViewProps {
   currentUser?: User | null;
@@ -107,13 +107,17 @@ export function MediaLibraryView({ currentUser }: MediaLibraryViewProps) {
   };
 
   useEffect(() => {
-    loadAssets();
+    queueMicrotask(() => {
+      void loadAssets();
+    });
   }, [selectedCategory]);
 
   useEffect(() => {
     if (selectedAsset) {
-      setAltTextInput(selectedAsset.alt || "");
-      setUsageInfo(null);
+      queueMicrotask(() => {
+        setAltTextInput(selectedAsset.alt || "");
+        setUsageInfo(null);
+      });
     }
   }, [selectedAsset]);
 
@@ -133,16 +137,22 @@ export function MediaLibraryView({ currentUser }: MediaLibraryViewProps) {
     setActionNotice(null);
 
     try {
-      const uploadResult = await uploadToCloudinary(file);
-      const uploadedUrl = typeof uploadResult === "string" ? uploadResult : (uploadResult as any).secure_url || "";
+      const uploadResult = await uploadMediaAssetToCloudinary(file, {
+        folder: `studio-assets/${uploadCategory}`,
+      });
+      const rawFmt = uploadResult.format || file.type.split("/")[1] || "png";
+      const normalizedFmt = rawFmt.toLowerCase().includes("svg") ? "svg" : rawFmt.toLowerCase();
       const newAsset: Partial<MediaAssetDocument> & { id: string } = {
         id: `asset_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         name: file.name.replace(/\.[^/.]+$/, ""),
-        url: uploadedUrl,
+        url: uploadResult.url,
+        publicId: uploadResult.publicId,
+        width: uploadResult.width,
+        height: uploadResult.height,
         category: uploadCategory,
         alt: uploadAltText || file.name.replace(/\.[^/.]+$/, ""),
-        format: file.type.split("/")[1] || "png",
-        fileSize: file.size,
+        format: normalizedFmt,
+        fileSize: uploadResult.bytes || file.size,
         createdAt: new Date().toISOString(),
       };
 
@@ -221,11 +231,18 @@ export function MediaLibraryView({ currentUser }: MediaLibraryViewProps) {
     if (!confirmed) return;
 
     try {
-      const res = await deleteMediaAssetAdmin(asset.id, asset.url);
+      let res = await deleteMediaAssetAdmin(asset.id, asset.url);
+      if (
+        !res.success &&
+        res.error?.includes("Still used in") &&
+        window.confirm(`${res.error}\n\nDelete from Media Library anyway?`)
+      ) {
+        res = await deleteMediaAssetAdmin(asset.id, asset.url, { force: true });
+      }
       if (res.success) {
         setActionNotice({
           type: "success",
-          text: `Asset "${asset.name}" removed from library.`,
+          text: res.warning || `Asset "${asset.name}" removed from library.`,
         });
         if (selectedAsset?.id === asset.id) {
           setSelectedAsset(null);
@@ -237,7 +254,7 @@ export function MediaLibraryView({ currentUser }: MediaLibraryViewProps) {
           text: res.error || "Cannot delete asset while referenced in content.",
         });
       }
-    } catch (err) {
+    } catch {
       setActionNotice({
         type: "error",
         text: "Failed to delete media asset.",

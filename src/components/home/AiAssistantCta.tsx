@@ -10,36 +10,36 @@ export function AiAssistantCta() {
       new CustomEvent("imdad:open-chat", {
         detail: {
           prompt:
-            "Hi Imdad AI! I'm not sure which service or package I need for my business. Can you help me evaluate my project and give me a quick estimate?",
+            "Hi! I'm not sure which service or package I need. Can you help me pick the right one?",
         },
       })
     );
   };
 
   return (
-    <section className="py-12 sm:py-16 relative overflow-hidden">
+    <section className="py-12 sm:py-16">
       <Container>
-        <div className="rounded-3xl bg-gradient-to-r from-white via-sky-50/20 to-blue-50/20 border border-slate-200 p-6 sm:p-10 backdrop-blur-2xl shadow-[0_15px_35px_-5px_rgba(10,25,47,0.06)] flex flex-col md:flex-row items-center justify-between gap-6 max-w-5xl mx-auto">
+        <div className="rounded-3xl bg-white border border-[#E8DFD5] p-6 sm:p-10 shadow-[0_10px_28px_-8px_rgba(51,41,36,0.06)] flex flex-col md:flex-row items-center justify-between gap-6 max-w-5xl mx-auto">
           <div className="space-y-2 text-center md:text-left">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[11px] font-semibold text-[#0284C7] font-mono uppercase tracking-wider">
-              <Sparkles className="w-3.5 h-3.5 text-[#0284C7]" />
-              <span>Instant Scope Guidance</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAECE4] border border-[#F0CFC0] text-xs font-semibold text-[#B4583F]">
+              <Sparkles className="w-3.5 h-3.5 text-[#C96A50]" />
+              <span>Quick Project Guide</span>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-black text-[#0A192F] tracking-tight">
+            <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#332924]">
               Not sure what you need?
             </h3>
-            <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed">
-              Talk to the AI assistant and get a quick project estimate based on your exact product volume, platforms, and goals.
+            <p className="text-xs sm:text-sm text-[#5F534D] max-w-xl leading-relaxed">
+              Ask our helper assistant to suggest the best package based on your goals and budget.
             </p>
           </div>
 
           <button
             type="button"
             onClick={handleOpenChat}
-            className="w-full sm:w-auto min-h-[48px] justify-center px-7 py-3.5 rounded-full font-bold text-xs sm:text-sm bg-[#0284C7] hover:bg-[#0369A1] text-white shadow-md transition-all flex items-center gap-2 cursor-pointer shrink-0 focus-ring active:scale-95"
+            className="w-full sm:w-auto min-h-[48px] justify-center px-7 py-3.5 rounded-full font-semibold text-xs sm:text-sm bg-[#C96A50] hover:bg-[#B4583F] text-white shadow-sm transition-colors flex items-center gap-2 cursor-pointer shrink-0 focus-ring"
           >
             <MessageSquare className="w-4 h-4 text-white" />
-            <span>Chat With Imdad AI</span>
+            <span>Ask Project Helper</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

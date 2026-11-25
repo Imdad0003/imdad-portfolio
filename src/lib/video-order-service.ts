@@ -17,7 +17,7 @@ import {
 } from "@/types/video-order";
 import { defaultVideoOrderConfig } from "@/data/video-order-config";
 import { db } from "@/lib/firebase";
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, setDoc, getDoc, deleteDoc, collection, query, where, getDocs } from "firebase/firestore";
 import crypto from "crypto";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -440,4 +440,27 @@ export async function listAllVideoOrders(): Promise<VideoOrder[]> {
   // Sort descending by createdAt
   list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   return list;
+}
+
+/**
+ * Deletes a video order from memory store and Firestore cleanly.
+ */
+export async function deleteVideoOrder(orderId: string): Promise<boolean> {
+  let deleted = memoryOrders.delete(orderId);
+
+  if (db) {
+    try {
+      const orderRef = doc(db, "videoOrders", orderId);
+      const snap = await getDoc(orderRef);
+      if (snap.exists()) {
+        await deleteDoc(orderRef);
+        deleted = true;
+      }
+    } catch (err) {
+      console.error("[VideoOrderService] Error deleting order in Firestore:", err);
+      throw err;
+    }
+  }
+
+  return deleted;
 }

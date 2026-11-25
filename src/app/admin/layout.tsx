@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Studio Admin & CMS | IMDAD.BUILDS",
+  title: "Studio Admin & CMS",
   robots: {
     index: false,
     follow: false,

@@ -2,7 +2,7 @@ export interface NavItem {
   label: string;
   href: string;
   badge?: string;
-  subItems?: { label: string; href: string; description?: string }[];
+  subItems?: { label: string; href: string; description?: string; badge?: string }[];
 }
 
 export const navItems: NavItem[] = [
@@ -11,23 +11,45 @@ export const navItems: NavItem[] = [
     label: "Services",
     href: "/services",
     subItems: [
-      { label: "Video Editing", href: "/services/video-editing", description: "Reels, Shorts, YouTube videos & commercial ads" },
-      { label: "E-commerce Creative", href: "/services/amazon-listing", description: "Amazon listing images, product creatives & A+ content" },
-      { label: "Web Development", href: "/services/website-development", description: "Business websites, web applications & digital platforms" },
-      { label: "Digital Solutions", href: "/services/app-development", description: "Custom digital tools & technology solutions" },
+      {
+        label: "Video Editing",
+        href: "/services/video-editing",
+        description: "Reels, YouTube videos & promo ads",
+      },
+      {
+        label: "Amazon & Product Images",
+        href: "/services/amazon-listing",
+        description: "Product photos, infographics & A+ pages",
+      },
+      {
+        label: "Websites & Stores",
+        href: "/services/website-development",
+        description: "Business websites & online stores",
+      },
+      {
+        label: "Apps & Custom Tools",
+        href: "/services/app-development",
+        description: "Mobile apps & business utilities",
+      },
+      {
+        label: "AI Resume Builder",
+        href: "/services/ai-resume-builder",
+        description: "Create a clean job resume in minutes",
+        badge: "Tool",
+      },
     ],
   },
-  { label: "Our Work", href: "/projects" },
+  { label: "Work", href: "/projects" },
+  { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
 ];
 
 export const companyNavItems: { label: string; href: string }[] = [
-  { label: "About Studio", href: "/about" },
-  { label: "Projects & Work", href: "/projects" },
-  { label: "Pricing Packages", href: "/pricing" },
-  { label: "Client Reviews", href: "/reviews" },
-  { label: "Direct Contact", href: "/contact" },
+  { label: "About Us", href: "/about" },
+  { label: "Our Work", href: "/projects" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "Reviews", href: "/reviews" },
+  { label: "Contact", href: "/contact" },
   { label: "FAQ", href: "/faq" },
 ];
 

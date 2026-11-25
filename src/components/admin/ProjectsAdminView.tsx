@@ -1,29 +1,26 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
+import type { ProjectDocument } from "@/types/cms";
+import { MediaLibraryModal } from "./MediaLibraryModal";
 import {
-  Globe,
   Plus,
   Search,
-  Filter,
-  Eye,
-  EyeOff,
+  LayoutGrid,
+  List as ListIcon,
   Edit3,
   Trash2,
-  ExternalLink,
-  Upload,
-  RefreshCw,
-  Sparkles,
-  Grid,
-  List,
-  Check,
+  Eye,
+  EyeOff,
+  Star,
   X,
-  Layers,
-  Tag,
+  Check,
+  Upload,
+  Image as ImageIcon,
+  Loader2,
+  FolderKanban,
+  ExternalLink,
 } from "lucide-react";
-import type { ProjectDocument } from "@/types/cms";
 
 interface ProjectsAdminViewProps {
   projects: ProjectDocument[];
@@ -37,6 +34,15 @@ interface ProjectsAdminViewProps {
   uploadingImage: boolean;
 }
 
+const CATEGORIES = [
+  "all",
+  "Apps & Products",
+  "Web Development",
+  "Amazon Listing Design",
+  "Design & Branding",
+  "AI/SaaS",
+];
+
 export function ProjectsAdminView({
   projects,
   onTogglePublished,
@@ -45,42 +51,28 @@ export function ProjectsAdminView({
   handleFileUpload,
   uploadingImage,
 }: ProjectsAdminViewProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">(
-    "all"
-  );
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-
-  // Editing state
-  const [editingProject, setEditingProject] =
-    useState<Partial<ProjectDocument> | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingProject, setEditingProject] = useState<Partial<ProjectDocument> | null>(null);
   const [techInput, setTechInput] = useState("");
   const [deliverableInput, setDeliverableInput] = useState("");
-
-  const categories = [
-    "all",
-    ...Array.from(
-      new Set(projects.map((p) => p.category).filter(Boolean))
-    ),
-  ];
+  const [scopeInput, setScopeInput] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [mediaTarget, setMediaTarget] = useState<"cover" | "gallery" | null>(null);
 
   const filteredProjects = projects.filter((p) => {
+    const matchesCat =
+      selectedCategory === "all" ||
+      (p.category || "").toLowerCase() === selectedCategory.toLowerCase();
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      !searchQuery ||
-      p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.slug?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.description?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesCategory =
-      selectedCategory === "all" || p.category === selectedCategory;
-
-    const matchesStatus =
-      statusFilter === "all" ||
-      (statusFilter === "published" && p.published) ||
-      (statusFilter === "draft" && !p.published);
-
-    return matchesSearch && matchesCategory && matchesStatus;
+      !q ||
+      p.name.toLowerCase().includes(q) ||
+      (p.shortDescription || "").toLowerCase().includes(q) ||
+      (p.category || "").toLowerCase().includes(q);
+    return matchesCat && matchesSearch;
   });
 
   const handleOpenCreateModal = () => {
@@ -88,258 +80,240 @@ export function ProjectsAdminView({
       id: `proj_${Date.now()}`,
       name: "",
       slug: "",
-      category: "Web Application",
-      tagline: "",
+      category: "Web Development",
+      status: "Completed",
       shortDescription: "",
       description: "",
-      scope: ["Design", "Full-Stack Development"],
-      technologies: ["Next.js", "TypeScript", "Tailwind CSS"],
-      deliverables: ["Responsive UI", "Production Deployment"],
-      published: true,
+      highlight: "",
+      url: "",
+      githubUrl: "",
+      coverImage: "",
+      gallery: [],
+      technologies: [],
+      scope: [],
+      deliverables: [],
+      metrics: [],
       featured: true,
-      status: "Completed",
       sortOrder: projects.length,
+      published: true,
     });
   };
 
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await onDeleteProject(id);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleSaveModal = async () => {
-    if (!editingProject || !editingProject.id) return;
-    await onSaveProject(editingProject);
-    setEditingProject(null);
+    if (!editingProject || !editingProject.name?.trim()) {
+      alert("Please enter a Project Name.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const slug =
+        editingProject.slug?.trim() ||
+        editingProject.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+      await onSaveProject({
+        ...editingProject,
+        slug,
+        description: editingProject.description?.trim() || editingProject.shortDescription || "",
+      });
+      setEditingProject(null);
+    } catch {
+      // error alert shown by parent
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header Bar */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-[#E8DFD5] shadow-2xs">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-[#0284C7]" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Portfolio & Case Studies
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold text-[#0A192F] tracking-tight">
-            Projects Management Desk
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            Publish client deliverables, commercial applications, and interactive
-            case studies.
+          <h2 className="text-base font-bold text-[#332924]">Projects &amp; Case Studies</h2>
+          <p className="text-xs text-[#6E625B]">
+            Add, edit, feature, hide, or delete portfolio work and case study visuals.
           </p>
         </div>
 
         <button
           type="button"
           onClick={handleOpenCreateModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-linear-to-r from-[#0066FF] to-[#0284C7] hover:from-[#0052cc] hover:to-[#0369a1] shadow-xs transition-all cursor-pointer"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#C96A50] hover:bg-[#B4583F] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          <span>New Case Study</span>
+          <span>Add New Project</span>
         </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="rounded-2xl bg-white border border-slate-200/80 p-4 shadow-xs space-y-3">
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-          {categories.map((cat) => (
+      {/* Category & Search Toolbar */}
+      <div className="bg-white p-4 rounded-2xl border border-[#E8DFD5] shadow-2xs space-y-3">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
             <button
               key={cat}
               type="button"
               onClick={() => setSelectedCategory(cat)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors cursor-pointer ${
                 selectedCategory === cat
-                  ? "bg-[#0284C7] text-white shadow-xs"
-                  : "text-slate-600 hover:text-[#0A192F] hover:bg-slate-100"
+                  ? "bg-[#332924] text-white"
+                  : "bg-[#FAF7F2] text-[#5F534D] border border-[#E8DFD5] hover:bg-[#FAECE4]"
               }`}
             >
-              {cat === "all" ? "All Categories" : cat}
+              {cat === "all" ? "All Projects" : cat}
             </button>
           ))}
         </div>
 
-        {/* Search, Status, and View Toggle */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
-          <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-[#8A7C75] absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by title, slug, or technologies..."
-              className="w-full pl-9 pr-3.5 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7] focus:bg-white transition-all"
+              placeholder="Search projects by title, tag, or summary..."
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5] text-xs text-[#332924] focus:outline-none focus:border-[#C96A50]"
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Status Filter */}
-            <select
-              value={statusFilter}
-              onChange={(e) =>
-                setStatusFilter(e.target.value as "all" | "published" | "draft")
-              }
-              className="px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-[#0A192F] font-semibold focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5] self-end">
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              className={`p-1.5 rounded-lg cursor-pointer ${
+                viewMode === "table" ? "bg-white text-[#332924] shadow-2xs" : "text-[#8A7C75]"
+              }`}
+              title="Table view"
             >
-              <option value="all">All Status ({projects.length})</option>
-              <option value="published">
-                Published ({projects.filter((p) => p.published).length})
-              </option>
-              <option value="draft">
-                Drafts ({projects.filter((p) => !p.published).length})
-              </option>
-            </select>
-
-            {/* Layout Toggle */}
-            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => setViewMode("table")}
-                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                  viewMode === "table"
-                    ? "bg-white text-[#0A192F] shadow-xs"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
-                title="Table View"
-              >
-                <List className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode("grid")}
-                className={`p-1.5 rounded-md transition-colors cursor-pointer ${
-                  viewMode === "grid"
-                    ? "bg-white text-[#0A192F] shadow-xs"
-                    : "text-slate-400 hover:text-slate-600"
-                }`}
-                title="Grid View"
-              >
-                <Grid className="w-3.5 h-3.5" />
-              </button>
-            </div>
+              <ListIcon className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("grid")}
+              className={`p-1.5 rounded-lg cursor-pointer ${
+                viewMode === "grid" ? "bg-white text-[#332924] shadow-2xs" : "text-[#8A7C75]"
+              }`}
+              title="Grid view"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Content Rendering: Table or Grid */}
+      {/* Empty State or Data View */}
       {filteredProjects.length === 0 ? (
-        <div className="py-20 text-center rounded-2xl bg-white border border-dashed border-slate-200 p-8">
-          <Globe className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <h3 className="text-sm font-bold text-[#0A192F]">
-            No projects match your filter
-          </h3>
-          <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-            Try adjusting your search query, or create a new case study to showcase
-            your work.
-          </p>
+        <div className="bg-white p-12 rounded-2xl border border-[#E8DFD5] text-center space-y-2">
+          <FolderKanban className="w-8 h-8 text-[#8A7C75] mx-auto" />
+          <p className="text-sm font-bold text-[#332924]">No matching projects</p>
+          <p className="text-xs text-[#6E625B]">Try another search or add a new project.</p>
         </div>
       ) : viewMode === "table" ? (
-        <div className="rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-xs">
+        <div className="bg-white rounded-2xl border border-[#E8DFD5] shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <tr>
-                  <th className="py-3.5 px-4 font-medium">Cover & Title</th>
-                  <th className="py-3.5 px-4 font-medium">Category</th>
-                  <th className="py-3.5 px-4 font-medium">Deliverables</th>
-                  <th className="py-3.5 px-4 font-medium">Status</th>
-                  <th className="py-3.5 px-4 font-medium">Visibility</th>
-                  <th className="py-3.5 px-4 font-medium text-right">Actions</th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-[#E8DFD5] bg-[#FAF7F2] text-[10px] font-mono uppercase tracking-wider text-[#8A7C75]">
+                  <th className="py-3.5 px-5 font-bold">Project</th>
+                  <th className="py-3.5 px-4 font-bold">Category</th>
+                  <th className="py-3.5 px-4 font-bold">Stage</th>
+                  <th className="py-3.5 px-4 font-bold">Status</th>
+                  <th className="py-3.5 px-5 font-bold text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[#F3ECE4] text-xs">
                 {filteredProjects.map((proj) => (
-                  <tr
-                    key={proj.id}
-                    className="hover:bg-slate-50/80 transition-colors"
-                  >
-                    <td className="py-3 px-4">
+                  <tr key={proj.id} className="hover:bg-[#FAF7F2]/70 transition-colors">
+                    <td className="py-3.5 px-5">
                       <div className="flex items-center gap-3">
-                        <div className="relative w-12 h-10 rounded-lg overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                        <div className="w-11 h-11 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5] overflow-hidden shrink-0 flex items-center justify-center">
                           {proj.coverImage ? (
-                            <Image
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
                               src={proj.coverImage}
                               alt={proj.name}
-                              fill
-                              className="object-cover"
-                              unoptimized
+                              className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-slate-400">
-                              <Globe className="w-4 h-4" />
-                            </div>
+                            <ImageIcon className="w-4 h-4 text-[#8A7C75]" />
                           )}
                         </div>
-                        <div>
-                          <div className="font-bold text-[#0A192F]">
-                            {proj.name}
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 font-bold text-[#332924]">
+                            <span>{proj.name}</span>
+                            {proj.featured && (
+                              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                            )}
                           </div>
-                          <div className="text-[11px] text-slate-400 font-mono">
-                            /projects/{proj.slug || proj.id}
+                          <div className="text-[11px] text-[#8A7C75] truncate max-w-xs">
+                            {proj.shortDescription}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-block px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-700">
+                    <td className="py-3.5 px-4">
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#FAECE4] text-[#B4583F] text-[11px] font-semibold">
                         {proj.category}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-slate-500">
-                      <span>{(proj.deliverables || []).length} items</span>
-                      {proj.technologies && proj.technologies.length > 0 && (
-                        <div className="text-[11px] text-slate-400 truncate max-w-xs mt-0.5">
-                          {proj.technologies.slice(0, 3).join(", ")}
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-sky-50 text-[#0284C7] border border-sky-200">
-                        {proj.status || "Completed"}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3.5 px-4 text-[#5F534D]">{proj.status}</td>
+                    <td className="py-3.5 px-4">
                       <button
                         type="button"
                         onClick={() => void onTogglePublished(proj)}
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer border ${
                           proj.published
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100"
-                            : "bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-stone-100 text-stone-600 border-stone-200"
                         }`}
                       >
-                        {proj.published ? (
-                          <Eye className="w-3 h-3 text-emerald-600" />
-                        ) : (
-                          <EyeOff className="w-3 h-3 text-slate-400" />
-                        )}
-                        <span>{proj.published ? "Published" : "Draft"}</span>
+                        {proj.published ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                        <span>{proj.published ? "Live" : "Draft"}</span>
                       </button>
                     </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Link
-                          href={`/projects/${proj.slug || proj.id}`}
-                          target="_blank"
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-[#0284C7] hover:bg-slate-100 transition-colors"
-                          title="View Live"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
+                    <td className="py-3.5 px-5 text-right">
+                      <div className="inline-flex items-center gap-1.5">
+                        {proj.url && (
+                          <a
+                            href={proj.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="p-1.5 rounded-lg text-[#5F534D] hover:text-[#332924] border border-[#E8DFD5]"
+                            title="Open Project URL"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
                         <button
                           type="button"
-                          onClick={() => setEditingProject(proj)}
-                          className="p-1.5 rounded-lg text-slate-500 hover:text-[#0A192F] hover:bg-slate-100 transition-colors cursor-pointer"
+                          onClick={() => setEditingProject({ ...proj })}
+                          className="p-1.5 rounded-lg text-[#5F534D] hover:text-[#332924] hover:bg-[#FAF7F2] border border-[#E8DFD5] cursor-pointer"
                           title="Edit Project"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
                           type="button"
-                          onClick={() => void onDeleteProject(proj.id)}
-                          className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
+                          onClick={() => void handleDelete(proj.id)}
+                          disabled={deletingId === proj.id}
+                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 cursor-pointer disabled:opacity-50"
                           title="Delete Project"
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          {deletingId === proj.id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
                         </button>
                       </div>
                     </td>
@@ -350,70 +324,65 @@ export function ProjectsAdminView({
           </div>
         </div>
       ) : (
-        /* Grid Mode */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredProjects.map((proj) => (
             <div
               key={proj.id}
-              className="rounded-2xl bg-white border border-slate-200/80 overflow-hidden shadow-xs hover:border-[#0284C7]/40 hover:shadow-md transition-all flex flex-col justify-between"
+              className="bg-white rounded-2xl border border-[#E8DFD5] overflow-hidden shadow-2xs flex flex-col justify-between"
             >
               <div>
-                <div className="relative aspect-video bg-slate-100 overflow-hidden">
+                <div className="aspect-video bg-[#FAF7F2] border-b border-[#E8DFD5] flex items-center justify-center overflow-hidden relative">
                   {proj.coverImage ? (
-                    <Image
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
                       src={proj.coverImage}
                       alt={proj.name}
-                      fill
-                      className="object-cover"
-                      unoptimized
+                      className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400">
-                      <Globe className="w-8 h-8 opacity-40" />
-                    </div>
+                    <ImageIcon className="w-8 h-8 text-[#8A7C75]" />
                   )}
-                  <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded text-[10px] font-mono uppercase font-bold bg-white/95 text-slate-700 backdrop-blur-xs border border-slate-200">
+                  <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-white/95 border border-[#E8DFD5] text-[10px] font-bold text-[#332924]">
                     {proj.category}
                   </span>
                 </div>
-
-                <div className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-bold text-sm text-[#0A192F] line-clamp-1">
+                <div className="p-4 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-display font-bold text-sm text-[#332924] truncate">
                       {proj.name}
                     </h3>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        proj.published
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-slate-100 text-slate-500"
-                      }`}
-                    >
-                      {proj.published ? "Live" : "Draft"}
-                    </span>
+                    {proj.featured && (
+                      <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 shrink-0" />
+                    )}
                   </div>
-                  <p className="text-xs text-slate-500 line-clamp-2">
-                    {proj.shortDescription || proj.description}
-                  </p>
+                  <p className="text-xs text-[#6E625B] line-clamp-2">{proj.shortDescription}</p>
                 </div>
               </div>
-
-              <div className="p-4 pt-0 border-t border-slate-100 flex items-center justify-between mt-3 text-xs">
-                <span className="text-slate-400 font-mono text-[11px]">
-                  {(proj.technologies || []).slice(0, 2).join(", ")}
-                </span>
-                <div className="flex items-center gap-1">
+              <div className="px-4 py-3 border-t border-[#F3ECE4] flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => void onTogglePublished(proj)}
+                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border cursor-pointer ${
+                    proj.published
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-stone-100 text-stone-600 border-stone-200"
+                  }`}
+                >
+                  {proj.published ? "Live" : "Draft"}
+                </button>
+                <div className="flex items-center gap-1.5">
                   <button
                     type="button"
-                    onClick={() => setEditingProject(proj)}
-                    className="p-1.5 text-slate-500 hover:text-[#0A192F] rounded-md hover:bg-slate-100 transition-colors"
+                    onClick={() => setEditingProject({ ...proj })}
+                    className="px-3 py-1 rounded-lg bg-[#FAF7F2] hover:bg-[#FAECE4] border border-[#E8DFD5] text-xs font-bold cursor-pointer"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    Edit
                   </button>
                   <button
                     type="button"
-                    onClick={() => void onDeleteProject(proj.id)}
-                    className="p-1.5 text-red-500 hover:text-red-700 rounded-md hover:bg-red-50 transition-colors"
+                    onClick={() => void handleDelete(proj.id)}
+                    disabled={deletingId === proj.id}
+                    className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -424,37 +393,28 @@ export function ProjectsAdminView({
         </div>
       )}
 
-      {/* Project Editor Modal */}
+      {/* Full Project Modal Editor */}
       {editingProject && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in-50 duration-200">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white border border-slate-200 p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h3 className="text-base font-bold text-[#0A192F] flex items-center gap-2">
-                <Edit3 className="w-4 h-4 text-[#0284C7]" />
-                <span>
-                  {editingProject.id?.startsWith("proj_")
-                    ? "Create New Case Study"
-                    : `Edit Project: ${editingProject.name}`}
-                </span>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#332924]/45 backdrop-blur-xs">
+          <div className="w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white border border-[#E8DFD5] shadow-2xl">
+            <div className="px-6 py-4 border-b border-[#E8DFD5] flex items-center justify-between bg-[#FAF7F2] sticky top-0 z-10">
+              <h3 className="font-display font-bold text-base text-[#332924]">
+                {editingProject.name ? `Edit: ${editingProject.name}` : "Create New Project"}
               </h3>
               <button
                 type="button"
                 onClick={() => setEditingProject(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="p-1.5 rounded-lg text-[#6E625B] hover:bg-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-4 text-xs">
-              {/* Title & Slug */}
+            <div className="p-6 space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="project-name-input" className="font-semibold text-slate-700 block mb-1">
-                    Project Name *
-                  </label>
+                  <label className="font-bold text-[#332924] block mb-1">Project Name *</label>
                   <input
-                    id="project-name-input"
                     type="text"
                     value={editingProject.name || ""}
                     onChange={(e) =>
@@ -465,186 +425,190 @@ export function ProjectsAdminView({
                           editingProject.slug ||
                           e.target.value
                             .toLowerCase()
-                            .replace(/[^a-z0-9]+/g, "-"),
+                            .replace(/[^a-z0-9]+/g, "-")
+                            .replace(/^-|-$/g, ""),
                       })
                     }
-                    placeholder="e.g., WishMusic Stream"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                    placeholder="e.g., EasyXo Brand Ecosystem"
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
                   />
                 </div>
                 <div>
-                  <label htmlFor="project-slug-input" className="font-semibold text-slate-700 block mb-1">
-                    URL Slug *
-                  </label>
+                  <label className="font-bold text-[#332924] block mb-1">URL Slug *</label>
                   <input
-                    id="project-slug-input"
                     type="text"
                     value={editingProject.slug || ""}
                     onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        slug: e.target.value,
-                      })
+                      setEditingProject({ ...editingProject, slug: e.target.value })
                     }
-                    placeholder="e.g., wishmusic-stream"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] font-mono focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5] font-mono"
                   />
                 </div>
               </div>
 
-              {/* Category & Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="font-bold text-[#332924] block mb-1">Category</label>
+                  <select
+                    value={editingProject.category || "Web Development"}
+                    onChange={(e) =>
+                      setEditingProject({ ...editingProject, category: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
+                  >
+                    {CATEGORIES.filter((c) => c !== "all").map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-[#332924] block mb-1">Project Stage</label>
+                  <select
+                    value={editingProject.status || "Completed"}
+                    onChange={(e) =>
+                      setEditingProject({ ...editingProject, status: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
+                  >
+                    <option value="Active Brand">Active Brand</option>
+                    <option value="Live Store">Live Store</option>
+                    <option value="Completed">Completed</option>
+                    <option value="In Production">In Production</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-bold text-[#332924] block mb-1">Highlight Badge</label>
+                  <input
+                    type="text"
+                    value={editingProject.highlight || ""}
+                    onChange={(e) =>
+                      setEditingProject({ ...editingProject, highlight: e.target.value })
+                    }
+                    placeholder="Flagship Venture"
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
+                  />
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="project-category-input" className="font-semibold text-slate-700 block mb-1">
-                    Category
-                  </label>
+                  <label className="font-bold text-[#332924] block mb-1">Live Website URL</label>
                   <input
-                    id="project-category-input"
                     type="text"
-                    value={editingProject.category || ""}
+                    value={editingProject.url || ""}
                     onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        category: e.target.value,
-                      })
+                      setEditingProject({ ...editingProject, url: e.target.value })
                     }
-                    placeholder="e.g., Web Application, E-commerce"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                    placeholder="https://example.com"
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5] font-mono"
                   />
                 </div>
                 <div>
-                  <label htmlFor="project-status-input" className="font-semibold text-slate-700 block mb-1">
-                    Status Label
-                  </label>
+                  <label className="font-bold text-[#332924] block mb-1">Sort Order</label>
                   <input
-                    id="project-status-input"
-                    type="text"
-                    value={editingProject.status || ""}
+                    type="number"
+                    value={editingProject.sortOrder ?? 0}
                     onChange={(e) =>
                       setEditingProject({
                         ...editingProject,
-                        status: e.target.value,
+                        sortOrder: Number(e.target.value) || 0,
                       })
                     }
-                    placeholder="e.g., Completed, Live Store, In Production"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                    className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
                   />
                 </div>
               </div>
 
-              {/* Tagline & Short Description */}
               <div>
-                <label htmlFor="project-tagline-input" className="font-semibold text-slate-700 block mb-1">
-                  Tagline / Subheadline
-                </label>
+                <label className="font-bold text-[#332924] block mb-1">Card Summary</label>
                 <input
-                  id="project-tagline-input"
                   type="text"
-                  value={editingProject.tagline || ""}
+                  value={editingProject.shortDescription || ""}
                   onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      tagline: e.target.value,
-                    })
+                    setEditingProject({ ...editingProject, shortDescription: e.target.value })
                   }
-                  placeholder="e.g., Ultra-lightweight ad-free music player for Android"
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                  placeholder="One-line outcome summary..."
+                  className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
                 />
               </div>
 
               <div>
-                <label htmlFor="project-description-input" className="font-semibold text-slate-700 block mb-1">
-                  Full Description
-                </label>
+                <label className="font-bold text-[#332924] block mb-1">Full Case Study Story</label>
                 <textarea
-                  id="project-description-input"
                   rows={3}
                   value={editingProject.description || ""}
                   onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      description: e.target.value,
-                    })
+                    setEditingProject({ ...editingProject, description: e.target.value })
                   }
-                  placeholder="Detailed project summary..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                  placeholder="Challenge, solution, and commercial results..."
+                  className="w-full px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
                 />
               </div>
 
-              {/* Cover Image Upload via Cloudinary */}
-              <div>
-                <label htmlFor="project-cover-image-input" className="font-semibold text-slate-700 block mb-1">
-                  Cover Image URL
-                </label>
-                <div className="flex gap-2">
+              {/* Cover Image with Direct Upload + Media Library Picker */}
+              <div className="p-4 rounded-2xl bg-[#FAF7F2] border border-[#E8DFD5] space-y-2.5">
+                <label className="font-bold text-[#332924] block">Cover Image</label>
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input
-                    id="project-cover-image-input"
                     type="text"
                     value={editingProject.coverImage || ""}
                     onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        coverImage: e.target.value,
-                      })
+                      setEditingProject({ ...editingProject, coverImage: e.target.value })
                     }
-                    placeholder="https://res.cloudinary.com/..."
-                    className="flex-1 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] font-mono focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                    placeholder="https://... image URL"
+                    className="flex-1 px-3 py-2 rounded-xl bg-white border border-[#E8DFD5] font-mono"
                   />
-                  <label className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold flex items-center gap-1.5 cursor-pointer transition-colors">
-                    <Upload className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Upload</span>
+                  <button
+                    type="button"
+                    onClick={() => setMediaTarget("cover")}
+                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAECE4] border border-[#E8DFD5] font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                  >
+                    <ImageIcon className="w-3.5 h-3.5 text-[#C96A50]" />
+                    <span>Pick Image</span>
+                  </button>
+                  <label className="px-3.5 py-2 rounded-xl bg-[#332924] hover:bg-[#4A3D36] text-white font-bold inline-flex items-center justify-center gap-1.5 cursor-pointer">
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{uploadingImage ? "Uploading..." : "Upload"}</span>
                     <input
                       type="file"
                       accept="image/*"
                       className="hidden"
                       onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const url = await handleFileUpload(file, "projects");
-                          if (url) {
-                            setEditingProject({
-                              ...editingProject,
-                              coverImage: url,
-                            });
-                          }
-                        }
+                        const f = e.target.files?.[0];
+                        if (!f) return;
+                        const url = await handleFileUpload(f, "projects");
+                        if (url) setEditingProject({ ...editingProject, coverImage: url });
                       }}
                     />
                   </label>
                 </div>
-                {uploadingImage && (
-                  <span className="text-[11px] text-[#0284C7] mt-1 block">
-                    Uploading image to Cloudinary...
-                  </span>
-                )}
               </div>
 
-              {/* Tech Stack Pills */}
+              {/* Tech Stack */}
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">
-                  Technologies
-                </label>
+                <label className="font-bold text-[#332924] block mb-1">Tools / Stack</label>
                 <div className="flex flex-wrap gap-1.5 mb-2">
-                  {(editingProject.technologies || []).map((t, idx) => (
+                  {(editingProject.technologies || []).map((t, i) => (
                     <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-[11px]"
+                      key={i}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FAECE4] text-[#B4583F] font-semibold"
                     >
                       <span>{t}</span>
                       <button
                         type="button"
-                        onClick={() => {
-                          const updated = (
-                            editingProject.technologies || []
-                          ).filter((_, i) => i !== idx);
+                        onClick={() =>
                           setEditingProject({
                             ...editingProject,
-                            technologies: updated,
-                          });
-                        }}
-                        className="text-slate-400 hover:text-red-500"
+                            technologies: (editingProject.technologies || []).filter(
+                              (_, idx) => idx !== i
+                            ),
+                          })
+                        }
+                        className="cursor-pointer"
                       >
-                        ×
+                        <X className="w-3 h-3" />
                       </button>
                     </span>
                   ))}
@@ -654,169 +618,206 @@ export function ProjectsAdminView({
                     type="text"
                     value={techInput}
                     onChange={(e) => setTechInput(e.target.value)}
-                    placeholder="Add technology (e.g. Next.js, Flutter)..."
-                    className="flex-1 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[#0A192F]"
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && techInput.trim()) {
                         e.preventDefault();
-                        const next = [
-                          ...(editingProject.technologies || []),
-                          techInput.trim(),
-                        ];
                         setEditingProject({
                           ...editingProject,
-                          technologies: next,
+                          technologies: [
+                            ...(editingProject.technologies || []),
+                            techInput.trim(),
+                          ],
                         });
                         setTechInput("");
                       }
                     }}
+                    placeholder="Add tool & press Enter (e.g. Next.js, Razorpay)..."
+                    className="flex-1 px-3 py-2 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
                   />
                   <button
                     type="button"
                     onClick={() => {
-                      if (techInput.trim()) {
-                        const next = [
-                          ...(editingProject.technologies || []),
-                          techInput.trim(),
-                        ];
-                        setEditingProject({
-                          ...editingProject,
-                          technologies: next,
-                        });
-                        setTechInput("");
-                      }
+                      if (!techInput.trim()) return;
+                      setEditingProject({
+                        ...editingProject,
+                        technologies: [...(editingProject.technologies || []), techInput.trim()],
+                      });
+                      setTechInput("");
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#332924] text-white font-bold cursor-pointer"
                   >
                     Add
                   </button>
                 </div>
               </div>
 
-              {/* Deliverables */}
-              <div>
-                <label className="font-semibold text-slate-700 block mb-1">
-                  Key Deliverables
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-2">
-                  {(editingProject.deliverables || []).map((d, idx) => (
-                    <span
-                      key={idx}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-sky-50 text-[#0284C7] text-[11px]"
-                    >
-                      <span>{d}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = (
-                            editingProject.deliverables || []
-                          ).filter((_, i) => i !== idx);
-                          setEditingProject({
-                            ...editingProject,
-                            deliverables: updated,
-                          });
-                        }}
-                        className="text-sky-400 hover:text-red-500"
+              {/* Scope & Deliverables */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-[#332924] block mb-1">Scope</label>
+                  <div className="space-y-1 mb-2">
+                    {(editingProject.scope || []).map((s, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#E8DFD5]"
                       >
-                        ×
-                      </button>
-                    </span>
-                  ))}
+                        <span className="truncate">{s}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingProject({
+                              ...editingProject,
+                              scope: (editingProject.scope || []).filter((_, idx) => idx !== i),
+                            })
+                          }
+                          className="text-rose-500 cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={scopeInput}
+                      onChange={(e) => setScopeInput(e.target.value)}
+                      placeholder="Add scope..."
+                      className="flex-1 px-3 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!scopeInput.trim()) return;
+                        setEditingProject({
+                          ...editingProject,
+                          scope: [...(editingProject.scope || []), scopeInput.trim()],
+                        });
+                        setScopeInput("");
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#332924] text-white font-bold cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={deliverableInput}
-                    onChange={(e) => setDeliverableInput(e.target.value)}
-                    placeholder="Add deliverable (e.g. Dark Mode System, Payment Gateway)..."
-                    className="flex-1 px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-[#0A192F]"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && deliverableInput.trim()) {
-                        e.preventDefault();
-                        const next = [
-                          ...(editingProject.deliverables || []),
-                          deliverableInput.trim(),
-                        ];
+
+                <div>
+                  <label className="font-bold text-[#332924] block mb-1">Deliverables</label>
+                  <div className="space-y-1 mb-2">
+                    {(editingProject.deliverables || []).map((d, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between px-2.5 py-1 rounded-lg bg-[#FAF7F2] border border-[#E8DFD5]"
+                      >
+                        <span className="truncate">{d}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEditingProject({
+                              ...editingProject,
+                              deliverables: (editingProject.deliverables || []).filter(
+                                (_, idx) => idx !== i
+                              ),
+                            })
+                          }
+                          className="text-rose-500 cursor-pointer"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={deliverableInput}
+                      onChange={(e) => setDeliverableInput(e.target.value)}
+                      placeholder="Add deliverable..."
+                      className="flex-1 px-3 py-1.5 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!deliverableInput.trim()) return;
                         setEditingProject({
                           ...editingProject,
-                          deliverables: next,
+                          deliverables: [
+                            ...(editingProject.deliverables || []),
+                            deliverableInput.trim(),
+                          ],
                         });
                         setDeliverableInput("");
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (deliverableInput.trim()) {
-                        const next = [
-                          ...(editingProject.deliverables || []),
-                          deliverableInput.trim(),
-                        ];
-                        setEditingProject({
-                          ...editingProject,
-                          deliverables: next,
-                        });
-                        setDeliverableInput("");
-                      }
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 font-bold text-slate-700 hover:bg-slate-200 cursor-pointer"
-                  >
-                    Add
-                  </button>
+                      }}
+                      className="px-3 py-1.5 rounded-xl bg-[#332924] text-white font-bold cursor-pointer"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* Flags */}
-              <div className="pt-2 flex items-center gap-6 border-t border-slate-100">
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+              <div className="flex flex-wrap gap-6 pt-2 border-t border-[#F3ECE4]">
+                <label className="flex items-center gap-2 font-bold text-[#332924] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={editingProject.published ?? true}
                     onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        published: e.target.checked,
-                      })
+                      setEditingProject({ ...editingProject, published: e.target.checked })
                     }
                   />
-                  <span>Published to Public Site</span>
+                  <span>Published Live</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                <label className="flex items-center gap-2 font-bold text-[#332924] cursor-pointer">
                   <input
                     type="checkbox"
                     checked={editingProject.featured ?? false}
                     onChange={(e) =>
-                      setEditingProject({
-                        ...editingProject,
-                        featured: e.target.checked,
-                      })
+                      setEditingProject({ ...editingProject, featured: e.target.checked })
                     }
                   />
-                  <span>Featured Case Study</span>
+                  <span>Featured on Homepage</span>
                 </label>
               </div>
             </div>
 
-            {/* Modal Actions */}
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <div className="px-6 py-4 border-t border-[#E8DFD5] flex items-center justify-end gap-2.5 bg-[#FAF7F2] sticky bottom-0">
               <button
                 type="button"
                 onClick={() => setEditingProject(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-full text-xs font-bold text-[#5F534D] hover:bg-white cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveModal}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0284C7] hover:bg-[#0052cc] shadow-xs transition-colors cursor-pointer"
+                disabled={saving}
+                className="px-5 py-2 rounded-full text-xs font-bold text-white bg-[#C96A50] hover:bg-[#B4583F] inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
-                Save Project
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                <span>{saving ? "Saving..." : "Save Project"}</span>
               </button>
             </div>
           </div>
         </div>
+      )}
+
+      {mediaTarget && editingProject && (
+        <MediaLibraryModal
+          isOpen={true}
+          onClose={() => setMediaTarget(null)}
+          onSelect={(asset) => {
+            if (mediaTarget === "cover") {
+              setEditingProject({ ...editingProject, coverImage: asset.url });
+            } else {
+              setEditingProject({
+                ...editingProject,
+                gallery: [...(editingProject.gallery || []), asset.url],
+              });
+            }
+          }}
+        />
       )}
     </div>
   );

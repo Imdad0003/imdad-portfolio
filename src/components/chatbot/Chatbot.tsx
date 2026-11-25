@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChatWindow } from "./ChatWindow";
 import { Message } from "./ChatMessage";
@@ -25,6 +26,7 @@ const initialMessages: Message[] = [
 ];
 
 export function Chatbot() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [loading, setLoading] = useState(false);
@@ -168,6 +170,10 @@ export function Chatbot() {
     }
   };
 
+  if (pathname?.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] right-4 sm:right-6 z-[100]">
       {/* Floating Trigger Button with Tooltip */}
@@ -180,28 +186,29 @@ export function Chatbot() {
             transition={{ duration: 0.2 }}
             className="relative flex items-center justify-end group"
           >
-            {/* Tooltip on Desktop */}
-            <div className="hidden sm:flex items-center gap-2 mr-3 px-3.5 py-1.5 rounded-full bg-white/95 border border-[#502D55]/15 text-xs font-bold text-[#180D1D] backdrop-blur-xl shadow-md pointer-events-none group-hover:scale-105 transition-transform">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#d97746] animate-pulse" />
+            {/* Tooltip on Desktop (Frosted M3 Pill) */}
+            <div className="hidden sm:flex items-center gap-2 mr-3 px-4 py-2 rounded-full m3-surface-2 text-xs font-semibold text-[#332924] pointer-events-none group-hover:scale-105 group-hover:-translate-x-0.5 transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C96A50] opacity-65" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C96A50]" />
+              </span>
               <span>Ask about a project</span>
             </div>
 
-            {/* Circular Glass Button */}
+            {/* Android 17 Expressive Floating Action Button (Squircle -> Pill Morph) */}
             <button
               type="button"
               onClick={handleOpen}
-              className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#2B1435] via-[#1E0D26] to-[#180D1D] border-2 border-[#F6DBC0]/50 text-[#F6DBC0] flex items-center justify-center shadow-[0_10px_30px_rgba(43,20,53,0.35),0_0_20px_rgba(246,219,192,0.3)] backdrop-blur-2xl hover:scale-105 active:scale-95 transition-all cursor-pointer focus-ring"
+              className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] hover:rounded-full active:rounded-[18px] bg-gradient-to-b from-[#D5775C] to-[#BE5D43] hover:from-[#C96A50] hover:to-[#AF5138] border border-white/75 text-white flex items-center justify-center shadow-[inset_0_1.5px_0_rgba(255,255,255,0.45),0_12px_30px_-4px_rgba(201,106,80,0.48),0_4px_10px_-2px_rgba(51,41,36,0.16)] hover:shadow-[inset_0_1.5px_0_rgba(255,255,255,0.5),0_18px_38px_-4px_rgba(201,106,80,0.58)] hover:scale-105 active:scale-92 transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)] cursor-pointer focus-ring"
               aria-label="Open AI Project Assistant"
             >
               <div className="relative">
-                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-[#F6DBC0]" />
+                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
               </div>
 
               {/* Unread Pill indicator */}
               {hasUnread && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#935073] border-2 border-white flex items-center justify-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#F6DBC0] animate-ping" />
-                </span>
+                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#FAECE4] border-2 border-[#C96A50] shadow-xs" />
               )}
             </button>
           </motion.div>

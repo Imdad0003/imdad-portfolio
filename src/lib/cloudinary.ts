@@ -19,13 +19,22 @@ export interface CloudinaryUploadResponse {
   };
 }
 
-export async function uploadToCloudinary(
+export interface CloudinaryAssetResult {
+  url: string;
+  publicId?: string;
+  width?: number;
+  height?: number;
+  bytes?: number;
+  format?: string;
+}
+
+export async function uploadMediaAssetToCloudinary(
   file: File,
   options?: {
     folder?: string;
     onProgress?: (percent: number) => void;
   }
-): Promise<string> {
+): Promise<CloudinaryAssetResult> {
   const formData = new FormData();
   formData.append("file", file);
   const folderParts = options?.folder?.split("/").filter(Boolean) || [];
@@ -56,9 +65,9 @@ export async function uploadToCloudinary(
 
       xhr.onload = () => {
         try {
-          const data = JSON.parse(xhr.responseText) as { asset?: { url?: string }; error?: string };
+          const data = JSON.parse(xhr.responseText) as { asset?: CloudinaryAssetResult; error?: string };
           if (xhr.status >= 200 && xhr.status < 300 && data.asset?.url) {
-            resolve(data.asset.url);
+            resolve(data.asset);
           } else {
             const msg = data.error || `Upload failed with status ${xhr.status}`;
             reject(new Error(msg));
@@ -82,7 +91,7 @@ export async function uploadToCloudinary(
     body: formData,
   });
 
-  const data = await res.json().catch(() => ({})) as { asset?: { url?: string }; error?: string };
+  const data = await res.json().catch(() => ({})) as { asset?: CloudinaryAssetResult; error?: string };
   if (!res.ok) {
     const errorMsg = data?.error || `Cloudinary upload failed with status ${res.status}`;
     throw new Error(errorMsg);
@@ -92,5 +101,16 @@ export async function uploadToCloudinary(
     throw new Error("Cloudinary response missing secure_url");
   }
 
-  return data.asset.url;
+  return data.asset;
+}
+
+export async function uploadToCloudinary(
+  file: File,
+  options?: {
+    folder?: string;
+    onProgress?: (percent: number) => void;
+  }
+): Promise<string> {
+  const asset = await uploadMediaAssetToCloudinary(file, options);
+  return asset.url;
 }

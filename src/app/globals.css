@@ -1,19 +1,34 @@
 @import "tailwindcss";
 
+@theme inline {
+  --font-sans: var(--font-dm-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-dm-sans), -apple-system, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
 :root {
-  /* Clean Light-Only Surface System */
-  --background: #F8FAFC;          /* Clean soft-blue/slate background */
-  --foreground: #0A192F;          /* Deep navy high-contrast text */
-  --navy-deep: #0A192F;           /* Primary deep navy */
-  --navy-dark: #0F172A;           /* Slate 900 */
-  --navy-slate: #1E293B;          /* Slate 800 */
-  --navy-muted: #334155;          /* Slate 700 (WCAG AA compliant contrast) */
-  --navy-subtle: #475569;         /* Slate 600 */
-  --blue-electric: #0284C7;       /* Electric blue accent (Sky 600) */
-  --blue-vibrant: #2563EB;        /* Blue 600 */
-  --blue-ice: #E0F2FE;            /* Sky 100 ice-blue surface */
-  --blue-soft: #F0F9FF;           /* Sky 50 soft-blue surface */
-  --cyan-accent: #06B6D4;         /* Tech Cyan */
+  /* Warm Soft & Light Studio Surface Palette (No Black, No Blue, No Green) */
+  --background: #FAF7F2;          /* Soft Warm Cream */
+  --surface-pure: #FFFFFF;        /* Pure Soft Ivory White */
+  --surface-sand: #F3ECE4;        /* Warm Sand / Oat Tint */
+  --surface-peach: #FAECE4;       /* Soft Blush Peach */
+  --foreground: #332924;          /* Warm Espresso Cocoa Ink */
+  --ink-primary: #332924;         /* Headings & Strong Ink */
+  --ink-body: #5F534D;            /* Comfortable Body Text */
+  --ink-muted: #8A7C75;           /* Soft Muted Captions */
+  --accent-coral: #C96A50;        /* Soft Warm Terracotta Accent */
+  --accent-coral-hover: #B4583F;  /* Deeper Terracotta Hover */
+  --accent-rose: #9A5B6B;         /* Soft Warm Rose */
+  --border-warm: #E8DFD5;         /* Gentle Warm Border */
+
+  /* Android 17 / Material 3 Expressive Tokens */
+  --m3-surface-low: rgba(244, 239, 232, 0.85);
+  --m3-surface-glass: rgba(255, 255, 255, 0.82);
+  --m3-surface-elevated: rgba(255, 255, 255, 0.92);
+  --m3-tonal-peach: rgba(250, 236, 228, 0.86);
+  --m3-spring-expressive: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --m3-spring-tactile: cubic-bezier(0.22, 1.28, 0.36, 1);
+  --m3-spring-smooth: cubic-bezier(0.2, 0.9, 0.3, 1);
   color-scheme: light;
 }
 
@@ -40,12 +55,20 @@ html {
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font-family: var(--font-sans);
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3,
+h4,
+.font-display {
+  font-family: var(--font-display);
 }
 
 .pb-safe {
@@ -56,72 +79,43 @@ body {
   padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
 }
 
-/* Liquid Glass System (Clean Light-Only Electric-Blue Aesthetic) */
+/* Soft Warm Paper Surfaces */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(14, 165, 233, 0.12);
-  box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #E8DFD5;
+  box-shadow: 0 6px 24px -6px rgba(51, 41, 36, 0.05);
 }
 
 .glass-panel-elevated {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(14, 165, 233, 0.18);
-  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.06), inset 0 1px 0 0 rgba(255, 255, 255, 1);
+  background: #FFFFFF;
+  border: 1px solid #E2D6CA;
+  box-shadow: 0 12px 32px -8px rgba(51, 41, 36, 0.07);
 }
 
 .glass-panel-interactive {
-  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
 }
 
 .glass-panel-interactive:hover {
-  background: #ffffff;
-  border-color: rgba(2, 132, 199, 0.35);
-  transform: translateY(-3px);
-  box-shadow: 0 20px 45px -10px rgba(15, 23, 42, 0.08), 0 0 30px -5px rgba(2, 132, 199, 0.15), inset 0 1px 0 0 #ffffff;
+  background: #FFFFFF;
+  border-color: #D8A999;
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -10px rgba(201, 106, 80, 0.14);
 }
 
 .glass-pill {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(14, 165, 233, 0.16);
-  box-shadow: 0 4px 15px -2px rgba(15, 23, 42, 0.03), inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+  background: #FFFFFF;
+  border: 1px solid #E8DFD5;
+  box-shadow: 0 2px 10px -2px rgba(51, 41, 36, 0.04);
 }
 
-/* Deep Navy & Electric Blue Typography Gradients */
-.text-gradient-dusk {
-  background: linear-gradient(135deg, #0A192F 0%, #0F172A 45%, #0284C7 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.text-gradient-electric {
-  background: linear-gradient(135deg, #0A192F 0%, #2563EB 60%, #06B6D4 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
+/* Soft Warm Text Gradients (No Blue/Black) */
+.text-gradient-dusk,
+.text-gradient-electric,
 .text-gradient-blue {
-  background: linear-gradient(135deg, #0F172A 0%, #0284C7 55%, #06B6D4 100%);
+  background: linear-gradient(135deg, #332924 0%, #9A5B6B 55%, #C96A50 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-/* Glow effects */
-.glow-blue {
-  box-shadow: 0 0 45px -5px rgba(2, 132, 199, 0.25);
-}
-
-.glow-ice {
-  box-shadow: 0 0 50px -5px rgba(224, 242, 254, 0.7);
-}
-
-.glow-electric {
-  box-shadow: 0 0 60px -5px rgba(37, 99, 235, 0.2);
 }
 
 /* Custom Scrollbar */
@@ -130,17 +124,17 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F8FAFC;
+  background: #FAF7F2;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #D8CFC6;
   border-radius: 9999px;
-  border: 2px solid #F8FAFC;
+  border: 2px solid #FAF7F2;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #0284C7;
+  background: #C96A50;
 }
 
 /* Focus Ring */
@@ -149,48 +143,16 @@ body {
 }
 .focus-ring:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #0284C7;
+  box-shadow: 0 0 0 2px #FFFFFF, 0 0 0 4px #C96A50;
 }
 
-/* Animation Keyframes (Preserved) */
+/* Subtle Animation Keyframes preserved for compatibility */
 @keyframes float-slow {
   0%, 100% {
-    transform: translateY(0px) rotate(0deg);
+    transform: translateY(0px);
   }
   50% {
-    transform: translateY(-8px) rotate(0.5deg);
-  }
-}
-
-@keyframes float-reverse {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(8px) rotate(-0.5deg);
-  }
-}
-
-@keyframes liquid-pulse {
-  0%, 100% {
-    opacity: 0.35;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 0.55;
-    transform: scale(1.08);
-  }
-}
-
-@keyframes ribbon-drift {
-  0% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  50% {
-    transform: translate(15px, 20px) rotate(1deg);
-  }
-  100% {
-    transform: translate(0, 0) rotate(0deg);
+    transform: translateY(-5px);
   }
 }
 
@@ -198,49 +160,198 @@ body {
   animation: float-slow 7s ease-in-out infinite;
 }
 
-.animate-float-reverse {
-  animation: float-reverse 8s ease-in-out infinite;
-}
-
-.animate-liquid-pulse {
-  animation: liquid-pulse 9s ease-in-out infinite;
-}
-
-.animate-ribbon-drift {
-  animation: ribbon-drift 14s ease-in-out infinite;
-}
-
-/* Studio Design System Utilities */
+/* Soft Warm Utility Classes */
 .studio-border {
-  border: 1px solid rgba(80, 45, 85, 0.1);
+  border: 1px solid #E8DFD5;
 }
 
 .studio-border-strong {
-  border: 1px solid rgba(80, 45, 85, 0.18);
+  border: 1px solid #D8CBBF;
 }
 
 .studio-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
 }
 
 .badge-live {
-  background-color: #ECFDF5;
-  color: #065F46;
-  border: 1px solid rgba(16, 185, 129, 0.35);
+  background-color: #FAECE4;
+  color: #B4583F;
+  border: 1px solid #F0CFC0;
 }
 
 .badge-in-development {
-  background-color: #FFFBEB;
-  color: #92400E;
-  border: 1px solid rgba(245, 158, 11, 0.35);
+  background-color: #FDF4EA;
+  color: #9A6324;
+  border: 1px solid #F3DCBE;
 }
 
 .badge-coming-soon {
-  background-color: #FAF5FF;
-  color: #6B21A8;
-  border: 1px solid rgba(168, 85, 247, 0.35);
+  background-color: #F6EAEF;
+  color: #8E5568;
+  border: 1px solid #E6CDD7;
 }
 
+/* =========================================================
+   Android 17 / Material 3 Expressive System Styles
+   Layered Tonal Elevation, Frosted Blurs, Spring Motion & Morphing
+   ========================================================= */
+
+@keyframes m3-ripple-expand {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.42;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.8);
+    opacity: 0;
+  }
+}
+
+@keyframes m3-aurora-drift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(18px, -14px, 0) scale(1.04);
+  }
+  66% {
+    transform: translate3d(-12px, 12px, 0) scale(0.98);
+  }
+}
+
+.animate-m3-ripple {
+  animation: m3-ripple-expand 580ms cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+}
+
+.animate-m3-aurora {
+  animation: m3-aurora-drift 18s ease-in-out infinite;
+}
+
+/* Frosted Translucent Tonal Surfaces with Multi-Layered Ambient Depth */
+.m3-surface-1 {
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(22px) saturate(145%);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  border: 1px solid rgba(232, 223, 213, 0.9);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.92),
+    0 2px 6px -1px rgba(51, 41, 36, 0.04),
+    0 14px 34px -10px rgba(51, 41, 36, 0.08);
+}
+
+.m3-surface-2 {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid rgba(226, 214, 202, 0.92);
+  box-shadow:
+    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.98),
+    0 4px 12px -2px rgba(51, 41, 36, 0.05),
+    0 24px 54px -14px rgba(51, 41, 36, 0.11);
+}
+
+.m3-surface-tonal {
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.9) 0%, rgba(250, 236, 228, 0.82) 100%);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border: 1px solid rgba(240, 207, 192, 0.9);
+  box-shadow:
+    inset 0 1.5px 0 0 rgba(255, 255, 255, 0.95),
+    0 12px 32px -10px rgba(201, 106, 80, 0.14),
+    0 3px 10px -2px rgba(51, 41, 36, 0.04);
+}
+
+/* Expressive Spring-Hover Interactive Cards */
+.m3-card-interactive {
+  transition:
+    transform 420ms var(--m3-spring-expressive),
+    box-shadow 360ms var(--m3-spring-smooth),
+    border-color 260ms ease,
+    background-color 260ms ease;
+}
+
+.m3-card-interactive:hover {
+  transform: translateY(-4px);
+  border-color: rgba(201, 106, 80, 0.48);
+  box-shadow:
+    inset 0 1.5px 0 0 rgba(255, 255, 255, 1),
+    0 6px 16px -4px rgba(51, 41, 36, 0.06),
+    0 24px 48px -12px rgba(201, 106, 80, 0.18);
+}
+
+.m3-card-interactive:active {
+  transform: translateY(-1px) scale(0.988);
+  transition-duration: 140ms;
+}
+
+/* Android 17 Morphing Icon Squircle */
+.m3-icon-squircle {
+  border-radius: 18px;
+  transition:
+    border-radius 460ms var(--m3-spring-expressive),
+    transform 460ms var(--m3-spring-expressive),
+    box-shadow 320ms var(--m3-spring-smooth),
+    background-color 240ms ease,
+    color 240ms ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 4px 12px -3px rgba(201, 106, 80, 0.16);
+}
+
+.group:hover .m3-icon-squircle,
+.m3-icon-squircle:hover {
+  border-radius: 9999px;
+  transform: scale(1.08) rotate(-3deg);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 20px -4px rgba(201, 106, 80, 0.28);
+}
+
+/* Tactile Pill & Chip Elevation */
+.m3-pill-chip {
+  transition:
+    transform 360ms var(--m3-spring-expressive),
+    box-shadow 260ms var(--m3-spring-smooth),
+    border-color 220ms ease,
+    background-color 220ms ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 6px -2px rgba(51, 41, 36, 0.06);
+}
+
+.m3-pill-chip:hover {
+  transform: translateY(-1.5px) scale(1.02);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 6px 14px -4px rgba(201, 106, 80, 0.18);
+}
+
+.m3-pill-chip:active {
+  transform: scale(0.96);
+}
+
+/* Tactile Quick-Settings Tile */
+.m3-quick-tile {
+  transition:
+    transform 380ms var(--m3-spring-expressive),
+    box-shadow 300ms var(--m3-spring-smooth),
+    border-color 240ms ease,
+    background-color 240ms ease,
+    border-radius 380ms var(--m3-spring-expressive);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 2px 8px -2px rgba(51, 41, 36, 0.04);
+}
+
+.m3-quick-tile:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 12px 26px -8px rgba(201, 106, 80, 0.2);
+}
+
+.m3-quick-tile:active {
+  transform: scale(0.975);
+  transition-duration: 120ms;
+}

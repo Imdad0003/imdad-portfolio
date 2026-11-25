@@ -8,7 +8,10 @@ import {
   getPublishedAPlusModules,
   getPublishedAmazonPackages,
 } from "@/lib/amazon-portfolio-service";
+import { getPublishedServiceBySlug } from "@/lib/cms";
 import { AmazonListingShowcaseClient } from "@/components/services/AmazonListingShowcaseClient";
+import { ServiceTeamSection } from "@/components/services/ServiceTeamSection";
+import { ServiceDemoGallery } from "@/components/services/ServiceDemoGallery";
 import {
   ArrowLeft,
   ShoppingBag,
@@ -37,11 +40,20 @@ export const metadata: Metadata = {
 };
 
 export default async function AmazonListingShowcasePage() {
-  const [samples, aPlusModules, packages] = await Promise.all([
+  const [samples, aPlusModules, packages, cmsService] = await Promise.all([
     getPublishedListingSamples(),
     getPublishedAPlusModules(),
     getPublishedAmazonPackages(),
+    getPublishedServiceBySlug("amazon-listing"),
   ]);
+
+  const heroTitle = cmsService?.name || "Amazon Listing & A+ Content Showcase";
+  const heroDescription =
+    cmsService?.description ||
+    cmsService?.shortDescription ||
+    "We design product listing image stacks and Amazon Enhanced Brand Content (EBC) engineered to maximize search discovery, overcome buyer hesitation in the first 3 seconds, and reduce return rates.";
+  const teamMembers = cmsService?.teamMembers || [];
+  const cmsDemos = cmsService?.demos || [];
 
   return (
     <main className="pt-24 sm:pt-28 pb-24 min-h-screen bg-[#FDFBF9]">
@@ -76,11 +88,11 @@ export default async function AmazonListingShowcasePage() {
             </div>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-[#0A192F] tracking-tight leading-tight">
-              Amazon Listing &amp; A+ Content Showcase
+              {heroTitle}
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              We design product listing image stacks and Amazon Enhanced Brand Content (EBC) engineered to maximize search discovery, overcome buyer hesitation in the first 3 seconds, and reduce return rates.
+              {heroDescription}
             </p>
 
             {/* Quick Metrics Bar */}
@@ -136,6 +148,20 @@ export default async function AmazonListingShowcasePage() {
           initialAPlusModules={aPlusModules}
           initialPackages={packages}
         />
+
+        {/* Additional Admin-Managed Service Demos (if added in Services CMS) */}
+        {cmsDemos.length > 0 && (
+          <div className="mt-16">
+            <ServiceDemoGallery demos={cmsDemos} serviceTitle={heroTitle} />
+          </div>
+        )}
+
+        {/* Dedicated Specialists Team For This Service (Admin-Editable) */}
+        {teamMembers.length > 0 && (
+          <div className="mt-16">
+            <ServiceTeamSection members={teamMembers} serviceTitle={heroTitle} />
+          </div>
+        )}
       </Container>
     </main>
   );

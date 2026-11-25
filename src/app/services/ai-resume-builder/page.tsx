@@ -6,8 +6,12 @@ import { ResumeFormWizard } from "@/components/resume-builder/ResumeFormWizard";
 import { ResumeLiveEditor } from "@/components/resume-builder/ResumeLiveEditor";
 import { ResumeInputPayload, GeneratedResume } from "@/types/resume";
 import { Container } from "@/components/ui/Container";
-import { getSettings } from "@/lib/cms";
-import { AlertTriangle, Wrench } from "lucide-react";
+import { getSettings, getPublishedServiceBySlug } from "@/lib/cms";
+import type { ServiceDocument } from "@/types/cms";
+import { ServiceDemoGallery } from "@/components/services/ServiceDemoGallery";
+import { ServiceTeamSection } from "@/components/services/ServiceTeamSection";
+import { Button } from "@/components/ui/Button";
+import { ArrowRight, Check, Wrench } from "lucide-react";
 
 export default function ResumeBuilderPage() {
   const [viewMode, setViewMode] = useState<"landing" | "form" | "editor">("landing");
@@ -28,11 +32,12 @@ export default function ResumeBuilderPage() {
     isFreeBeta: true,
     noticeBanner: undefined,
   });
+  const [serviceInfo, setServiceInfo] = useState<ServiceDocument | null>(null);
 
   useEffect(() => {
     getSettings()
       .then((settings) => {
-        const rb = (settings as any)?.resumeBuilder;
+        const rb = settings?.resumeBuilder;
         if (rb) {
           setConfig({
             enabled: rb.enabled !== false,
@@ -41,6 +46,12 @@ export default function ResumeBuilderPage() {
             noticeBanner: rb.noticeBanner,
           });
         }
+      })
+      .catch(() => {});
+
+    getPublishedServiceBySlug("ai-resume-builder")
+      .then((svc) => {
+        if (svc) setServiceInfo(svc);
       })
       .catch(() => {});
   }, []);
@@ -103,11 +114,88 @@ export default function ResumeBuilderPage() {
       )}
 
       {viewMode === "landing" && (
-        <ResumeLandingHero
-          onStart={handleStart}
-          isFreeBeta={config.isFreeBeta}
-          noticeBanner={config.noticeBanner}
-        />
+        <>
+          <ResumeLandingHero
+            onStart={handleStart}
+            isFreeBeta={config.isFreeBeta}
+            noticeBanner={config.noticeBanner}
+          />
+
+          {serviceInfo && (
+            <div className="py-12 sm:py-16 bg-[#FAF7F2] border-t border-[#E8DFD5]">
+              <Container>
+                {serviceInfo.demos && serviceInfo.demos.length > 0 && (
+                  <ServiceDemoGallery
+                    demos={serviceInfo.demos}
+                    serviceTitle={serviceInfo.name}
+                  />
+                )}
+
+                {serviceInfo.pricing && serviceInfo.pricing.length > 0 && (
+                  <section className="mb-14">
+                    <div className="mb-6">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FAECE4] border border-[#F0CFC0] text-[11px] font-semibold text-[#B4583F] uppercase tracking-wider mb-2">
+                        Plans &amp; Pricing
+                      </span>
+                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-[#332924]">
+                        {serviceInfo.name} Pricing
+                      </h2>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {serviceInfo.pricing.map((tier, idx) => (
+                        <div
+                          key={idx}
+                          className="p-6 rounded-[28px] m3-surface-1 m3-card-interactive flex flex-col justify-between"
+                        >
+                          <div>
+                            <h3 className="font-display font-bold text-xl text-[#332924]">
+                              {tier.tierName}
+                            </h3>
+                            <p className="text-xs text-[#5F534D] mt-1 mb-4">
+                              {tier.description}
+                            </p>
+                            <div className="flex items-baseline gap-1.5 pb-4 mb-4 border-b border-[#EFE6DD]">
+                              <span className="font-display text-2xl font-bold text-[#332924]">
+                                {tier.price}
+                              </span>
+                              <span className="text-xs text-[#8A7C75]">{tier.turnaround}</span>
+                            </div>
+                            <ul className="space-y-2 mb-6">
+                              {(tier.deliverables || []).map((item, dIdx) => (
+                                <li key={dIdx} className="flex items-center gap-2 text-xs text-[#5F534D]">
+                                  <Check className="w-3.5 h-3.5 text-[#C96A50] shrink-0" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={handleStart}
+                            variant="primary"
+                            size="sm"
+                            className="w-full justify-center"
+                          >
+                            <span>Launch Builder</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {serviceInfo.teamMembers && serviceInfo.teamMembers.length > 0 && (
+                  <ServiceTeamSection
+                    members={serviceInfo.teamMembers}
+                    serviceTitle={serviceInfo.name}
+                  />
+                )}
+              </Container>
+            </div>
+          )}
+        </>
       )}
 
       {viewMode === "form" && (

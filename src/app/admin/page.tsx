@@ -7,6 +7,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   deleteDoc,
@@ -27,7 +28,21 @@ import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
 import { allServices, corePackages } from "@/data/pricing";
 import { siteConfig } from "@/data/config";
-import { cleanUndefined } from "@/lib/cms";
+import {
+  cleanUndefined,
+  deleteAppAdmin,
+  deletePackageAdmin,
+  deleteProjectAdmin,
+  deleteServiceAdmin,
+  getSettings,
+  getSiteContent,
+  markCollectionInitializedAdmin,
+  saveAppAdmin,
+  savePackageAdmin,
+  saveProjectAdmin,
+  saveServiceAdmin,
+  saveSettingsAdmin,
+} from "@/lib/cms";
 
 // Modular Admin Components
 import {
@@ -231,9 +246,11 @@ export default function AdminPortalPage() {
             id: s.id,
             name: s.title,
             slug: s.slug,
+            tagline: s.tagline,
             shortDescription: s.shortDescription,
             description: s.fullDescription,
             category: s.title,
+            capabilities: s.capabilities,
             deliverables: s.deliverables,
             process: s.process.map((step) => ({
               step: step.step,
@@ -248,9 +265,14 @@ export default function AdminPortalPage() {
               deliverables: pkg.features,
               turnaround: "1-2 Weeks",
             })),
+            pricingNote: s.pricingNote,
+            demos: s.demos || [],
+            teamMembers: s.teamMembers || [],
             faq: s.faqs,
             featured: true,
             sortOrder: i,
+            iconName: s.iconName,
+            accentColor: s.accentColor,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             published: true,
@@ -313,44 +335,79 @@ export default function AdminPortalPage() {
         setPackages([...defaultCorePkgs, ...defaultServicePkgs]);
       }
 
-      // Reviews
+      // Reviews (merge Firestore + /api/admin/reviews local store)
+      const reviewsMap = new Map<string, ReviewDocument>();
       const revSnap = await getDocs(
         query(collection(db, "reviews"), orderBy("createdAt", "desc"))
       ).catch(() => null);
       if (revSnap && !revSnap.empty) {
-        setReviews(
-          revSnap.docs.map((d) => ({ id: d.id, ...d.data() } as ReviewDocument))
+        revSnap.docs.forEach((d) =>
+          reviewsMap.set(d.id, { id: d.id, ...d.data() } as ReviewDocument)
         );
       }
+      try {
+        const idToken = await currentUser.getIdToken();
+        const revApiRes = await fetch("/api/admin/reviews", {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (revApiRes.ok) {
+          const revApiData = (await revApiRes.json()) as { reviews?: ReviewDocument[] };
+          (revApiData.reviews || []).forEach((r) => {
+            if (!reviewsMap.has(r.id)) reviewsMap.set(r.id, r);
+          });
+        }
+      } catch {
+        // fallback cleanly to Firestore list
+      }
+      setReviews(
+        Array.from(reviewsMap.values()).sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      );
 
-      // Site Content
-      const contSnap = await getDocs(collection(db, "siteContent")).catch(
+      // Site Content (explicitly load live 'main' with merged defaults)
+      const contSnap = await getDoc(doc(db, "siteContent", "main")).catch(
         () => null
       );
-      if (contSnap && !contSnap.empty) {
-        setSiteContent(contSnap.docs[0].data() as SiteContentDocument);
+      if (contSnap && contSnap.exists()) {
+        const merged = await getSiteContent().catch(() => null);
+        setSiteContent(merged || (contSnap.data() as SiteContentDocument));
+      } else {
+        const fallbackSite = await getSiteContent().catch(() => null);
+        if (fallbackSite) setSiteContent(fallbackSite);
       }
 
-      // Settings
-      const setSnap = await getDocs(collection(db, "settings")).catch(
+      // Settings (explicitly load 'global' and guarantee published: true)
+      const setSnap = await getDoc(doc(db, "settings", "global")).catch(
         () => null
       );
-      if (setSnap && !setSnap.empty) {
-        setSettings(setSnap.docs[0].data() as SettingsDocument);
+      let loadedSettings: SettingsDocument;
+      if (setSnap && setSnap.exists()) {
+        loadedSettings = { id: "global", published: true, ...setSnap.data() } as SettingsDocument;
       } else {
-        setSettings({
+        loadedSettings = await getSettings().catch(() => ({
           id: "global",
           studioName: siteConfig.name,
           tagline: siteConfig.tagline,
           contactEmail: siteConfig.contact.email,
           whatsappNumber: siteConfig.contact.whatsappNumber,
           instagramHandle: siteConfig.contact.instagramHandle,
-          liveUrl: "https://imdadbuild.space",
+          instagramUrl: siteConfig.contact.instagramUrl,
+          liveUrl: siteConfig.siteUrl,
           maintenanceMode: false,
           allowPublicReviews: true,
+          published: true,
           updatedAt: new Date().toISOString(),
-        });
+        }));
       }
+      setSettings(loadedSettings);
+
+      // Respect initialized empty collections so intentionally deleted demo items stay empty
+      const initFlags = loadedSettings.initializedCollections || {};
+      if (initFlags.apps && appsSnap && appsSnap.empty) setApps([]);
+      if (initFlags.projects && projSnap && projSnap.empty) setProjects([]);
+      if (initFlags.services && servSnap && servSnap.empty) setServices([]);
+      if (initFlags.packages && pkgSnap && pkgSnap.empty) setPackages([]);
 
       // Video Orders Count
       try {
@@ -463,152 +520,320 @@ export default function AdminPortalPage() {
   const toggleAppPublished = async (app: AppDocument) => {
     if (!db) return;
     const newStatus = !app.published;
+    const prevApps = apps;
     setApps((prev) =>
       prev.map((a) => (a.id === app.id ? { ...a, published: newStatus } : a))
     );
-    await setDoc(
-      doc(db, "apps", app.id),
-      { published: newStatus, updatedAt: new Date().toISOString() },
-      { merge: true }
-    );
+    try {
+      await saveAppAdmin({ ...app, published: newStatus });
+      await markCollectionInitializedAdmin("apps");
+      setSyncStatus(`✓ App ${newStatus ? "published" : "moved to draft"}.`);
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      setApps(prevApps);
+      const msg = err instanceof Error ? err.message : "Failed to update app status";
+      alert(`Could not update app: ${msg}`);
+    }
   };
 
   const deleteApp = async (id: string) => {
-    if (!db || !confirm(`Delete app "${id}" from Firestore?`)) return;
-    setApps((prev) => prev.filter((a) => a.id !== id));
-    await deleteDoc(doc(db, "apps", id));
+    if (!db || !confirm(`Delete app "${id}" permanently?`)) return;
+    const prevApps = apps;
+    setSyncStatus("Deleting app...");
+    try {
+      const remaining = prevApps.filter((a) => a.id !== id);
+      if (!settings?.initializedCollections?.apps) {
+        for (const item of remaining) {
+          await saveAppAdmin(item);
+        }
+      }
+      await deleteAppAdmin(id);
+      setApps(remaining);
+      setSettings((prev) =>
+        prev ? { ...prev, initializedCollections: { ...prev.initializedCollections, apps: true } } : prev
+      );
+      setSyncStatus("✓ App deleted.");
+      setTimeout(() => setSyncStatus(null), 3000);
+    } catch (err) {
+      setApps(prevApps);
+      const msg = err instanceof Error ? err.message : "Failed to delete app";
+      setSyncStatus(`⚠ Error deleting app: ${msg}`);
+      alert(`Could not delete app: ${msg}`);
+    }
   };
 
   const saveAppModal = async () => {
     if (!db || !editingApp || !editingApp.id) return;
-    const now = new Date().toISOString();
-    const payload: Partial<AppDocument> = cleanUndefined({
-      ...editingApp,
-      updatedAt: now,
-      createdAt: editingApp.createdAt || now,
-      published: editingApp.published ?? true,
-    });
-    await setDoc(doc(db, "apps", editingApp.id), payload, { merge: true });
-    setEditingApp(null);
-    await loadAllData();
+    setSyncStatus("Saving app...");
+    try {
+      const now = new Date().toISOString();
+      const payload: Partial<AppDocument> & { id: string } = cleanUndefined({
+        ...editingApp,
+        id: editingApp.id,
+        updatedAt: now,
+        createdAt: editingApp.createdAt || now,
+        published: editingApp.published ?? true,
+      }) as Partial<AppDocument> & { id: string };
+      if (!settings?.initializedCollections?.apps) {
+        for (const item of apps) {
+          if (item.id !== payload.id) await saveAppAdmin(item);
+        }
+      }
+      await saveAppAdmin(payload);
+      await markCollectionInitializedAdmin("apps");
+      setEditingApp(null);
+      await loadAllData();
+      setSyncStatus("✓ App saved.");
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save app";
+      setSyncStatus(`⚠ Error saving app: ${msg}`);
+      alert(`Could not save app: ${msg}`);
+    }
   };
 
   // Project Actions
   const toggleProjectPublished = async (project: ProjectDocument) => {
     if (!db) return;
     const newStatus = !project.published;
+    const prevProjects = projects;
     setProjects((prev) =>
       prev.map((p) =>
         p.id === project.id ? { ...p, published: newStatus } : p
       )
     );
-    await setDoc(
-      doc(db, "projects", project.id),
-      { published: newStatus, updatedAt: new Date().toISOString() },
-      { merge: true }
-    );
+    try {
+      await saveProjectAdmin({ ...project, published: newStatus });
+      await markCollectionInitializedAdmin("projects");
+      setSyncStatus(`✓ Project ${newStatus ? "published" : "hidden"}.`);
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      setProjects(prevProjects);
+      const msg = err instanceof Error ? err.message : "Failed to update project status";
+      alert(`Could not update project: ${msg}`);
+    }
   };
 
   const deleteProject = async (id: string) => {
-    if (!db || !confirm(`Delete project "${id}" from Firestore?`)) return;
-    setProjects((prev) => prev.filter((p) => p.id !== id));
-    await deleteDoc(doc(db, "projects", id));
+    if (!db || !confirm(`Delete project "${id}" permanently?`)) return;
+    const prevProjects = projects;
+    setSyncStatus("Deleting project...");
+    try {
+      const remaining = prevProjects.filter((p) => p.id !== id);
+      if (!settings?.initializedCollections?.projects) {
+        for (const item of remaining) {
+          await saveProjectAdmin(item);
+        }
+      }
+      await deleteProjectAdmin(id);
+      setProjects(remaining);
+      setSettings((prev) =>
+        prev ? { ...prev, initializedCollections: { ...prev.initializedCollections, projects: true } } : prev
+      );
+      setSyncStatus("✓ Project deleted.");
+      setTimeout(() => setSyncStatus(null), 3000);
+    } catch (err) {
+      setProjects(prevProjects);
+      const msg = err instanceof Error ? err.message : "Failed to delete project";
+      setSyncStatus(`⚠ Error deleting project: ${msg}`);
+      alert(`Could not delete project: ${msg}`);
+    }
   };
 
   const saveProjectModal = async (projectData: Partial<ProjectDocument>) => {
     if (!db || !projectData.id) return;
-    const now = new Date().toISOString();
-    const payload: Partial<ProjectDocument> = cleanUndefined({
-      ...projectData,
-      updatedAt: now,
-      createdAt: projectData.createdAt || now,
-      published: projectData.published ?? true,
-    });
-    await setDoc(doc(db, "projects", projectData.id), payload, {
-      merge: true,
-    });
-    await loadAllData();
+    setSyncStatus("Saving project...");
+    try {
+      const now = new Date().toISOString();
+      const payload = cleanUndefined({
+        ...projectData,
+        id: projectData.id,
+        updatedAt: now,
+        createdAt: projectData.createdAt || now,
+        published: projectData.published ?? true,
+      }) as Partial<ProjectDocument> & { id: string };
+      if (!settings?.initializedCollections?.projects) {
+        for (const item of projects) {
+          if (item.id !== payload.id) await saveProjectAdmin(item);
+        }
+      }
+      await saveProjectAdmin(payload);
+      await markCollectionInitializedAdmin("projects");
+      await loadAllData();
+      setSyncStatus("✓ Project saved.");
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save project";
+      setSyncStatus(`⚠ Error saving project: ${msg}`);
+      alert(`Could not save project: ${msg}`);
+      throw err;
+    }
   };
 
   // Service Actions
   const toggleServicePublished = async (service: ServiceDocument) => {
     if (!db) return;
     const newStatus = !service.published;
+    const prevServices = services;
     setServices((prev) =>
       prev.map((s) =>
         s.id === service.id ? { ...s, published: newStatus } : s
       )
     );
-    await setDoc(
-      doc(db, "services", service.id),
-      { published: newStatus, updatedAt: new Date().toISOString() },
-      { merge: true }
-    );
+    try {
+      await saveServiceAdmin({ ...service, published: newStatus });
+      await markCollectionInitializedAdmin("services");
+      setSyncStatus(`✓ Service ${newStatus ? "published" : "hidden"}.`);
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      setServices(prevServices);
+      const msg = err instanceof Error ? err.message : "Failed to update service";
+      alert(`Could not update service: ${msg}`);
+    }
   };
 
   const deleteService = async (id: string) => {
-    if (!db || !confirm(`Delete service "${id}" from Firestore?`)) return;
-    setServices((prev) => prev.filter((s) => s.id !== id));
-    await deleteDoc(doc(db, "services", id));
+    if (!db || !confirm(`Delete service "${id}" permanently?`)) return;
+    const prevServices = services;
+    setSyncStatus("Deleting service...");
+    try {
+      const remaining = prevServices.filter((s) => s.id !== id);
+      if (!settings?.initializedCollections?.services) {
+        for (const item of remaining) {
+          await saveServiceAdmin(item);
+        }
+      }
+      await deleteServiceAdmin(id);
+      setServices(remaining);
+      setSettings((prev) =>
+        prev ? { ...prev, initializedCollections: { ...prev.initializedCollections, services: true } } : prev
+      );
+      setSyncStatus("✓ Service deleted.");
+      setTimeout(() => setSyncStatus(null), 3000);
+    } catch (err) {
+      setServices(prevServices);
+      const msg = err instanceof Error ? err.message : "Failed to delete service";
+      setSyncStatus(`⚠ Error deleting service: ${msg}`);
+      alert(`Could not delete service: ${msg}`);
+    }
   };
 
   const saveServiceModal = async (serviceData: Partial<ServiceDocument>) => {
     if (!db || !serviceData.id) return;
-    const now = new Date().toISOString();
-    const payload: Partial<ServiceDocument> = cleanUndefined({
-      ...serviceData,
-      updatedAt: now,
-      createdAt: serviceData.createdAt || now,
-      published: serviceData.published ?? true,
-    });
-    await setDoc(doc(db, "services", serviceData.id), payload, { merge: true });
-    await loadAllData();
+    setSyncStatus("Saving service...");
+    try {
+      const now = new Date().toISOString();
+      const payload = cleanUndefined({
+        ...serviceData,
+        id: serviceData.id,
+        updatedAt: now,
+        createdAt: serviceData.createdAt || now,
+        published: serviceData.published ?? true,
+      }) as Partial<ServiceDocument> & { id: string };
+      if (!settings?.initializedCollections?.services) {
+        for (const item of services) {
+          if (item.id !== payload.id) await saveServiceAdmin(item);
+        }
+      }
+      await saveServiceAdmin(payload);
+      await markCollectionInitializedAdmin("services");
+      await loadAllData();
+      setSyncStatus("✓ Service saved.");
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save service";
+      setSyncStatus(`⚠ Error saving service: ${msg}`);
+      alert(`Could not save service: ${msg}`);
+      throw err;
+    }
   };
 
   // Package Actions
   const togglePackageActive = async (pkg: WebsitePackageDocument) => {
     if (!db) return;
     const newStatus = !pkg.active;
+    const prevPackages = packages;
     setPackages((prev) =>
       prev.map((p) => (p.id === pkg.id ? { ...p, active: newStatus } : p))
     );
-    await setDoc(
-      doc(db, "websitePackages", pkg.id),
-      { active: newStatus, updatedAt: new Date().toISOString() },
-      { merge: true }
-    );
+    try {
+      await savePackageAdmin({ ...pkg, active: newStatus });
+      await markCollectionInitializedAdmin("packages");
+      setSyncStatus(`✓ Package ${newStatus ? "activated" : "paused"}.`);
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      setPackages(prevPackages);
+      const msg = err instanceof Error ? err.message : "Failed to update package";
+      alert(`Could not update package: ${msg}`);
+    }
   };
 
   const deletePackage = async (id: string) => {
-    if (!db || !confirm(`Delete website package "${id}" from Firestore?`))
+    if (!db || !confirm(`Delete website package "${id}" permanently?`))
       return;
-    setPackages((prev) => prev.filter((p) => p.id !== id));
-    await deleteDoc(doc(db, "websitePackages", id));
+    const prevPackages = packages;
+    setSyncStatus("Deleting package...");
+    try {
+      const remaining = prevPackages.filter((p) => p.id !== id);
+      if (!settings?.initializedCollections?.packages) {
+        for (const item of remaining) {
+          await savePackageAdmin(item);
+        }
+      }
+      await deletePackageAdmin(id);
+      setPackages(remaining);
+      setSettings((prev) =>
+        prev ? { ...prev, initializedCollections: { ...prev.initializedCollections, packages: true } } : prev
+      );
+      setSyncStatus("✓ Package deleted.");
+      setTimeout(() => setSyncStatus(null), 3000);
+    } catch (err) {
+      setPackages(prevPackages);
+      const msg = err instanceof Error ? err.message : "Failed to delete package";
+      setSyncStatus(`⚠ Error deleting package: ${msg}`);
+      alert(`Could not delete package: ${msg}`);
+    }
   };
 
   const savePackageModal = async (pkgData: Partial<WebsitePackageDocument>) => {
     if (!db || !pkgData.id) return;
-    const now = new Date().toISOString();
-    const payload: Partial<WebsitePackageDocument> = cleanUndefined({
-      ...pkgData,
-      updatedAt: now,
-      createdAt: pkgData.createdAt || now,
-      published: pkgData.published ?? true,
-      active: pkgData.active ?? true,
-    });
-    await setDoc(doc(db, "websitePackages", pkgData.id), payload, {
-      merge: true,
-    });
-    await loadAllData();
+    setSyncStatus("Saving package...");
+    try {
+      const now = new Date().toISOString();
+      const payload = cleanUndefined({
+        ...pkgData,
+        id: pkgData.id,
+        updatedAt: now,
+        createdAt: pkgData.createdAt || now,
+        published: pkgData.published ?? true,
+        active: pkgData.active ?? true,
+      }) as Partial<WebsitePackageDocument> & { id: string };
+      if (!settings?.initializedCollections?.packages) {
+        for (const item of packages) {
+          if (item.id !== payload.id) await savePackageAdmin(item);
+        }
+      }
+      await savePackageAdmin(payload);
+      await markCollectionInitializedAdmin("packages");
+      await loadAllData();
+      setSyncStatus("✓ Package saved.");
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save package";
+      setSyncStatus(`⚠ Error saving package: ${msg}`);
+      alert(`Could not save package: ${msg}`);
+      throw err;
+    }
   };
 
-  // Review Actions
+  // Review Actions (syncs both Firestore AND /api/admin/reviews local JSON)
   const updateReviewStatus = async (
     id: string,
     status: ReviewDocument["status"],
     verified?: boolean
   ) => {
     if (!db) return;
+    const prevReviews = reviews;
     const updates: Partial<ReviewDocument> = {
       status,
       updatedAt: new Date().toISOString(),
@@ -617,26 +842,84 @@ export default function AdminPortalPage() {
     setReviews((prev) =>
       prev.map((r) => (r.id === id ? { ...r, ...updates } : r))
     );
-    await setDoc(doc(db, "reviews", id), updates, { merge: true });
+    try {
+      const targetRev = prevReviews.find((r) => r.id === id);
+      if (targetRev) {
+        await setDoc(doc(db, "reviews", id), cleanUndefined({ ...targetRev, ...updates }), { merge: true }).catch(
+          () => {}
+        );
+      }
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        await fetch("/api/admin/reviews", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ id, status, verified }),
+        }).catch(() => {});
+      }
+      setSyncStatus(`✓ Review updated (${status}).`);
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      setReviews(prevReviews);
+      const msg = err instanceof Error ? err.message : "Failed to update review";
+      alert(`Could not update review: ${msg}`);
+    }
   };
 
   const deleteReviewDoc = async (id: string) => {
-    if (!db || !confirm("Delete this client review?")) return;
-    setReviews((prev) => prev.filter((r) => r.id !== id));
-    await deleteDoc(doc(db, "reviews", id));
+    if (!db || !confirm("Delete this client review permanently?")) return;
+    const prevReviews = reviews;
+    setSyncStatus("Deleting review...");
+    try {
+      let deleted = false;
+      try {
+        await deleteDoc(doc(db, "reviews", id));
+        deleted = true;
+      } catch (fsErr) {
+        console.warn("Firestore review delete fallback:", fsErr);
+      }
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        const apiRes = await fetch("/api/admin/reviews", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ id }),
+        });
+        if (apiRes.ok) deleted = true;
+      }
+      if (!deleted) throw new Error("Failed to remove review from storage.");
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+      setSyncStatus("✓ Review deleted.");
+      setTimeout(() => setSyncStatus(null), 2500);
+    } catch (err) {
+      setReviews(prevReviews);
+      const msg = err instanceof Error ? err.message : "Failed to delete review";
+      setSyncStatus(`⚠ Error deleting review: ${msg}`);
+      alert(`Could not delete review: ${msg}`);
+    }
   };
 
   // Save Settings
   const saveSettingsToFirestore = async (updated: SettingsDocument) => {
     if (!db) return;
     setSyncStatus("Saving settings to Firestore...");
-    await setDoc(
-      doc(db, "settings", "global"),
-      { ...updated, updatedAt: new Date().toISOString() },
-      { merge: true }
-    );
-    setSyncStatus("✓ Settings saved successfully.");
-    setTimeout(() => setSyncStatus(null), 3000);
+    try {
+      const payload: SettingsDocument = {
+        ...updated,
+        id: "global",
+        published: true,
+        updatedAt: new Date().toISOString(),
+      };
+      await saveSettingsAdmin(payload);
+      setSettings(payload);
+      setSyncStatus("✓ Settings saved successfully.");
+      setTimeout(() => setSyncStatus(null), 3000);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to save settings";
+      setSyncStatus(`⚠ Error saving settings: ${msg}`);
+      alert(`Could not save settings: ${msg}`);
+      throw err;
+    }
   };
 
   // Seed / Sync Demo Data to Firestore
@@ -673,9 +956,9 @@ export default function AdminPortalPage() {
   // -------------------------------------------------------------
   if (authLoading) {
     return (
-      <main className="flex-1 flex items-center justify-center min-h-screen bg-[#F8FAFC]">
-        <div className="flex items-center gap-3 text-xs font-mono text-slate-500 bg-white px-5 py-3 rounded-2xl border border-slate-200/80 shadow-xs">
-          <RefreshCw className="w-4 h-4 animate-spin text-[#0284C7]" />
+      <main className="flex-1 flex items-center justify-center min-h-screen bg-[#FAF7F2]">
+        <div className="flex items-center gap-3 text-xs font-mono text-[#6E625B] bg-white px-5 py-3 rounded-2xl border border-[#E8DFD5] shadow-xs">
+          <RefreshCw className="w-4 h-4 animate-spin text-[#C96A50]" />
           <span>Verifying studio administrator session...</span>
         </div>
       </main>
@@ -687,25 +970,24 @@ export default function AdminPortalPage() {
   // -------------------------------------------------------------
   if (!currentUser) {
     return (
-      <main className="flex-1 flex items-center justify-center min-h-screen bg-[#F8FAFC] p-4 relative overflow-hidden">
+      <main className="flex-1 flex items-center justify-center min-h-screen bg-[#FAF7F2] p-4 relative overflow-hidden">
         {/* Subtle background glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-sky-100/60 rounded-full blur-3xl -z-10" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#FAECE4]/70 rounded-full blur-3xl -z-10" />
 
-        <div className="w-full max-w-md mx-auto p-8 rounded-3xl bg-white border border-slate-200 shadow-xl text-center space-y-6">
-          <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 text-[#0284C7] flex items-center justify-center mx-auto shadow-2xs">
+        <div className="w-full max-w-md mx-auto p-8 rounded-3xl bg-white border border-[#E8DFD5] shadow-xl text-center space-y-6">
+          <div className="w-12 h-12 rounded-2xl bg-[#FAECE4] border border-[#EED3C5] text-[#C96A50] flex items-center justify-center mx-auto shadow-2xs">
             <Lock className="w-6 h-6" />
           </div>
 
           <div>
-            <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-widest bg-sky-50 text-[#0284C7] border border-sky-200 mb-2 font-bold">
-              Restricted Desk
+            <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-mono uppercase tracking-widest bg-[#FAECE4] text-[#B4583F] border border-[#EED3C5] mb-2 font-bold">
+              Studio Control Desk
             </div>
-            <h1 className="text-2xl font-black text-[#0A192F] tracking-tight">
+            <h1 className="text-2xl font-black text-[#332924] tracking-tight">
               Studio Operations Gateway
             </h1>
-            <p className="text-xs text-slate-500 mt-1">
-              Administrative management hub for IMDAD.BUILDS. Sign in with
-              authorized administrator credentials.
+            <p className="text-xs text-[#6E625B] mt-1">
+              Sign in to customize layouts, services, projects, orders &amp; settings.
             </p>
           </div>
 
@@ -728,7 +1010,7 @@ export default function AdminPortalPage() {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading}
-            className="w-full py-3 px-4 rounded-xl bg-white hover:bg-slate-50 text-[#0A192F] border border-slate-200 text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2.5 hover:border-slate-300 disabled:opacity-50"
+            className="w-full py-3 px-4 rounded-xl bg-white hover:bg-[#FAF7F2] text-[#332924] border border-[#E8DFD5] text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2.5 hover:border-[#D8A999] disabled:opacity-50"
           >
             <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
               <path
@@ -755,16 +1037,16 @@ export default function AdminPortalPage() {
 
           <div className="relative my-4 text-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-200" />
+              <div className="w-full border-t border-[#E8DFD5]" />
             </div>
-            <span className="relative px-3 bg-white text-[10px] font-mono uppercase tracking-wider text-slate-400">
+            <span className="relative px-3 bg-white text-[10px] font-mono uppercase tracking-wider text-[#8A7C75]">
               or authenticate with password
             </span>
           </div>
 
           <form onSubmit={handleSignIn} className="space-y-3.5 text-left">
             <div>
-              <label className="block text-[11px] font-bold text-slate-700 mb-1 uppercase tracking-wider">
+              <label className="block text-[11px] font-bold text-[#332924] mb-1 uppercase tracking-wider">
                 Admin Email
               </label>
               <input
@@ -773,19 +1055,19 @@ export default function AdminPortalPage() {
                 onChange={(e) => setEmailInput(e.target.value)}
                 placeholder="imdad.builds@gmail.com"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7] focus:bg-white transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5] text-xs text-[#332924] focus:outline-none focus:ring-2 focus:ring-[#C96A50] focus:bg-white transition-all"
               />
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                <label className="block text-[11px] font-bold text-[#332924] uppercase tracking-wider">
                   Password
                 </label>
                 <button
                   type="button"
                   onClick={handlePasswordReset}
-                  className="text-[11px] text-[#0284C7] hover:underline cursor-pointer"
+                  className="text-[11px] text-[#C96A50] hover:underline cursor-pointer"
                 >
                   Forgot Password?
                 </button>
@@ -796,20 +1078,20 @@ export default function AdminPortalPage() {
                 onChange={(e) => setPasswordInput(e.target.value)}
                 placeholder="••••••••••••"
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7] focus:bg-white transition-all"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF7F2] border border-[#E8DFD5] text-xs text-[#332924] focus:outline-none focus:ring-2 focus:ring-[#C96A50] focus:bg-white transition-all"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-linear-to-r from-[#0066FF] to-[#0284C7] hover:from-[#0052cc] hover:to-[#0369a1] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 mt-4"
+              className="w-full py-3 rounded-xl bg-[#C96A50] hover:bg-[#B4583F] text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 mt-4"
             >
               <Lock className="w-3.5 h-3.5" />
               <span>Authenticate Session</span>
             </button>
           </form>
 
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+          <div className="pt-4 border-t border-[#F3ECE4] flex items-center justify-center gap-2 text-[11px] text-[#8A7C75]">
             <Database className="w-3.5 h-3.5" />
             <span>
               Firestore ID:{" "}
@@ -858,9 +1140,13 @@ export default function AdminPortalPage() {
       {/* 2. Homepage Builder CMS */}
       {activeTab === "homepage-builder" && (
         <HomepageBuilder
+          currentUserEmail={currentUser.email || undefined}
           apps={apps}
           projects={projects}
           services={services}
+          packages={packages}
+          reviews={reviews}
+          onRefreshAll={loadAllData}
         />
       )}
 
@@ -1128,7 +1414,7 @@ export default function AdminPortalPage() {
             <div className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">
+                  <label className="font-semibold text-stone-700 block mb-1">
                     App Name *
                   </label>
                   <input
@@ -1146,11 +1432,11 @@ export default function AdminPortalPage() {
                       })
                     }
                     placeholder="e.g., WishMusic"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                    className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#C96A50]"
                   />
                 </div>
                 <div>
-                  <label className="font-semibold text-slate-700 block mb-1">
+                  <label className="font-semibold text-stone-700 block mb-1">
                     URL Slug *
                   </label>
                   <input
@@ -1160,13 +1446,64 @@ export default function AdminPortalPage() {
                       setEditingApp({ ...editingApp, slug: e.target.value })
                     }
                     placeholder="e.g., wishmusic"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] font-mono focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                    className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 font-mono focus:outline-none focus:ring-2 focus:ring-[#C96A50]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Status</label>
+                  <select
+                    value={editingApp.status || "IN_DEVELOPMENT"}
+                    onChange={(e) =>
+                      setEditingApp({
+                        ...editingApp,
+                        status: e.target.value as AppDocument["status"],
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900"
+                  >
+                    <option value="LIVE">Live</option>
+                    <option value="IN_DEVELOPMENT">In Development</option>
+                    <option value="COMING_SOON">Coming Soon</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Category</label>
+                  <input
+                    type="text"
+                    value={editingApp.category || ""}
+                    onChange={(e) => setEditingApp({ ...editingApp, category: e.target.value })}
+                    placeholder="Audio & Media"
+                    className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Version</label>
+                  <input
+                    type="text"
+                    value={editingApp.version || ""}
+                    onChange={(e) => setEditingApp({ ...editingApp, version: e.target.value })}
+                    placeholder="v1.0.0"
+                    className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 font-mono"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-semibold text-slate-700 block mb-1">
+                <label className="font-semibold text-stone-700 block mb-1">Tagline</label>
+                <input
+                  type="text"
+                  value={editingApp.tagline || ""}
+                  onChange={(e) => setEditingApp({ ...editingApp, tagline: e.target.value })}
+                  placeholder="Short punchy one-liner..."
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-stone-700 block mb-1">
                   Short Description
                 </label>
                 <input
@@ -1179,12 +1516,67 @@ export default function AdminPortalPage() {
                     })
                   }
                   placeholder="One-line summary for app cards..."
-                  className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-[#0A192F] focus:outline-none focus:ring-2 focus:ring-[#0284C7]"
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 focus:outline-none focus:ring-2 focus:ring-[#C96A50]"
                 />
               </div>
 
-              <div className="pt-2 flex items-center gap-6 border-t border-slate-100">
-                <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+              <div>
+                <label className="font-semibold text-stone-700 block mb-1">Full Description</label>
+                <textarea
+                  rows={3}
+                  value={editingApp.description || ""}
+                  onChange={(e) => setEditingApp({ ...editingApp, description: e.target.value })}
+                  placeholder="Detailed product overview..."
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Logo / Icon URL</label>
+                  <input
+                    type="text"
+                    value={editingApp.logo || ""}
+                    onChange={(e) => setEditingApp({ ...editingApp, logo: e.target.value })}
+                    placeholder="https://... or /logo.png"
+                    className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-semibold text-stone-700 block mb-1">Live / Download URL</label>
+                  <input
+                    type="text"
+                    value={editingApp.url || ""}
+                    onChange={(e) => setEditingApp({ ...editingApp, url: e.target.value })}
+                    placeholder="https://... or /apps/wishmusic"
+                    className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-semibold text-stone-700 block mb-1">
+                  Platforms (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={(editingApp.platform || []).join(", ")}
+                  onChange={(e) =>
+                    setEditingApp({
+                      ...editingApp,
+                      platform: e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean) as AppDocument["platform"],
+                    })
+                  }
+                  placeholder="Android, iOS, Web"
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-stone-900"
+                />
+              </div>
+
+              <div className="pt-2 flex flex-wrap items-center gap-6 border-t border-stone-100">
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-stone-700">
                   <input
                     type="checkbox"
                     checked={editingApp.published ?? true}
@@ -1197,21 +1589,34 @@ export default function AdminPortalPage() {
                   />
                   <span>Published to Public Site</span>
                 </label>
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-stone-700">
+                  <input
+                    type="checkbox"
+                    checked={editingApp.featured ?? false}
+                    onChange={(e) =>
+                      setEditingApp({
+                        ...editingApp,
+                        featured: e.target.checked,
+                      })
+                    }
+                  />
+                  <span>Featured on Homepage</span>
+                </label>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
+            <div className="pt-3 border-t border-stone-100 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setEditingApp(null)}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={saveAppModal}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#0284C7] hover:bg-[#0052cc] shadow-xs transition-colors cursor-pointer"
+                className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#C96A50] hover:bg-[#B4583F] shadow-xs transition-colors cursor-pointer"
               >
                 Save App
               </button>

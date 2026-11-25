@@ -3,6 +3,7 @@ import {
   listAllVideoOrders,
   getVideoOrderById,
   updateVideoOrder,
+  deleteVideoOrder,
 } from "@/lib/video-order-service";
 import { ProjectStatus, AssignedEditor, VideoOrder } from "@/types/video-order";
 import { verifyAdminRequest } from "@/lib/server-auth";
@@ -227,6 +228,62 @@ export async function PATCH(req: NextRequest) {
     console.error("[AdminVideoOrdersAPI] PATCH Error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to update video order." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const authResult = await verifyAdminRequest(req);
+    if (!authResult.authorized) {
+      return NextResponse.json(
+        { success: false, error: authResult.error || "Unauthorized: Administrator credentials required." },
+        { status: authResult.statusCode }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const body = await req.json().catch(() => null) as { orderId?: string; confirmPaid?: boolean } | null;
+    const orderId = body?.orderId || searchParams.get("orderId");
+    const confirmPaid = Boolean(body?.confirmPaid || searchParams.get("confirmPaid") === "true");
+
+    if (!orderId) {
+      return NextResponse.json(
+        { success: false, error: "Missing orderId." },
+        { status: 400 }
+      );
+    }
+
+    const existing = await getVideoOrderById(orderId);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: "Order not found." },
+        { status: 404 }
+      );
+    }
+
+    if (existing.paymentStatus !== "unpaid" && existing.paymentStatus !== "failed" && !confirmPaid) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This order has recorded payments. Pass confirmPaid=true only to archive/delete a paid test order.",
+          requiresConfirmPaid: true,
+        },
+        { status: 400 }
+      );
+    }
+
+    await deleteVideoOrder(existing.id);
+
+    return NextResponse.json({
+      success: true,
+      message: `Order ${existing.orderNumber} deleted.`,
+    });
+  } catch (error) {
+    console.error("[AdminVideoOrdersAPI] DELETE Error:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to delete video order." },
       { status: 500 }
     );
   }

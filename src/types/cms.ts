@@ -122,16 +122,43 @@ export interface ServiceFaqItem {
   answer: string;
 }
 
+export interface ServiceDemoItem {
+  id: string;
+  title: string;
+  description: string;
+  category?: string;
+  mediaType?: "image" | "video" | "link";
+  mediaUrl?: string;
+  thumbnailUrl?: string;
+  demoLink?: string;
+  metricsLabel?: string;
+}
+
+export interface ServiceTeamMember {
+  id: string;
+  name: string;
+  role: string;
+  bio?: string;
+  avatarUrl?: string;
+  initials?: string;
+  specialties?: string[];
+}
+
 export interface ServiceDocument {
   id: string;
   name: string;
   slug: string;
+  tagline?: string;
   shortDescription: string;
   description: string;
   category: string;
+  capabilities?: string[];
   deliverables: string[];
   process: ServiceProcessItem[];
   pricing: ServiceTierItem[];
+  pricingNote?: string;
+  demos?: ServiceDemoItem[];
+  teamMembers?: ServiceTeamMember[];
   faq: ServiceFaqItem[];
   featured: boolean;
   sortOrder: number;
@@ -197,6 +224,131 @@ export interface HeroPrototypeApp {
   type?: "audio" | "tracker" | "store" | "custom";
 }
 
+export interface HeroQuickStartItem {
+  id: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  badge?: string;
+  iconName?: string;
+}
+
+export interface HeroTrustHighlight {
+  id: string;
+  label: string;
+  value?: string;
+  iconName?: string;
+}
+
+export interface NavSubItem {
+  label: string;
+  href: string;
+  description?: string;
+  badge?: string;
+  enabled?: boolean;
+}
+
+export interface OverviewPillarConfig {
+  id: string;
+  number?: string;
+  title: string;
+  description: string;
+  iconName?: string;
+}
+
+export interface ProcessStepConfig {
+  id: string;
+  step: string;
+  title: string;
+  description: string;
+  badge?: string;
+}
+
+export interface WhyUsItemConfig {
+  id: string;
+  title: string;
+  description: string;
+  metric?: string;
+  iconName?: string;
+}
+
+export interface TeamMemberConfig {
+  id: string;
+  name: string;
+  role: string;
+  title?: string;
+  badge?: string;
+  bio: string;
+  avatarUrl?: string;
+  initials?: string;
+  specialties?: string[];
+  portfolioUrl?: string;
+  enabled?: boolean;
+}
+
+export interface FooterColumnConfig {
+  id: string;
+  title: string;
+  links: Array<{ label: string; href: string }>;
+}
+
+export type CustomSectionLayout =
+  | "banner"
+  | "cards-2"
+  | "cards-3"
+  | "cards-4"
+  | "split-media"
+  | "faq"
+  | "checklist";
+
+export type CustomSectionTone = "cream" | "white" | "peach";
+
+export interface CustomSectionItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  description?: string;
+  badge?: string;
+  price?: string;
+  imageUrl?: string;
+  buttonText?: string;
+  buttonLink?: string;
+  bullets?: string[];
+}
+
+export interface CustomSectionConfig {
+  id: string;
+  name: string;
+  layout: CustomSectionLayout;
+  tone?: CustomSectionTone;
+  eyebrow?: string;
+  headline: string;
+  subheadline?: string;
+  bodyText?: string;
+  mediaUrl?: string;
+  mediaAlt?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  secondaryCtaText?: string;
+  secondaryCtaLink?: string;
+  items?: CustomSectionItem[];
+}
+
+export interface SiteThemeSettings {
+  presetId?: "warm-cream" | "soft-sand" | "rose-linen" | "apricot-light" | "custom";
+  backgroundColor?: string;
+  surfaceColor?: string;
+  sandColor?: string;
+  peachColor?: string;
+  accentColor?: string;
+  accentHoverColor?: string;
+  headingColor?: string;
+  bodyColor?: string;
+  borderColor?: string;
+  headingFont?: "plus-jakarta" | "dm-sans" | "system";
+  bodyFont?: "dm-sans" | "plus-jakarta" | "system";
+}
+
 export interface SiteContentDocument {
   id: "main" | "draft" | string;
   hero: {
@@ -216,12 +368,17 @@ export interface SiteContentDocument {
     viewportHeader?: string;
     viewportBadge?: string;
     prototypeApps?: HeroPrototypeApp[];
+    quickStartTitle?: string;
+    quickStartSubtitle?: string;
+    quickStartItems?: HeroQuickStartItem[];
+    trustHighlights?: HeroTrustHighlight[];
   };
   navigation?: {
     logo?: string;
     brandName?: string;
     badgeText?: string;
     navLinks?: Array<{ label: string; href: string; isExternal?: boolean }>;
+    servicesDropdown?: NavSubItem[];
     ctaText?: string;
     ctaLink?: string;
   };
@@ -239,6 +396,8 @@ export interface SiteContentDocument {
     subtitle?: string;
     ctaText?: string;
     ctaLink?: string;
+    displayedServiceIds?: string[];
+    columns?: 2 | 3 | 4;
   };
   projectsSection?: {
     eyebrow?: string;
@@ -247,6 +406,33 @@ export interface SiteContentDocument {
     ctaText?: string;
     ctaLink?: string;
     displayedProjectIds?: string[];
+    columns?: 2 | 3;
+  };
+  overviewSection?: {
+    eyebrow?: string;
+    headline?: string;
+    subheadline?: string;
+    pillars?: OverviewPillarConfig[];
+  };
+  processSection?: {
+    eyebrow?: string;
+    headline?: string;
+    subheadline?: string;
+    ctaText?: string;
+    ctaLink?: string;
+    steps?: ProcessStepConfig[];
+  };
+  whyUsSection?: {
+    eyebrow?: string;
+    headline?: string;
+    subheadline?: string;
+    items?: WhyUsItemConfig[];
+  };
+  teamSection?: {
+    eyebrow?: string;
+    headline?: string;
+    subheadline?: string;
+    members?: TeamMemberConfig[];
   };
   about: {
     eyebrow: string;
@@ -287,10 +473,15 @@ export interface SiteContentDocument {
     tagline: string;
     copyrightYear: number;
     studioName: string;
+    studioBadge?: string;
     description?: string;
     copyrightText?: string;
     navLinks?: Array<{ label: string; href: string }>;
+    columns?: FooterColumnConfig[];
+    bottomLinks?: Array<{ label: string; href: string }>;
   };
+  customSections?: CustomSectionConfig[];
+  themeSettings?: SiteThemeSettings;
   title?: string;
   section?: string;
   metadata?: {
@@ -361,6 +552,8 @@ export interface SettingsDocument {
   contact?: Record<string, unknown>;
   socials?: Record<string, unknown>;
   config?: Record<string, unknown>;
+  activePreset?: string;
+  initializedCollections?: Record<string, boolean>;
   published?: boolean;
   updatedAt: string;
 }

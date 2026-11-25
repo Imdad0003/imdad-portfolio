@@ -80,13 +80,17 @@ export function MediaLibraryModal({
 
   useEffect(() => {
     if (isOpen) {
-      loadAssets();
+      queueMicrotask(() => {
+        void loadAssets();
+      });
     }
   }, [isOpen, selectedCategory]);
 
   useEffect(() => {
     if (selectedAsset) {
-      setAltTextInput(selectedAsset.alt || "");
+      queueMicrotask(() => {
+        setAltTextInput(selectedAsset.alt || "");
+      });
     }
   }, [selectedAsset]);
 
@@ -161,21 +165,36 @@ export function MediaLibraryModal({
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (force = false) => {
     if (!selectedAsset) return;
-    if (!confirm(`Are you sure you want to delete "${selectedAsset.name}"?`)) return;
+    if (
+      !force &&
+      !confirm(`Are you sure you want to delete "${selectedAsset.name}"?`)
+    ) {
+      return;
+    }
 
     setActionNotice(null);
     try {
-      const result = await deleteMediaAssetAdmin(selectedAsset.id, selectedAsset.url);
+      const result = await deleteMediaAssetAdmin(selectedAsset.id, selectedAsset.url, {
+        force,
+      });
       if (!result.success) {
+        if (
+          !force &&
+          result.error?.includes("Still used in") &&
+          confirm(`${result.error}\n\nDelete from Media Library anyway?`)
+        ) {
+          await handleDelete(true);
+          return;
+        }
         setActionNotice({ type: "error", text: result.error || "Cannot delete asset." });
         return;
       }
 
       setAssets((prev) => prev.filter((a) => a.id !== selectedAsset.id));
       setSelectedAsset(null);
-      setActionNotice({ type: "success", text: "Asset safely deleted." });
+      setActionNotice({ type: "success", text: result.warning || "Asset safely deleted." });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setActionNotice({ type: "error", text: `Delete failed: ${msg}` });
@@ -486,7 +505,7 @@ export function MediaLibraryModal({
                       });
                       onClose();
                     }}
-                    className="w-full py-2.5 rounded-xl text-xs font-bold bg-[#0284C7] hover:bg-[#0369A1] text-white transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+                    className="w-full py-2.5 rounded-xl text-xs font-bold bg-[#C96A50] hover:bg-[#B4583F] text-white transition-all flex items-center justify-center gap-2 shadow-sm cursor-pointer"
                   >
                     <Check className="w-3.5 h-3.5" />
                     <span>Choose This Image</span>
@@ -494,7 +513,7 @@ export function MediaLibraryModal({
                 )}
 
                 <button
-                  onClick={handleDelete}
+                  onClick={() => void handleDelete(false)}
                   className="w-full py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 border border-rose-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />

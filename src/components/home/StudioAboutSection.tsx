@@ -14,11 +14,11 @@ interface StudioAboutSectionProps {
 export function StudioAboutSection({ initialContent }: StudioAboutSectionProps) {
   const [aboutContent, setAboutContent] = useState<SiteContentDocument["about"]>(
     initialContent || {
-      eyebrow: "THE STUDIO MANIFESTO // INDEPENDENT OPERATOR",
-      headline: "An independent studio built around tangible execution.",
-      bio: "Imdad.builds was founded on a simple premise: modern businesses and creators don't need generic agency buzzwords or bloated retainers. They need fast, reliable digital products that actually convert and perform.",
-      ethos: "Zero bloat. Fast iterations. Real products powered by imdad.builds.",
-      location: "India • Global Distribution",
+      eyebrow: "About Studio",
+      headline: "An independent studio focused on useful, honest digital work.",
+      bio: "Imdad.builds helps businesses, online sellers, and creators with simple video editing, product graphics, and clean websites — with transparent pricing and direct support.",
+      ethos: "Simple design. Honest pricing. Reliable execution.",
+      location: "India",
     }
   );
 
@@ -33,78 +33,75 @@ export function StudioAboutSection({ initialContent }: StudioAboutSectionProps) 
   }, []);
 
   return (
-    <section id="studio-about" className="py-16 sm:py-24 relative overflow-hidden">
+    <section id="studio-about" className="py-16 sm:py-20 bg-white border-b border-[#E8DFD5]">
       <Container>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          
-          {/* Left Column: Manifesto & Narrative (7 Cols) */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-sky-50 border border-sky-200 text-[10px] font-mono text-[#0284C7] shadow-2xs font-bold uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#0284C7]" />
+          <div className="lg:col-span-7 space-y-5">
+            <span className="inline-block px-3 py-1 rounded-full bg-[#FAECE4] border border-[#F0CFC0] text-xs font-semibold text-[#B4583F]">
               {aboutContent.eyebrow}
-            </div>
+            </span>
 
-            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#0A192F] leading-tight">
+            <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[#332924] leading-snug">
               {aboutContent.headline}
             </h2>
 
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="text-sm sm:text-base text-[#5F534D] leading-relaxed">
               {aboutContent.bio}
             </p>
 
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="text-sm sm:text-base text-[#5F534D] leading-relaxed">
               {aboutContent.ethos}
             </p>
 
             <div className="pt-2">
               <Link
                 href="/about"
-                className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#0A192F] hover:text-[#0284C7] transition-colors group"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#C96A50] hover:text-[#B4583F] transition-colors group"
               >
-                <span>READ THE FULL STUDIO MANIFESTO</span>
-                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                <span>Read more about us</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
           </div>
 
-          {/* Right Column: 3 Operational Pillars (5 Cols) */}
           <div className="lg:col-span-5 space-y-4">
             {(
               aboutContent.pillars || [
                 {
                   number: "01",
-                  title: "Real Products, Zero Fluff",
-                  description:
-                    "We build working codebases, deployed mobile applications, and verified marketplace listings. No fake startup metrics or vanity presentations.",
+                  title: "Real Experience",
+                  description: "We build and manage live online stores and apps ourselves.",
                 },
                 {
                   number: "02",
-                  title: "Direct Founder Partnership",
-                  description:
-                    "No middle managers or delegated offshore handoffs. You collaborate directly with the builder who architects, codes, and refines your solution.",
+                  title: "Direct Collaboration",
+                  description: "No middlemen — talk straight with the people creating your project.",
                 },
                 {
                   number: "03",
-                  title: "Conversion-First Engineering",
-                  description:
-                    "Every layout, visual contrast choice, and micro-interaction is engineered to remove customer hesitation, speed up transactions, and maximize conversion rates.",
+                  title: "Clear Outcomes",
+                  description: "Clean layouts built for real customers on mobile and desktop.",
                 },
               ]
             ).map((pillar, idx) => (
-              <div key={idx} className="p-5 sm:p-6 rounded-2xl bg-white/95 border border-slate-200 backdrop-blur-md shadow-2xs">
+              <div
+                key={idx}
+                className="p-5 sm:p-6 rounded-2xl bg-[#FAF7F2] border border-[#E8DFD5]"
+              >
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-sky-50 text-[#0284C7] border border-sky-100 flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#FAECE4] text-[#B4583F] border border-[#F0CFC0] flex items-center justify-center font-bold text-xs">
                     {pillar.number || `0${idx + 1}`}
                   </div>
-                  <h4 className="font-black text-base text-[#0A192F]">{pillar.title}</h4>
+                  <h4 className="font-display font-bold text-base text-[#332924]">
+                    {pillar.title}
+                  </h4>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed pl-11">
+                <p className="text-xs sm:text-sm text-[#5F534D] leading-relaxed pl-11">
                   {pillar.description}
                 </p>
               </div>
             ))}
           </div>
-
         </div>
       </Container>
     </section>

@@ -4,13 +4,12 @@ import { db, isFirebaseConfigured } from "./firebase";
 import {
   collection,
   doc,
+  getDoc,
   setDoc,
-  updateDoc,
   deleteDoc,
   getDocs,
   query,
   where,
-  orderBy,
 } from "firebase/firestore";
 
 export type ReviewStatus = "pending" | "approved" | "rejected";
@@ -44,7 +43,7 @@ async function ensureFile(): Promise<void> {
   }
 }
 
-export async function getAllReviews(): Promise<Review[]> {
+async function readLocalReviews(): Promise<Review[]> {
   await ensureFile();
   try {
     const content = await fs.readFile(REVIEWS_FILE, "utf-8");
@@ -53,6 +52,39 @@ export async function getAllReviews(): Promise<Review[]> {
     console.error("Error reading reviews file:", err);
     return [];
   }
+}
+
+export async function getAllReviews(): Promise<Review[]> {
+  const localReviews = await readLocalReviews();
+  const merged = new Map<string, Review>(localReviews.map((r) => [r.id, r]));
+
+  if (db && isFirebaseConfigured) {
+    try {
+      const snap = await getDocs(collection(db, "reviews"));
+      snap.docs.forEach((d) => {
+        const data = d.data() as Partial<Review>;
+        merged.set(d.id, {
+          id: d.id,
+          name: String(data.name || "Client"),
+          email: String(data.email || ""),
+          service: String(data.service || ""),
+          rating: Number(data.rating || 5),
+          review: String(data.review || ""),
+          status: (data.status as ReviewStatus) || "pending",
+          verified: Boolean(data.verified),
+          createdAt: String(data.createdAt || new Date().toISOString()),
+          updatedAt: String(data.updatedAt || data.createdAt || new Date().toISOString()),
+          ...(data.image ? { image: String(data.image) } : {}),
+        });
+      });
+    } catch (err) {
+      console.warn("Firestore getAllReviews merge fallback:", err);
+    }
+  }
+
+  return Array.from(merged.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
 }
 
 export async function getApprovedReviews(): Promise<PublicReview[]> {
@@ -114,9 +146,10 @@ export async function createReview(input: {
   image?: string;
 }): Promise<Review> {
   await ensureFile();
-  const reviews = await getAllReviews();
+  const reviews = await readLocalReviews();
 
   const now = new Date().toISOString();
+  const cleanImage = input.image?.trim();
   const newReview: Review = {
     id: `rev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     name: input.name.trim(),
@@ -124,7 +157,7 @@ export async function createReview(input: {
     service: input.service.trim(),
     rating: Math.max(1, Math.min(5, Math.round(input.rating))),
     review: input.review.trim(),
-    image: input.image?.trim() || undefined,
+    ...(cleanImage ? { image: cleanImage } : {}),
     status: "pending", // All reviews start as pending until manually approved
     verified: false, // Verification is independent of approval
     createdAt: now,
@@ -151,27 +184,36 @@ export async function updateReview(
   updates: Partial<Pick<Review, "status" | "verified" | "review" | "rating" | "service">>
 ): Promise<Review | null> {
   await ensureFile();
-  const reviews = await getAllReviews();
+  const reviews = await readLocalReviews();
   const index = reviews.findIndex((r) => r.id === id);
+  const now = new Date().toISOString();
 
-  if (index === -1) return null;
+  let updated: Review | null = null;
 
-  const current = reviews[index];
-  const updated: Review = {
-    ...current,
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
-
-  reviews[index] = updated;
-  await fs.writeFile(REVIEWS_FILE, JSON.stringify(reviews, null, 2), "utf-8");
+  if (index !== -1) {
+    updated = {
+      ...reviews[index],
+      ...updates,
+      updatedAt: now,
+    };
+    reviews[index] = updated;
+    await fs.writeFile(REVIEWS_FILE, JSON.stringify(reviews, null, 2), "utf-8");
+  }
 
   if (db && isFirebaseConfigured) {
     try {
-      await updateDoc(doc(db, "reviews", id), {
-        ...updates,
-        updatedAt: updated.updatedAt,
-      });
+      const refDoc = doc(db, "reviews", id);
+      const snap = await getDoc(refDoc);
+      if (snap.exists() || updated) {
+        const base = snap.exists() ? (snap.data() as Review) : updated!;
+        updated = {
+          ...base,
+          ...updates,
+          id,
+          updatedAt: now,
+        };
+        await setDoc(refDoc, updated, { merge: true });
+      }
     } catch (err) {
       console.warn("Firestore updateReview sync fallback:", err);
     }
@@ -182,20 +224,26 @@ export async function updateReview(
 
 export async function deleteReview(id: string): Promise<boolean> {
   await ensureFile();
-  const reviews = await getAllReviews();
+  const reviews = await readLocalReviews();
   const filtered = reviews.filter((r) => r.id !== id);
+  let deletedAny = filtered.length < reviews.length;
 
-  if (filtered.length === reviews.length) return false;
-
-  await fs.writeFile(REVIEWS_FILE, JSON.stringify(filtered, null, 2), "utf-8");
+  if (deletedAny) {
+    await fs.writeFile(REVIEWS_FILE, JSON.stringify(filtered, null, 2), "utf-8");
+  }
 
   if (db && isFirebaseConfigured) {
     try {
-      await deleteDoc(doc(db, "reviews", id));
+      const refDoc = doc(db, "reviews", id);
+      const snap = await getDoc(refDoc);
+      if (snap.exists()) {
+        await deleteDoc(refDoc);
+        deletedAny = true;
+      }
     } catch (err) {
       console.warn("Firestore deleteReview sync fallback:", err);
     }
   }
 
-  return true;
+  return deletedAny;
 }

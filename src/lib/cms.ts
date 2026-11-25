@@ -15,6 +15,8 @@ import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
 import { allServices, corePackages } from "@/data/pricing";
 import { siteConfig } from "@/data/config";
+import { studioTeam } from "@/data/team";
+import { navItems, companyNavItems, legalNavItems } from "@/data/navigation";
 import type {
   AppDocument,
   ProjectDocument,
@@ -23,6 +25,15 @@ import type {
   SiteContentDocument,
   SettingsDocument,
   MediaAssetDocument,
+  HeroQuickStartItem,
+  HeroTrustHighlight,
+  OverviewPillarConfig,
+  ProcessStepConfig,
+  WhyUsItemConfig,
+  TeamMemberConfig,
+  FooterColumnConfig,
+  CustomSectionConfig,
+  SiteThemeSettings,
 } from "@/types/cms";
 import type {
   AppReleaseDocument,
@@ -32,6 +43,18 @@ import type {
 // ==========================================
 // 1. PUBLIC READ APIS (WITH STATIC FALLBACK)
 // ==========================================
+
+async function isCollectionInitialized(
+  key: "apps" | "projects" | "services" | "packages"
+): Promise<boolean> {
+  if (!db) return false;
+  try {
+    const snap = await getDoc(doc(db, "settings", "global"));
+    return Boolean(snap.exists() && snap.data()?.initializedCollections?.[key] === true);
+  } catch {
+    return false;
+  }
+}
 
 export async function getPublishedApps(): Promise<AppDocument[]> {
   if (db && isFirebaseConfigured) {
@@ -46,6 +69,9 @@ export async function getPublishedApps(): Promise<AppDocument[]> {
           .map((d) => ({ id: d.id, ...d.data() } as AppDocument))
           .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
         if (list.length > 0) return list;
+      }
+      if (await isCollectionInitialized("apps")) {
+        return [];
       }
     } catch (err) {
       console.warn("Firestore getPublishedApps fallback:", err);
@@ -166,6 +192,9 @@ export async function getPublishedProjects(): Promise<ProjectDocument[]> {
           })
           .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       }
+      if (await isCollectionInitialized("projects")) {
+        return [];
+      }
     } catch (err) {
       console.warn("Firestore getPublishedProjects fallback:", err);
     }
@@ -257,6 +286,9 @@ export async function getPublishedServices(): Promise<ServiceDocument[]> {
           .map((d) => ({ id: d.id, ...d.data() } as ServiceDocument))
           .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
       }
+      if (await isCollectionInitialized("services")) {
+        return [];
+      }
     } catch (err) {
       console.warn("Firestore getPublishedServices fallback:", err);
     }
@@ -266,9 +298,11 @@ export async function getPublishedServices(): Promise<ServiceDocument[]> {
     id: s.id,
     name: s.title,
     slug: s.slug,
+    tagline: s.tagline,
     shortDescription: s.shortDescription,
     description: s.fullDescription,
     category: s.title,
+    capabilities: s.capabilities,
     deliverables: s.deliverables,
     process: s.process.map((p) => ({
       step: p.step,
@@ -283,6 +317,9 @@ export async function getPublishedServices(): Promise<ServiceDocument[]> {
       deliverables: pkg.features,
       turnaround: "1-2 Weeks",
     })),
+    pricingNote: s.pricingNote,
+    demos: s.demos || [],
+    teamMembers: s.teamMembers || [],
     faq: s.faqs,
     featured: true,
     sortOrder: idx,
@@ -294,8 +331,34 @@ export async function getPublishedServices(): Promise<ServiceDocument[]> {
   }));
 }
 
+export async function getFirestoreServiceBySlug(slug: string): Promise<ServiceDocument | null> {
+  const normalizedSlug = slug.toLowerCase();
+  if (!db || !isFirebaseConfigured) return null;
+  try {
+    const q = query(
+      collection(db, "services"),
+      where("slug", "==", normalizedSlug),
+      where("published", "==", true)
+    );
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) return null;
+    const d = snapshot.docs[0];
+    const raw = d.data();
+    return {
+      id: d.id,
+      ...raw,
+      name: raw.name || raw.title || "",
+      deliverables: raw.deliverables || [],
+    } as ServiceDocument;
+  } catch {
+    return null;
+  }
+}
+
 export async function getPublishedServiceBySlug(slug: string): Promise<ServiceDocument | null> {
   const normalizedSlug = slug.toLowerCase();
+  const staticFallback = studioServices.find((item) => item.slug.toLowerCase() === normalizedSlug);
+
   if (db && isFirebaseConfigured) {
     try {
       const q = query(
@@ -310,8 +373,13 @@ export async function getPublishedServiceBySlug(slug: string): Promise<ServiceDo
         return {
           id: d.id,
           ...raw,
-          name: raw.name || raw.title || "",
+          name: raw.name || raw.title || staticFallback?.title || "",
+          tagline: raw.tagline || staticFallback?.tagline,
+          capabilities: raw.capabilities || staticFallback?.capabilities || [],
           deliverables: raw.deliverables || [],
+          pricingNote: raw.pricingNote ?? staticFallback?.pricingNote,
+          demos: Array.isArray(raw.demos) ? raw.demos : (staticFallback?.demos || []),
+          teamMembers: Array.isArray(raw.teamMembers) ? raw.teamMembers : (staticFallback?.teamMembers || []),
         } as ServiceDocument;
       }
     } catch (err) {
@@ -319,16 +387,18 @@ export async function getPublishedServiceBySlug(slug: string): Promise<ServiceDo
     }
   }
 
-  const s = studioServices.find((item) => item.slug.toLowerCase() === normalizedSlug);
+  const s = staticFallback;
   if (!s) return null;
 
   return {
     id: s.id,
     name: s.title,
     slug: s.slug,
+    tagline: s.tagline,
     shortDescription: s.shortDescription,
     description: s.fullDescription,
     category: s.title,
+    capabilities: s.capabilities,
     deliverables: s.deliverables,
     process: s.process.map((p) => ({
       step: p.step,
@@ -343,6 +413,9 @@ export async function getPublishedServiceBySlug(slug: string): Promise<ServiceDo
       deliverables: pkg.features,
       turnaround: "1-2 Weeks",
     })),
+    pricingNote: s.pricingNote,
+    demos: s.demos || [],
+    teamMembers: s.teamMembers || [],
     faq: s.faqs,
     featured: true,
     sortOrder: 0,
@@ -424,6 +497,9 @@ export async function getPublishedPackages(): Promise<WebsitePackageDocument[]> 
         const combined = [...firestorePkgs, ...missingCore];
 
         return combined.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+      }
+      if (await isCollectionInitialized("packages")) {
+        return [];
       }
     } catch (err) {
       console.warn("Firestore getPublishedPackages fallback:", err);
@@ -615,12 +691,12 @@ export const defaultSiteContent: SiteContentDocument = {
   metadata: {
     sectionOrder: [
       "hero",
-      "overview",
       "services",
       "projects",
+      "overview",
+      "process",
       "why-us",
       "team",
-      "process",
       "final-cta",
     ],
     sectionVisibility: {
@@ -668,68 +744,361 @@ export const defaultSiteContent: SiteContentDocument = {
   updatedAt: new Date().toISOString(),
 };
 
-function mergeSiteContent(raw: Record<string, any>, targetId: "main" | "draft" = "main"): SiteContentDocument {
+export const defaultHeroQuickStart: HeroQuickStartItem[] = [
+  {
+    id: "qs-video",
+    title: "Video Editing",
+    subtitle: "Reels, YouTube & ads",
+    href: "/services/video-editing",
+    badge: "From ₹499",
+    iconName: "Video",
+  },
+  {
+    id: "qs-amazon",
+    title: "Amazon Listings",
+    subtitle: "Images & A+ Content",
+    href: "/services/amazon-listing",
+    badge: "Popular",
+    iconName: "ShoppingBag",
+  },
+  {
+    id: "qs-websites",
+    title: "Websites & Stores",
+    subtitle: "Business sites & Next.js",
+    href: "/services/website-development",
+    badge: "Custom",
+    iconName: "Globe",
+  },
+  {
+    id: "qs-apps",
+    title: "Apps & AI Tools",
+    subtitle: "Mobile apps & utilities",
+    href: "/services/app-development",
+    badge: "Studio",
+    iconName: "Smartphone",
+  },
+];
+
+export const defaultHeroTrustHighlights: HeroTrustHighlight[] = [
+  { id: "th-1", label: "Fast Delivery", value: "24–48h Turnaround", iconName: "Zap" },
+  { id: "th-2", label: "Direct Access", value: "Talk to Builders Directly", iconName: "MessageSquare" },
+  { id: "th-3", label: "Transparent Pricing", value: "Clear Scope & Revisions", iconName: "ShieldCheck" },
+];
+
+export const defaultOverviewSection: NonNullable<SiteContentDocument["overviewSection"]> = {
+  eyebrow: "ABOUT US",
+  headline: "Built for Businesses, Not Generic Agency Fluff",
+  subheadline:
+    "Whether you need scroll-stopping product images, a clean company website, or high-retention reels, we focus on clarity, speed, and practical business results.",
+  pillars: [
+    {
+      id: "ov-1",
+      number: "01",
+      title: "Clear, Honest Communication",
+      description: "You work directly with the builder and creative team — no confusing agency layers or hidden fees.",
+      iconName: "Compass",
+    },
+    {
+      id: "ov-2",
+      number: "02",
+      title: "Built to Sell & Convert",
+      description: "Every page layout, Amazon graphic, and reel is structured to guide real visitors to take action.",
+      iconName: "Target",
+    },
+    {
+      id: "ov-3",
+      number: "03",
+      title: "Everything Under One Roof",
+      description: "Design, video editing, e-commerce catalogs, websites, and custom apps working seamlessly together.",
+      iconName: "Layers",
+    },
+  ] as OverviewPillarConfig[],
+};
+
+export const defaultProcessSection: NonNullable<SiteContentDocument["processSection"]> = {
+  eyebrow: "HOW WE WORK",
+  headline: "Simple 4-Step Delivery Process",
+  subheadline: "From first message to final files, everything stays structured and transparent.",
+  ctaText: "Start Your Project",
+  ctaLink: "/contact",
+  steps: [
+    {
+      id: "proc-1",
+      step: "01",
+      title: "Share Your Goal",
+      description: "Tell us what you need — a website, video package, Amazon deck, or app idea.",
+      badge: "Step 01",
+    },
+    {
+      id: "proc-2",
+      step: "02",
+      title: "Plan & Outline",
+      description: "We confirm timeline, deliverables, and transparent fixed pricing upfront.",
+      badge: "Step 02",
+    },
+    {
+      id: "proc-3",
+      step: "03",
+      title: "Craft & Preview",
+      description: "We design, build, or edit in focused iterations and share clean previews for feedback.",
+      badge: "Step 03",
+    },
+    {
+      id: "proc-4",
+      step: "04",
+      title: "Launch & Handover",
+      description: "Final production assets, live deployment, and post-launch support ready to scale.",
+      badge: "Step 04",
+    },
+  ] as ProcessStepConfig[],
+};
+
+export const defaultWhyUsSection: NonNullable<SiteContentDocument["whyUsSection"]> = {
+  eyebrow: "WHY IMDAD.BUILDS",
+  headline: "Practical Execution Over Agency Hype",
+  subheadline: "Real digital operators building creative media, stores, and software we actively use ourselves.",
+  items: [
+    {
+      id: "why-1",
+      title: "Conversion-First Thinking",
+      description: "Every design answers buyer questions and guides visitors cleanly toward ordering or booking.",
+      metric: "Buyer Focused",
+      iconName: "Target",
+    },
+    {
+      id: "why-2",
+      title: "Direct Collaboration",
+      description: "Talk straight with Imdad and our specialized editors without middlemen slowing progress.",
+      metric: "Zero Bureaucracy",
+      iconName: "Users",
+    },
+    {
+      id: "why-3",
+      title: "Modern Full-Stack Craft",
+      description: "We blend clean web engineering, AI workflows, and high-retention editing under one studio.",
+      metric: "End-to-End",
+      iconName: "Sparkles",
+    },
+    {
+      id: "why-4",
+      title: "Fair & Clear Pricing",
+      description: "Clear package scopes and milestones so you always know what you get before paying.",
+      metric: "Transparent",
+      iconName: "ShieldCheck",
+    },
+  ] as WhyUsItemConfig[],
+};
+
+export const defaultTeamSection: NonNullable<SiteContentDocument["teamSection"]> = {
+  eyebrow: "STUDIO TEAM",
+  headline: "Meet the People Behind the Work",
+  subheadline: "A small, hands-on team focused on engineering quality and conversion-driven creative craft.",
+  members: studioTeam.map((m): TeamMemberConfig => ({
+    id: m.id,
+    name: m.name,
+    role: m.role,
+    title: m.title,
+    badge: m.badge,
+    bio: m.bio,
+    avatarUrl: m.avatarUrl,
+    initials: m.initials,
+    specialties: m.specialties,
+    enabled: true,
+  })),
+};
+
+export const defaultThemeSettings: SiteThemeSettings = {
+  presetId: "warm-cream",
+  backgroundColor: "#FAF7F2",
+  surfaceColor: "#FFFFFF",
+  sandColor: "#F3ECE4",
+  peachColor: "#FAECE4",
+  accentColor: "#C96A50",
+  accentHoverColor: "#B4583F",
+  headingColor: "#332924",
+  bodyColor: "#5F534D",
+  borderColor: "#E8DFD5",
+  headingFont: "plus-jakarta",
+  bodyFont: "dm-sans",
+};
+
+export const defaultFooterColumns: FooterColumnConfig[] = [
+  {
+    id: "col-services",
+    title: "Services",
+    links: (navItems.find((n) => n.label === "Services")?.subItems || []).map((s) => ({
+      label: s.label,
+      href: s.href,
+    })),
+  },
+  {
+    id: "col-studio",
+    title: "Studio",
+    links: companyNavItems,
+  },
+  {
+    id: "col-legal",
+    title: "Policies",
+    links: legalNavItems,
+  },
+];
+
+function asRecord(val: unknown): Record<string, unknown> {
+  return val && typeof val === "object" && !Array.isArray(val) ? (val as Record<string, unknown>) : {};
+}
+
+function mergeSiteContent(raw: Record<string, unknown>, targetId: "main" | "draft" = "main"): SiteContentDocument {
+  const rawHero = asRecord(raw.hero);
+  const rawNav = asRecord(raw.navigation);
+  const rawServicesSec = asRecord(raw.servicesSection);
+  const rawProjectsSec = asRecord(raw.projectsSection);
+  const rawAppsSec = asRecord(raw.appsSection);
+  const rawAbout = asRecord(raw.about);
+  const rawFinalCta = asRecord(raw.finalCta);
+  const rawContact = asRecord(raw.contact);
+  const rawSocial = asRecord(raw.socialLinks);
+  const rawFooter = asRecord(raw.footer);
+  const rawMetadata = asRecord(raw.metadata);
+  const rawOverview = asRecord(raw.overviewSection);
+  const rawProcess = asRecord(raw.processSection);
+  const rawWhyUs = asRecord(raw.whyUsSection);
+  const rawTeam = asRecord(raw.teamSection);
+  const rawTheme = asRecord(raw.themeSettings);
+
+  const defaultServicesDropdown = (navItems.find((n) => n.label === "Services")?.subItems || []).map((s) => ({
+    ...s,
+    enabled: true,
+  }));
+
+  const isLayoutV2 = rawMetadata.layoutVersion === 2;
+
   return {
     id: targetId,
     hero: {
       ...defaultSiteContent.hero,
-      ...(raw.hero || {}),
-      prototypeApps: raw.hero?.prototypeApps || defaultSiteContent.hero.prototypeApps,
+      ...(isLayoutV2 ? (rawHero as Partial<SiteContentDocument["hero"]>) : {}),
+      prototypeApps: (rawHero.prototypeApps as SiteContentDocument["hero"]["prototypeApps"]) || defaultSiteContent.hero.prototypeApps,
+      quickStartTitle:
+        (isLayoutV2 ? (rawHero.quickStartTitle as string) : undefined) || "Quick Start",
+      quickStartSubtitle:
+        (isLayoutV2 ? (rawHero.quickStartSubtitle as string) : undefined) ||
+        "Pick what you need to begin",
+      quickStartItems:
+        (isLayoutV2 ? (rawHero.quickStartItems as HeroQuickStartItem[]) : undefined) ||
+        defaultHeroQuickStart,
+      trustHighlights:
+        (isLayoutV2 ? (rawHero.trustHighlights as HeroTrustHighlight[]) : undefined) ||
+        defaultHeroTrustHighlights,
     },
     navigation: {
       ...defaultSiteContent.navigation,
-      ...(raw.navigation || {}),
+      ...(isLayoutV2 ? (rawNav as Partial<NonNullable<SiteContentDocument["navigation"]>>) : {}),
+      servicesDropdown:
+        (isLayoutV2
+          ? (rawNav.servicesDropdown as NonNullable<SiteContentDocument["navigation"]>["servicesDropdown"])
+          : undefined) || defaultServicesDropdown,
     },
     appsSection: {
       ...defaultSiteContent.appsSection,
-      ...(raw.appsSection || {}),
+      ...(rawAppsSec as Partial<NonNullable<SiteContentDocument["appsSection"]>>),
     },
     servicesSection: {
       ...defaultSiteContent.servicesSection,
-      ...(raw.servicesSection || {}),
+      ...(isLayoutV2 ? (rawServicesSec as Partial<NonNullable<SiteContentDocument["servicesSection"]>>) : {}),
+      columns: ((isLayoutV2 ? (rawServicesSec.columns as 2 | 3 | 4) : undefined) || 3),
     },
     projectsSection: {
       ...defaultSiteContent.projectsSection,
-      ...(raw.projectsSection || {}),
+      ...(isLayoutV2 ? (rawProjectsSec as Partial<NonNullable<SiteContentDocument["projectsSection"]>>) : {}),
+      columns: ((isLayoutV2 ? (rawProjectsSec.columns as 2 | 3) : undefined) || 3),
+    },
+    overviewSection: {
+      ...defaultOverviewSection,
+      ...(isLayoutV2 ? (rawOverview as Partial<typeof defaultOverviewSection>) : {}),
+      pillars:
+        (isLayoutV2 ? (rawOverview.pillars as OverviewPillarConfig[]) : undefined) ||
+        defaultOverviewSection.pillars,
+    },
+    processSection: {
+      ...defaultProcessSection,
+      ...(isLayoutV2 ? (rawProcess as Partial<typeof defaultProcessSection>) : {}),
+      steps:
+        (isLayoutV2 ? (rawProcess.steps as ProcessStepConfig[]) : undefined) ||
+        defaultProcessSection.steps,
+    },
+    whyUsSection: {
+      ...defaultWhyUsSection,
+      ...(isLayoutV2 ? (rawWhyUs as Partial<typeof defaultWhyUsSection>) : {}),
+      items:
+        (isLayoutV2 ? (rawWhyUs.items as WhyUsItemConfig[]) : undefined) ||
+        defaultWhyUsSection.items,
+    },
+    teamSection: {
+      ...defaultTeamSection,
+      ...(isLayoutV2 ? (rawTeam as Partial<typeof defaultTeamSection>) : {}),
+      members:
+        (isLayoutV2 ? (rawTeam.members as TeamMemberConfig[]) : undefined) ||
+        defaultTeamSection.members,
     },
     about: {
       ...defaultSiteContent.about,
-      ...(raw.about || {}),
-      pillars: raw.about?.pillars || defaultSiteContent.about.pillars,
+      ...(rawAbout as Partial<SiteContentDocument["about"]>),
+      pillars: (rawAbout.pillars as SiteContentDocument["about"]["pillars"]) || defaultSiteContent.about.pillars,
     },
     finalCta: {
       ...defaultSiteContent.finalCta,
-      ...(raw.finalCta || {}),
+      ...(isLayoutV2 ? (rawFinalCta as Partial<SiteContentDocument["finalCta"]>) : {}),
     },
     contact: {
       ...defaultSiteContent.contact,
-      ...(raw.contact || {}),
+      ...(rawContact as Partial<SiteContentDocument["contact"]>),
     },
     socialLinks: {
       ...defaultSiteContent.socialLinks,
-      ...(raw.socialLinks || {}),
+      ...(rawSocial as Partial<SiteContentDocument["socialLinks"]>),
     },
     footer: {
       ...defaultSiteContent.footer,
-      ...(raw.footer || {}),
+      ...(isLayoutV2 ? (rawFooter as Partial<SiteContentDocument["footer"]>) : {}),
+      studioBadge:
+        (isLayoutV2 ? (rawFooter.studioBadge as string) : undefined) ||
+        "Product Studio & Digital Services",
+      columns:
+        (isLayoutV2 ? (rawFooter.columns as FooterColumnConfig[]) : undefined) ||
+        defaultFooterColumns,
+      bottomLinks:
+        (isLayoutV2 ? (rawFooter.bottomLinks as Array<{ label: string; href: string }>) : undefined) ||
+        legalNavItems,
+    },
+    customSections:
+      isLayoutV2 && Array.isArray(raw.customSections)
+        ? (raw.customSections as CustomSectionConfig[])
+        : [],
+    themeSettings: {
+      ...defaultThemeSettings,
+      ...(isLayoutV2 ? (rawTheme as Partial<SiteThemeSettings>) : {}),
     },
     metadata: {
-      sectionOrder: raw.metadata?.sectionOrder || defaultSiteContent.metadata?.sectionOrder,
+      layoutVersion: 2,
+      sectionOrder:
+        isLayoutV2 && Array.isArray(rawMetadata.sectionOrder)
+          ? (rawMetadata.sectionOrder as string[])
+          : defaultSiteContent.metadata?.sectionOrder,
       sectionVisibility: {
         ...defaultSiteContent.metadata?.sectionVisibility,
-        ...(raw.metadata?.sectionVisibility || {}),
+        ...(isLayoutV2 ? (asRecord(rawMetadata.sectionVisibility) as Record<string, boolean>) : {}),
       },
-      skills: raw.metadata?.skills || defaultSiteContent.metadata?.skills,
+      skills: (rawMetadata.skills as Array<{ category: string; items: string[] }>) || defaultSiteContent.metadata?.skills,
       seo: {
         ...defaultSiteContent.metadata?.seo,
-        ...(raw.metadata?.seo || {}),
+        ...asRecord(rawMetadata.seo),
       },
     },
-    published: raw.published ?? true,
-    publishedAt: raw.publishedAt,
-    publishedBy: raw.publishedBy,
-    draftModifiedAt: raw.draftModifiedAt,
-    updatedAt: raw.updatedAt || new Date().toISOString(),
+    published: typeof raw.published === "boolean" ? raw.published : targetId === "main",
+    publishedAt: typeof raw.publishedAt === "string" ? raw.publishedAt : undefined,
+    publishedBy: typeof raw.publishedBy === "string" ? raw.publishedBy : undefined,
+    draftModifiedAt: typeof raw.draftModifiedAt === "string" ? raw.draftModifiedAt : undefined,
+    updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : new Date().toISOString(),
   };
 }
 
@@ -742,21 +1111,21 @@ export async function getSiteContent(options?: { isDraft?: boolean }): Promise<S
         const draftRef = doc(db, "siteContent", "draft");
         const draftSnap = await getDoc(draftRef);
         if (draftSnap.exists()) {
-          return mergeSiteContent(draftSnap.data(), "draft");
+          return mergeSiteContent(draftSnap.data() as Record<string, unknown>, "draft");
         }
       }
 
       const mainRef = doc(db, "siteContent", "main");
       const snap = await getDoc(mainRef);
       if (snap.exists()) {
-        return mergeSiteContent(snap.data(), "main");
+        return mergeSiteContent(snap.data() as Record<string, unknown>, "main");
       }
     } catch (err) {
       console.warn("Firestore getSiteContent fallback:", err);
     }
   }
 
-  return { ...defaultSiteContent };
+  return mergeSiteContent(defaultSiteContent as unknown as Record<string, unknown>, "main");
 }
 
 export async function getSettings(): Promise<SettingsDocument> {
@@ -765,7 +1134,7 @@ export async function getSettings(): Promise<SettingsDocument> {
       const docRef = doc(db, "settings", "global");
       const snap = await getDoc(docRef);
       if (snap.exists()) {
-        return { id: "global", ...snap.data() } as SettingsDocument;
+        return { id: "global", published: true, ...snap.data() } as SettingsDocument;
       }
     } catch (err) {
       console.warn("Firestore getSettings fallback:", err);
@@ -779,9 +1148,11 @@ export async function getSettings(): Promise<SettingsDocument> {
     contactEmail: siteConfig.contact.email,
     whatsappNumber: siteConfig.contact.whatsappNumber,
     instagramHandle: siteConfig.contact.instagramHandle,
+    instagramUrl: siteConfig.contact.instagramUrl,
     liveUrl: "https://imdadbuild.space",
     maintenanceMode: false,
     allowPublicReviews: true,
+    published: true,
     updatedAt: new Date().toISOString(),
   };
 }
@@ -815,6 +1186,7 @@ export async function saveAppAdmin(app: Partial<AppDocument> & { id: string }): 
 export async function deleteAppAdmin(id: string): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   await deleteDoc(doc(db, "apps", id));
+  await markCollectionInitializedAdmin("apps").catch(() => {});
 }
 
 export async function getAllProjectsAdmin(): Promise<ProjectDocument[]> {
@@ -824,33 +1196,34 @@ export async function getAllProjectsAdmin(): Promise<ProjectDocument[]> {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() } as ProjectDocument));
 }
 
-function isSpecialFirestoreValue(val: any): boolean {
+function isSpecialFirestoreValue(val: unknown): boolean {
   if (val === null || typeof val !== "object") return false;
   if (val instanceof Date) return true;
+  const candidate = val as { toDate?: unknown; toMillis?: unknown; _methodName?: unknown };
   // Firestore Timestamp (duck-typed)
-  if (typeof val.toDate === "function" && typeof val.toMillis === "function") return true;
+  if (typeof candidate.toDate === "function" && typeof candidate.toMillis === "function") return true;
   // Firestore FieldValue sentinel (serverTimestamp, deleteField, etc.)
-  if (val._methodName !== undefined) return true;
+  if (candidate._methodName !== undefined) return true;
   return false;
 }
 
-export function cleanUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
+export function cleanUndefined<T extends object>(obj: T): Partial<T> {
   if (obj === null || typeof obj !== "object" || isSpecialFirestoreValue(obj)) {
     return obj;
   }
-  const cleaned: Record<string, any> = {};
-  for (const [k, v] of Object.entries(obj)) {
+  const cleaned: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
     if (v !== undefined) {
       if (Array.isArray(v)) {
         cleaned[k] = v
           .filter((item) => item !== undefined)
           .map((item) =>
             typeof item === "object" && item !== null && !isSpecialFirestoreValue(item)
-              ? cleanUndefined(item)
+              ? cleanUndefined(item as Record<string, unknown>)
               : item
           );
       } else if (typeof v === "object" && v !== null && !isSpecialFirestoreValue(v)) {
-        cleaned[k] = cleanUndefined(v);
+        cleaned[k] = cleanUndefined(v as Record<string, unknown>);
       } else {
         cleaned[k] = v;
       }
@@ -876,6 +1249,7 @@ export async function saveProjectAdmin(
 export async function deleteProjectAdmin(id: string): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   await deleteDoc(doc(db, "projects", id));
+  await markCollectionInitializedAdmin("projects").catch(() => {});
 }
 
 export async function getAllServicesAdmin(): Promise<ServiceDocument[]> {
@@ -905,6 +1279,7 @@ export async function saveServiceAdmin(
 export async function deleteServiceAdmin(id: string): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   await deleteDoc(doc(db, "services", id));
+  await markCollectionInitializedAdmin("services").catch(() => {});
 }
 
 export async function getAllPackagesAdmin(): Promise<WebsitePackageDocument[]> {
@@ -934,6 +1309,7 @@ export async function savePackageAdmin(
 export async function deletePackageAdmin(id: string): Promise<void> {
   if (!db) throw new Error("Firestore is not initialized");
   await deleteDoc(doc(db, "websitePackages", id));
+  await markCollectionInitializedAdmin("packages").catch(() => {});
 }
 
 export async function saveSiteContentAdmin(content: Partial<SiteContentDocument>): Promise<void> {
@@ -954,7 +1330,12 @@ export async function saveSiteContentDraft(content: Partial<SiteContentDocument>
   const now = new Date().toISOString();
   const payload = cleanUndefined({
     ...content,
+    metadata: {
+      ...(content.metadata || {}),
+      layoutVersion: 2,
+    },
     id: "draft",
+    published: typeof content.published === "boolean" ? content.published : false,
     draftModifiedAt: now,
     updatedAt: now,
   });
@@ -969,6 +1350,10 @@ export async function publishSiteContent(
   const now = new Date().toISOString();
   const payload = cleanUndefined({
     ...content,
+    metadata: {
+      ...(content.metadata || {}),
+      layoutVersion: 2,
+    },
     id: "main",
     published: true,
     publishedAt: now,
@@ -1099,43 +1484,58 @@ export async function checkAssetUsage(url: string): Promise<{ inUse: boolean; lo
 
 export async function deleteMediaAssetAdmin(
   id: string,
-  url?: string
-): Promise<{ success: boolean; error?: string }> {
+  url?: string,
+  options?: { force?: boolean }
+): Promise<{ success: boolean; error?: string; warning?: string }> {
   if (!db) throw new Error("Firestore is not initialized");
 
-  if (url) {
+  if (url && !options?.force) {
     const usage = await checkAssetUsage(url);
     if (usage.inUse) {
       return {
         success: false,
-        error: `Cannot delete asset: still referenced in ${usage.locations.join(", ")}. Please replace or remove references first.`,
+        error: `Still used in ${usage.locations.join(", ")}. Remove it there first or use Force Delete.`,
       };
     }
   }
 
+  let warning: string | undefined;
   const existing = await getDoc(doc(db, "mediaAssets", id));
+  const resolvedUrl = url || (existing.exists() ? String(existing.data().url || "") : "");
   const publicId = existing.exists()
-    ? (existing.data().publicId as string | undefined) || extractCloudinaryPublicId(url || String(existing.data().url || ""))
-    : extractCloudinaryPublicId(url || "");
-  if (publicId) {
+    ? (existing.data().publicId as string | undefined) || extractCloudinaryPublicId(resolvedUrl)
+    : extractCloudinaryPublicId(resolvedUrl);
+
+  if (publicId && publicId.startsWith("studio-assets/")) {
     const { auth } = await import("@/lib/firebase");
     const idToken = await auth?.currentUser?.getIdToken();
-    if (!idToken) return { success: false, error: "Administrator authentication is required to delete media." };
-    const response = await fetch("/api/admin/media", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
-      body: JSON.stringify({ publicId, resourceType: /\/video\/upload\//.test(url || "") ? "video" : "image" }),
-    });
-    const result = await response.json().catch(() => null) as { success?: boolean; error?: string } | null;
-    if (!response.ok || !result?.success) {
-      return { success: false, error: result?.error || "CDN deletion failed; media metadata was kept." };
+    if (idToken) {
+      const response = await fetch("/api/admin/media", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({
+          publicId,
+          resourceType: /\/video\/upload\//.test(resolvedUrl) ? "video" : "image",
+        }),
+      });
+      const result = (await response.json().catch(() => null)) as { success?: boolean; error?: string } | null;
+      if (!response.ok || !result?.success) {
+        if (response.status === 503 || response.status === 404) {
+          warning = result?.error || "Removed from library metadata (CDN storage not configured locally).";
+        } else {
+          return {
+            success: false,
+            error: result?.error || "CDN deletion failed; media metadata was kept.",
+          };
+        }
+      }
     }
-  } else if ((url || "").includes("cloudinary.com")) {
-    return { success: false, error: "Cannot verify the Cloudinary asset identity; media metadata was kept." };
+  } else if (resolvedUrl.includes("cloudinary.com")) {
+    warning = "Legacy Cloudinary asset removed from studio library index.";
   }
 
   await deleteDoc(doc(db, "mediaAssets", id));
-  return { success: true };
+  return { success: true, warning };
 }
 
 function extractCloudinaryPublicId(url?: string): string | undefined {
@@ -1152,6 +1552,28 @@ export async function saveSettingsAdmin(settings: Partial<SettingsDocument>): Pr
     cleanUndefined({
       ...settings,
       id: "global",
+      published: typeof settings.published === "boolean" ? settings.published : true,
+      updatedAt: new Date().toISOString(),
+    }),
+    { merge: true }
+  );
+}
+
+export async function markCollectionInitializedAdmin(
+  collectionKey: "apps" | "projects" | "services" | "packages"
+): Promise<void> {
+  if (!db) return;
+  const current = await getDoc(doc(db, "settings", "global")).catch(() => null);
+  const existingInit = (current?.exists() ? current.data().initializedCollections : {}) || {};
+  await setDoc(
+    doc(db, "settings", "global"),
+    cleanUndefined({
+      id: "global",
+      published: true,
+      initializedCollections: {
+        ...existingInit,
+        [collectionKey]: true,
+      },
       updatedAt: new Date().toISOString(),
     }),
     { merge: true }

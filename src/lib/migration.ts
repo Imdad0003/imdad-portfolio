@@ -5,6 +5,18 @@ import { projectsData } from "@/data/projectsData";
 import { studioServices } from "@/data/servicesData";
 import { allServices, corePackages } from "@/data/pricing";
 import { siteConfig } from "@/data/config";
+import {
+  cleanUndefined,
+  defaultFooterColumns,
+  defaultHeroQuickStart,
+  defaultHeroTrustHighlights,
+  defaultOverviewSection,
+  defaultProcessSection,
+  defaultSiteContent,
+  defaultTeamSection,
+  defaultThemeSettings,
+  defaultWhyUsSection,
+} from "@/lib/cms";
 import type {
   AppDocument,
   ProjectDocument,
@@ -75,7 +87,7 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
         updatedAt: now,
         published: true,
       };
-      await setDoc(docRef, appDoc, { merge: true });
+      await setDoc(docRef, cleanUndefined(appDoc as unknown as Record<string, unknown>), { merge: true });
       result.appsCount++;
     }
   }
@@ -107,7 +119,7 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
         updatedAt: now,
         published: true,
       };
-      await setDoc(docRef, projectDoc, { merge: true });
+      await setDoc(docRef, cleanUndefined(projectDoc as unknown as Record<string, unknown>), { merge: true });
       result.projectsCount++;
     }
   }
@@ -148,7 +160,7 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
         updatedAt: now,
         published: true,
       };
-      await setDoc(docRef, serviceDoc, { merge: true });
+      await setDoc(docRef, cleanUndefined(serviceDoc as unknown as Record<string, unknown>), { merge: true });
       result.servicesCount++;
     }
   }
@@ -177,7 +189,7 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
 
     for (const pkgDoc of corePkgsDocs) {
       const docRef = doc(db, "websitePackages", pkgDoc.id);
-      await setDoc(docRef, pkgDoc, { merge: true });
+      await setDoc(docRef, cleanUndefined(pkgDoc as unknown as Record<string, unknown>), { merge: true });
       result.packagesCount++;
     }
 
@@ -205,113 +217,45 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
         updatedAt: now,
         published: true,
       };
-      await setDoc(docRef, pkgDoc, { merge: true });
+      await setDoc(docRef, cleanUndefined(pkgDoc as unknown as Record<string, unknown>), { merge: true });
       result.packagesCount++;
     }
   }
 
-  // 5. Migrate Site Content
+  // 5. Migrate Site Content using current live homepage structure & soft-light defaults
   const siteContentDoc: SiteContentDocument = {
+    ...defaultSiteContent,
     id: "main",
     hero: {
-      badge: "DIGITAL PRODUCT STUDIO",
-      headline: "Apps, Platforms & Digital Commerce.",
-      subheadline:
-        "Independent studio engineering high-performance mobile apps, web applications, conversion-engineered e-commerce engines, and retention media.",
-      primaryCtaText: "Explore New Apps",
-      primaryCtaLink: "/apps",
-      secondaryCtaText: "Studio Services",
-      secondaryCtaLink: "/services",
-      announcement: "Now building: WishMusic & WishTracking for iOS/Android",
+      ...defaultSiteContent.hero,
+      quickStartTitle: "Quick Start",
+      quickStartSubtitle: "Pick what you need to begin",
+      quickStartItems: defaultHeroQuickStart,
+      trustHighlights: defaultHeroTrustHighlights,
     },
-    about: {
-      eyebrow: "STUDIO ORIGIN",
-      headline: "Building software, platforms & creative assets with commercial precision.",
-      bio: "Imdad.builds was founded as an independent digital studio where software engineering converges with direct commercial reality. Unlike agencies who theorize about products, we build, launch, and operate them ourselves.",
-      ethos: "Zero bloat. Fast iterations. Real products powered by imdad.builds.",
-      location: "India • Global Distribution",
-    },
-    finalCta: {
-      eyebrow: "COLLABORATE WITH IMDAD",
-      headline: "Have an ambitious product idea or digital service need?",
-      description:
-        "From early conceptual wireframes to high-conversion stores and consumer apps, let's build something enduring together.",
-      primaryCtaText: "Start a Project",
-      secondaryCtaText: "Explore Studio Services",
-    },
-    contact: {
-      email: siteConfig.contact.email,
-      whatsappNumber: siteConfig.contact.whatsappNumber,
-      whatsappDisplay: siteConfig.contact.whatsappDisplay,
-      whatsappMessage: siteConfig.contact.whatsappMessage,
-      instagramHandle: siteConfig.contact.instagramHandle,
-      instagramUrl: siteConfig.contact.instagramUrl,
-    },
-    socialLinks: {
-      instagram: siteConfig.links.instagram,
-      whatsapp: siteConfig.links.whatsapp,
-      email: siteConfig.links.email,
-      easyxo: siteConfig.links.easyxo,
-    },
+    overviewSection: defaultOverviewSection,
+    processSection: defaultProcessSection,
+    whyUsSection: defaultWhyUsSection,
+    teamSection: defaultTeamSection,
     footer: {
-      tagline: siteConfig.subTagline,
-      copyrightYear: 2026,
-      studioName: siteConfig.name,
+      ...defaultSiteContent.footer,
+      studioBadge: "Product Studio & Digital Services",
+      columns: defaultFooterColumns,
     },
+    customSections: [],
+    themeSettings: defaultThemeSettings,
     metadata: {
-      sectionOrder: [
-        "hero",
-        "packages",
-        "apps",
-        "services",
-        "projects",
-        "about",
-        "reviews",
-        "ai-assistant",
-        "final-cta",
-      ],
-      sectionVisibility: {
-        hero: true,
-        packages: true,
-        apps: true,
-        services: true,
-        projects: true,
-        about: true,
-        reviews: true,
-        "ai-assistant": true,
-        "final-cta": true,
-      },
-      skills: [
-        {
-          category: "Mobile & App Engineering",
-          items: ["Flutter", "Dart", "iOS", "Android", "Offline-First SQLite"],
-        },
-        {
-          category: "Web & Storefronts",
-          items: ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS v4", "Razorpay"],
-        },
-        {
-          category: "Marketplace & E-Commerce",
-          items: ["Amazon Listing SEO", "A+ Content (EBC)", "Catalog Architecture", "EasyXo"],
-        },
-        {
-          category: "AI & Media Systems",
-          items: ["Gemini 2.5 API", "Automated Video Pipeline", "Image Staging"],
-        },
-      ],
-      seo: {
-        title: "IMDAD.BUILDS | Independent Digital Product Studio",
-        description:
-          "Independent digital product studio building mobile apps, web applications, e-commerce systems, and conversion-engineered creative media.",
-      },
+      ...(defaultSiteContent.metadata || {}),
+      layoutVersion: 2,
     },
     published: true,
     updatedAt: now,
   };
-  await setDoc(doc(db, "siteContent", "main"), siteContentDoc, { merge: true });
+  await setDoc(doc(db, "siteContent", "main"), cleanUndefined(siteContentDoc as unknown as Record<string, unknown>), { merge: true });
+  await setDoc(doc(db, "siteContent", "draft"), cleanUndefined({ ...siteContentDoc, id: "draft" } as unknown as Record<string, unknown>), { merge: true });
   result.siteContentMigrated = true;
 
-  // 6. Migrate Settings
+  // 6. Migrate Settings (always include published: true for Firestore rules)
   const settingsDoc: SettingsDocument = {
     id: "global",
     studioName: siteConfig.name,
@@ -319,12 +263,20 @@ export async function migrateInitialDataToFirestore(force = false): Promise<Migr
     contactEmail: siteConfig.contact.email,
     whatsappNumber: siteConfig.contact.whatsappNumber,
     instagramHandle: siteConfig.contact.instagramHandle,
+    instagramUrl: siteConfig.contact.instagramUrl,
     liveUrl: "https://imdadbuild.space",
     maintenanceMode: false,
     allowPublicReviews: true,
+    initializedCollections: {
+      apps: true,
+      projects: true,
+      services: true,
+      packages: true,
+    },
+    published: true,
     updatedAt: now,
   };
-  await setDoc(doc(db, "settings", "global"), settingsDoc, { merge: true });
+  await setDoc(doc(db, "settings", "global"), cleanUndefined(settingsDoc as unknown as Record<string, unknown>), { merge: true });
   result.settingsMigrated = true;
 
   result.message = `Successfully migrated ${result.appsCount} apps, ${result.projectsCount} projects, ${result.servicesCount} services, ${result.packagesCount} packages, site content, and settings.`;

@@ -12,65 +12,76 @@ service cloud.firestore {
     // Collection: apps
     // Document ID: {appId} (e.g., 'wishmusic', 'wishtracking')
     // Fields:
-    //   - id: string (optional, max 64 chars, immutable)
+    //   - id: string (optional, max 64 chars, immutable once set)
     //   - name: string (required, 1-100 chars)
     //   - slug: string (required, 1-100 chars)
-    //   - tagline: string (required, 1-250 chars)
-    //   - description: string (required, 1-2000 chars)
-    //   - fullDescription: string (optional, 1-10000 chars)
-    //   - shortDescription: string (optional, 1-2000 chars)
-    //   - platform: list of strings (optional, <= 10 items)
-    //   - status: string (optional, 1-50 chars)
-    //   - statusLabel: string (optional, 1-50 chars)
+    //   - tagline: string (optional, max 250 chars)
+    //   - description: string (optional, max 10000 chars)
+    //   - fullDescription: string (optional, max 10000 chars)
+    //   - shortDescription: string (optional, max 2000 chars)
+    //   - platform: list (optional, <= 10 items)
+    //   - status: string (optional, max 50 chars)
+    //   - statusLabel: string (optional, max 50 chars)
     //   - published: bool (required) - Controls public visibility
     //   - isNew: bool (optional)
     //   - featured: bool (optional)
-    //   - category: string (optional, 1-100 chars)
-    //   - accentColor: string (optional, 1-30 chars)
-    //   - version: string (optional, 1-50 chars)
-    //   - releaseDate: string (optional, 1-50 chars)
+    //   - category: string (optional, max 100 chars)
+    //   - accentColor: string (optional, max 30 chars)
+    //   - version: string (optional, max 50 chars)
+    //   - releaseDate: string (optional, max 50 chars)
     //   - features: list (optional, <= 50 items)
     //   - techStack: list (optional, <= 50 items)
     //   - technologies: list (optional, <= 50 items)
-    //   - links: map (optional)
-    //   - logo: string (optional, max 1000 chars)
+    //   - links: map (optional, <= 20 keys)
+    //   - logo: string (optional, safe URL/path, max 1000 chars)
     //   - screenshots: list (optional, <= 30 items)
-    //   - url: string (optional, max 1000 chars)
-    //   - waitlistUrl: string (optional, max 1000 chars)
+    //   - url: string (optional, safe URL/path, max 1000 chars)
+    //   - waitlistUrl: string (optional, safe URL/path, max 1000 chars)
     //   - sortOrder: number (optional)
+    //   - approvedCertificateFingerprint: string (optional, max 128 chars)
+    //   - packageName: string (optional, max 150 chars)
+    //   - latestReleaseId: string (optional, max 100 chars)
+    //   - latestVersionName: string (optional, max 50 chars)
+    //   - latestVersionCode: int (optional, >= 1)
+    //   - latestReleaseDate: timestamp | string (optional, max 50 chars if string)
+    //   - latestDownloadUrl: string (optional, safe URL/path, max 1000 chars)
+    //   - latestSha256: string (optional, empty or 64 chars)
+    //   - latestApkSize: string (optional, max 50 chars)
+    //   - supportEmail: string (optional, empty or valid email, max 150 chars)
+    //   - privacyPolicyUrl: string (optional, safe URL/path, max 1000 chars)
     //   - createdAt: timestamp | string (optional)
     //   - updatedAt: timestamp | string (optional)
     //
     // Collection: projects
     // Document ID: {projectId} (e.g., 'easyxo-brand-ecosystem')
     // Fields:
-    //   - id: string (optional, max 64 chars, immutable)
+    //   - id: string (optional, max 64 chars, immutable once set)
     //   - name: string (required, 1-100 chars)
     //   - slug: string (required, 1-100 chars)
-    //   - category: string (required, 1-50 chars)
-    //   - tagline: string (optional, 1-250 chars)
-    //   - description: string (required, 1-5000 chars)
-    //   - shortDescription: string (optional, 1-2000 chars)
+    //   - category: string (required, 1-100 chars)
+    //   - tagline: string (optional, max 250 chars)
+    //   - description: string (optional, max 10000 chars)
+    //   - shortDescription: string (optional, max 2000 chars)
     //   - published: bool (required) - Controls public visibility
-    //   - scope: list (optional, <= 20 items)
-    //   - tools: list (optional, <= 30 items)
+    //   - scope: list (optional, <= 30 items)
+    //   - tools: list (optional, <= 50 items)
     //   - technologies: list (optional, <= 50 items)
-    //   - status: string (optional, 1-50 chars)
+    //   - status: string (optional, max 50 chars)
     //   - publishingStatus: string (optional, 'draft' | 'published' | 'archived')
     //   - featured: bool (optional)
-    //   - highlight: string (optional, 1-100 chars)
-    //   - url: string (optional, 1-500 chars)
-    //   - githubUrl: string (optional, max 1000 chars)
+    //   - highlight: string (optional, max 250 chars)
+    //   - url: string (optional, safe URL/path, max 1000 chars)
+    //   - githubUrl: string (optional, safe URL/path, max 1000 chars)
     //   - completionDate: string (optional, max 100 chars)
     //   - seoTitle: string (optional, max 200 chars)
     //   - seoDescription: string (optional, max 1000 chars)
-    //   - accentColor: string (optional, 1-30 chars)
-    //   - logo: string (optional, max 1000 chars)
-    //   - coverImage: string (optional, max 1000 chars)
-    //   - gallery: list (optional, <= 50 items)
+    //   - accentColor: string (optional, max 30 chars)
+    //   - logo: string (optional, safe URL/path, max 1000 chars)
+    //   - coverImage: string (optional, safe URL/path, max 1000 chars)
+    //   - gallery: list (optional, <= 100 items)
     //   - galleryItems: list (optional, <= 100 items)
     //   - screenshots: list (optional, <= 50 items)
-    //   - videoUrl: string (optional, max 1000 chars)
+    //   - videoUrl: string (optional, safe URL/path, max 1000 chars)
     //   - videos: list (optional, <= 20 items)
     //   - metrics: list (optional, <= 20 items)
     //   - deliverables: list (optional, <= 30 items)
@@ -81,28 +92,32 @@ service cloud.firestore {
     // Collection: services
     // Document ID: {serviceId} (e.g., 'website-development')
     // Fields:
-    //   - id: string (optional, max 64 chars, immutable)
-    //   - number: string (optional, 1-10 chars)
-    //   - title: string (optional, 1-100 chars)
-    //   - name: string (optional, 1-100 chars) - alias for title
+    //   - id: string (optional, max 64 chars, immutable once set)
+    //   - number: string (optional, max 10 chars)
+    //   - title: string (optional, 1-100 chars; either title or name required)
+    //   - name: string (optional, 1-100 chars; either title or name required)
     //   - slug: string (required, 1-100 chars)
-    //   - tagline: string (optional, 1-250 chars)
-    //   - shortDescription: string (required, 1-1000 chars)
-    //   - fullDescription: string (optional, 1-5000 chars)
-    //   - iconName: string (optional, 1-50 chars)
-    //   - accentColor: string (optional, 1-30 chars)
+    //   - tagline: string (optional, max 250 chars)
+    //   - shortDescription: string (optional, max 1000 chars)
+    //   - description: string (optional, max 10000 chars)
+    //   - fullDescription: string (optional, max 10000 chars)
+    //   - category: string (optional, max 100 chars)
+    //   - iconName: string (optional, max 50 chars)
+    //   - accentColor: string (optional, max 30 chars)
     //   - capabilities: list (optional, <= 30 items)
     //   - deliverables: list (optional, <= 30 items)
     //   - suitableFor: list (optional, <= 30 items)
-    //   - targetAudience: string (optional, 1-1000 chars)
+    //   - targetAudience: string (optional, max 1000 chars)
     //   - process: list (optional, <= 20 items)
     //   - subTypes: list (optional, <= 20 items)
     //   - packages: list (optional, <= 20 items)
     //   - pricing: list (optional, <= 30 items)
     //   - hasRealPricing: bool (optional)
-    //   - pricingNote: string (optional, 1-500 chars)
+    //   - pricingNote: string (optional, max 500 chars)
     //   - faqs: list (optional, <= 30 items)
     //   - faq: list (optional, <= 30 items)
+    //   - demos: list (optional, <= 30 items)
+    //   - teamMembers: list (optional, <= 20 items)
     //   - featured: bool (optional)
     //   - sortOrder: number (optional)
     //   - published: bool (required) - Controls public visibility
@@ -112,213 +127,154 @@ service cloud.firestore {
     // Collection: websitePackages
     // Document ID: {packageId}
     // Fields:
-    //   - id: string (optional, max 64 chars, immutable)
+    //   - id: string (optional, max 64 chars, immutable once set)
     //   - name: string (required, 1-100 chars)
     //   - price: number (required, >= 0)
-    //   - priceMax: number (optional)
-    //   - priceType: string (optional, 1-30 chars)
-    //   - unit: string (optional, 1-50 chars)
-    //   - description: string (required, 1-1000 chars)
+    //   - priceMax: number | null (optional, >= 0)
+    //   - priceType: string (optional, 'starting' | 'fixed' | 'range')
+    //   - unit: string (optional, max 50 chars)
+    //   - description: string (optional, max 1000 chars)
     //   - features: list (optional, <= 30 items)
     //   - recommended: bool (optional)
+    //   - popular: bool (optional)
     //   - active: bool (optional)
-    //   - websiteType: string (optional, 1-100 chars)
-    //   - badge: string (optional, 1-100 chars)
-    //   - cta: string (optional, 1-200 chars)
-    //   - ctaText: string (optional, 1-100 chars)
+    //   - websiteType: string (optional, max 100 chars)
+    //   - badge: string | null (optional, max 100 chars)
+    //   - cta: string (optional, max 200 chars)
+    //   - ctaText: string (optional, max 100 chars)
     //   - sortOrder: number (optional)
     //   - published: bool (required) - Controls public visibility
     //   - createdAt: timestamp | string (optional)
     //   - updatedAt: timestamp | string (optional)
     //
     // Collection: siteContent
-    // Document ID: {contentId} (e.g., 'hero', 'about')
+    // Document ID: 'main' | 'draft' | {contentId}
     // Fields:
-    //   - id: string (optional, max 64 chars, immutable)
-    //   - section: string (optional, 1-100 chars)
-    //   - title: string (optional, 1-200 chars)
-    //   - content: string | map (optional)
-    //   - metadata: map (optional)
-    //   - hero: map (optional)
-    //   - about: map (optional)
-    //   - finalCta: map (optional)
-    //   - contact: map (optional)
-    //   - socialLinks: map | list (optional)
-    //   - footer: map (optional)
-    //   - navigation: map | list (optional)
-    //   - appsSection: map (optional)
-    //   - servicesSection: map (optional)
-    //   - projectsSection: map (optional)
-    //   - reviewsSection: map (optional)
-    //   - packagesSection: map (optional)
-    //   - aboutSection: map (optional)
-    //   - aiAssistantSection: map (optional)
+    //   - id: string (optional, max 64 chars, immutable once set)
+    //   - section: string (optional, max 100 chars)
+    //   - title: string (optional, max 200 chars)
+    //   - content: string | map (optional, max 50000 chars or 50 keys)
+    //   - metadata: map (optional, <= 50 keys)
+    //   - hero: map (optional, <= 50 keys)
+    //   - about: map (optional, <= 30 keys)
+    //   - finalCta: map (optional, <= 30 keys)
+    //   - contact: map (optional, <= 30 keys)
+    //   - socialLinks: map | list (optional, <= 30 entries)
+    //   - footer: map (optional, <= 30 keys)
+    //   - navigation: map | list (optional, <= 30 entries)
+    //   - appsSection: map (optional, <= 30 keys)
+    //   - servicesSection: map (optional, <= 30 keys)
+    //   - projectsSection: map (optional, <= 30 keys)
+    //   - reviewsSection: map (optional, <= 30 keys)
+    //   - packagesSection: map (optional, <= 30 keys)
+    //   - aboutSection: map (optional, <= 30 keys)
+    //   - aiAssistantSection: map (optional, <= 30 keys)
+    //   - overviewSection: map (optional, <= 30 keys)
+    //   - whyUsSection: map (optional, <= 30 keys)
+    //   - teamSection: map (optional, <= 30 keys)
+    //   - processSection: map (optional, <= 30 keys)
+    //   - customSections: list (optional, <= 30 items)
+    //   - themeSettings: map (optional, <= 50 keys)
     //   - draftModifiedAt: timestamp | string (optional)
     //   - publishedAt: timestamp | string (optional)
     //   - publishedBy: string (optional, max 150 chars)
-    //   - published: bool (required) - Controls public visibility
+    //   - published: bool (required on non-draft docs; optional bool on 'draft')
     //   - createdAt: timestamp | string (optional)
     //   - updatedAt: timestamp | string (optional)
     //
     // Collection: settings
-    // Document ID: {settingId} (e.g., 'general', 'brand', 'contact')
+    // Document ID: 'global' | {settingId}
     // Fields:
-    //   - id: string (optional, max 64 chars, immutable)
-    //   - name: string (optional, 1-100 chars)
-    //   - studioName: string (optional, 1-100 chars)
-    //   - tagline: string (optional, 1-250 chars)
-    //   - contact: map (optional)
-    //   - contactEmail: string (optional, 1-150 chars)
-    //   - whatsappNumber: string (optional, 1-50 chars)
-    //   - instagramHandle: string (optional, 1-100 chars)
-    //   - liveUrl: string (optional, 1-500 chars)
-    //   - socials: map (optional)
-    //   - config: map (optional)
+    //   - id: string (optional, max 64 chars, immutable once set)
+    //   - name: string (optional, max 100 chars)
+    //   - studioName: string (optional, max 100 chars)
+    //   - tagline: string (optional, max 250 chars)
+    //   - primaryLogo: string (optional, safe URL/path, max 1000 chars)
+    //   - secondaryLogo: string (optional, safe URL/path, max 1000 chars)
+    //   - favicon: string (optional, safe URL/path, max 1000 chars)
+    //   - contact: map (optional, <= 30 keys)
+    //   - contactEmail: string (optional, empty or valid email, max 150 chars)
+    //   - whatsappNumber: string (optional, max 50 chars)
+    //   - instagramHandle: string (optional, max 100 chars)
+    //   - instagramUrl: string (optional, safe URL/path, max 500 chars)
+    //   - liveUrl: string (optional, max 500 chars)
+    //   - socials: map (optional, <= 30 keys)
+    //   - config: map (optional, <= 50 keys)
+    //   - brandColors: map (optional, <= 30 keys)
+    //   - typography: map (optional, <= 30 keys)
+    //   - activePreset: string (optional, max 100 chars)
+    //   - initializedCollections: list | map (optional, <= 50 entries)
     //   - maintenanceMode: bool (optional)
     //   - allowPublicReviews: bool (optional)
-    //   - resumeBuilder: map (optional)
-    //   - published: bool (required) - Controls public visibility
+    //   - resumeBuilder: map (optional, <= 30 keys)
+    //   - published: bool (optional, controls public visibility)
     //   - createdAt: timestamp | string (optional)
     //   - updatedAt: timestamp | string (optional)
     //
     // Collection: reviews
     // Document ID: {reviewId}
     // Fields:
-    //   - id: string (optional, max 100 chars, immutable)
+    //   - id: string (optional, max 100 chars, immutable once set)
     //   - name: string (required, 2-100 chars)
     //   - service: string (required, 2-150 chars)
     //   - rating: number (required, 1-5)
     //   - review: string (required, 10-2000 chars)
     //   - status: string (required, 'pending' | 'approved' | 'rejected')
-    //   - email: string (optional, valid email, max 150 chars)
-    //   - image: string (optional, valid url, max 500 chars)
-    //   - verified: bool (optional, immutable for non-admins)
-    //   - createdAt: timestamp | string (optional, immutable)
-    //   - updatedAt: timestamp | string (optional)
-    //
-    // Collection: appReleases
-    // Document ID: {releaseId} (e.g., '{appId}_{versionCode}' or unique ID)
-    // Fields:
-    //   - id: string (optional, max 100 chars, immutable)
-    //   - appId: string (required, 1-64 chars, immutable)
-    //   - appName: string (optional, 1-100 chars)
-    //   - packageName: string (required, 1-150 chars, immutable)
-    //   - versionName: string (required, 1-50 chars)
-    //   - versionCode: int (required, >= 1, immutable)
-    //   - releaseTitle: string (optional, 1-200 chars)
-    //   - releaseNotes: string (optional, 1-10000 chars)
-    //   - channel: string (required, 'stable' | 'beta')
-    //   - status: string (required, 'draft' | 'published' | 'archived' | 'rolled_back')
-    //   - isLatestStable: bool (optional)
-    //   - fileName: string (optional, 1-200 chars)
-    //   - fileSize: number (optional, >= 0)
-    //   - fileSizeFormatted: string (optional, 1-50 chars)
-    //   - sha256: string (required, 64 chars, immutable)
-    //   - minSdkVersion: int (optional, >= 1)
-    //   - minAndroidVersion: string (optional, 1-50 chars)
-    //   - targetSdkVersion: int (optional, >= 1)
-    //   - targetAndroidVersion: string (optional, 1-50 chars)
-    //   - permissions: list (optional, <= 100 items)
-    //   - certificateFingerprintSha256: string (optional, 1-128 chars)
-    //   - certificateSubject: string (optional, 1-500 chars)
-    //   - isProductionSigned: bool (optional)
-    //   - hostingProvider: string (optional, 'github' | 'storage' | 'custom')
-    //   - downloadUrl: string (required, 1-1000 chars)
-    //   - githubReleaseId: number (optional)
-    //   - githubTag: string (optional, 1-100 chars)
-    //   - githubAssetId: number (optional)
-    //   - uploadedBy: string (optional, 1-100 chars)
-    //   - createdAt: timestamp | string (optional)
-    //   - publishedAt: timestamp | string (optional)
-    //   - updatedAt: timestamp | string (optional)
-    //
-    // Collection: releaseAuditLogs
-    // Document ID: {logId}
-    // Fields:
-    //   - id: string (optional, max 100 chars)
-    //   - appId: string (required, 1-64 chars)
-    //   - releaseId: string (optional, 1-100 chars)
-    //   - action: string (required, 'upload' | 'validate' | 'publish' | 'rollback' | 'archive' | 'download')
-    //   - performedBy: string (required, 1-100 chars)
-    //   - details: map | string (optional, max 5000 chars if string)
-    //   - timestamp: timestamp | string (required, max 50 chars if string)
-    //
-    // Collection: admins
-    // Document ID: {adminUid} (Firebase Auth UID of administrator)
-    // Fields:
-    //   - email: string (optional, max 150 chars)
-    //   - role: string (optional, max 50 chars)
-    //   - createdAt: timestamp | string (optional)
-    //
-    // Collection: appVisualContent
-    // Document ID: {contentId} (e.g., 'wishmusic')
-    // Fields:
-    //   - id: string (optional, max 64 chars)
-    //   - draft: map (optional) - Draft visual content configuration
-    //   - published: map (optional) - Published visual content configuration
-    //   - previous: map (optional) - Previous version for rollback
-    //   - updatedAt: timestamp | string (optional)
-    //   - publishedAt: timestamp | string (optional)
-    //
-    // Collection: videoOrders
-    // Document ID: {orderId} (e.g., 'ord_vid_1731715200000_abc12')
-    // Fields:
-    //   - id: string (optional, max 64 chars)
-    //   - orderNumber: string (optional, max 64 chars)
-    //   - serviceCategory: string (required, 'video-editing')
-    //   - customer: map (required)
-    //     - fullName: string (optional, 1-100 chars)
-    //     - mobileNumber: string (optional, 5-30 chars)
-    //     - email: string (required, valid email, max 150 chars)
-    //   - project: map (optional)
-    //   - pricing: map (optional)
-    //   - status: string (optional, 1-50 chars)
-    //   - paymentStatus: string (optional, 1-50 chars)
-    //   - projectStatus: string (optional, 1-50 chars)
-    //   - assignedEditor: map | null (optional)
-    //   - payments: list (optional)
-    //   - createdAt: timestamp | string (optional)
-    //   - updatedAt: timestamp | string (optional)
-    //   - metadata: map (optional)
-    //
-    // Collection: orderPrivateAssets
-    // Document ID: {assetId} (e.g., 'file_1731715200000_abc123')
-    // Fields:
-    //   - id: string (required, max 100 chars)
-    //   - name: string (required, max 255 chars)
-    //   - size: number (required, >= 0)
-    //   - type: string (required, MIME type)
-    //   - category: string ('raw_footage' | 'audio' | 'voiceover' | 'image' | 'asset' | 'other')
-    //   - storagePath: string (required, secure vault path)
-    //   - fileKey: string (required, internal identifier)
-    //   - orderId: string (required, order reference)
-    //   - status: string ('staged' | 'attached' | 'deleted')
-    //   - isPrivate: bool (true)
-    //   - uploadedAt: timestamp | string
-    //   - createdAt: timestamp | string
-    //
-    // Collection: orderConfigurations
-    // Document ID: {configId} (e.g., 'video-editing')
-    // Fields:
-    //   - serviceOptions: list (service configurations)
-    //   - videoFormats: list (supported video formats)
-    //   - aspectRatios: list (aspect ratio configurations)
-    //   - deliveryOptions: list (turnaround delivery choices)
-    //   - uploadSettings: map (file upload bounds and restrictions)
-    //   - orderFormFields: list (order form definitions)
+    //   - email: string (required on public create, valid email, max 150 chars)
+    //   - image: string (optional, safe URL/path, max 500 chars)
+    //   - verified: bool (optional, immutable false for public creates)
+    //   - createdAt: timestamp | string (optional, immutable once set)
     //   - updatedAt: timestamp | string (optional)
     //
     // Collection: mediaAssets
     // Document ID: {assetId}
     // Fields:
-    //   - id: string (optional, max 100 chars)
-    //   - name: string (optional, max 255 chars)
-    //   - url: string (optional, max 1000 chars)
-    //   - path: string (optional, max 1000 chars)
-    //   - size: number (optional, >= 0)
-    //   - type: string (optional, max 100 chars)
-    //   - createdAt: timestamp | string (optional)
+    //   - id: string (required, 1-128 chars, immutable once set)
+    //   - url: string (required, https:// URL or static / path, max 1500 chars)
+    //   - name: string (required, 1-255 chars)
+    //   - alt: string (required, max 500 chars)
+    //   - category: string (required, 'logos' | 'hero' | 'apps' | 'projects' | 'services' | 'general')
+    //   - fileSize: number (required, 0-52428800 bytes)
+    //   - width: number (optional, 0-50000)
+    //   - height: number (optional, 0-50000)
+    //   - format: string (optional, 'jpeg' | 'jpg' | 'png' | 'webp' | 'svg' | 'svg+xml' | 'mp4' | 'webm' | 'gif' | 'avif')
+    //   - publicId: string (optional, max 500 chars)
+    //   - tags: list (optional, <= 30 items)
+    //   - usedIn: list (optional, <= 100 items)
+    //   - createdAt: timestamp | string (required)
     //   - updatedAt: timestamp | string (optional)
+    //
+    // Collections: amazonListings, amazonAPlusModules, amazonPackages
+    // Document ID: {listingId} | {moduleId} | {packageId}
+    // Public catalog read; Admin create, update, delete with schema validation.
+    //
+    // Collection: appReleases
+    // Document ID: {releaseId} (e.g., '{appId}_{versionCode}')
+    // Public reads published releases; Admin create/update/delete.
+    //
+    // Collection: releaseAuditLogs
+    // Document ID: {logId}
+    // Admin read & create only; Immutable (update/delete denied).
+    //
+    // Collection: admins
+    // Document ID: {adminUid}
+    // Admin read only; Client writes denied.
+    //
+    // Collection: appVisualContent
+    // Document ID: {contentId} (e.g., 'wishmusic')
+    // Public read; Admin create/update/delete with schema validation.
+    //
+    // Collection: videoOrders
+    // Document ID: {orderId}
+    // Admin read/update/delete; Constrained public create preserving Razorpay protections.
+    //
+    // Collection: orderPrivateAssets
+    // Document ID: {assetId}
+    // Admin read/update/delete; Constrained private asset staging create.
+    //
+    // Collection: orderConfigurations
+    // Document ID: {configId} (e.g., 'video-editing')
+    // Public read; Admin create/update/delete with schema validation.
     //
     // ===============================================================
 
@@ -326,8 +282,12 @@ service cloud.firestore {
     // Helper Functions
     // ===============================================================
 
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
     function isAdmin() {
-      return request.auth != null && (
+      return isAuthenticated() && (
         request.auth.token.admin == true ||
         (request.auth.token.email == 'imdad.builds@gmail.com' && request.auth.token.email_verified == true) ||
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
@@ -338,6 +298,12 @@ service cloud.firestore {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
     }
 
+    function isIdImmutable(docId) {
+      return !('id' in resource.data)
+        ? (!('id' in request.resource.data) || request.resource.data.id == docId)
+        : ('id' in request.resource.data && request.resource.data.id == resource.data.id);
+    }
+
     function isValidEmail(email) {
       return email is string &&
         email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
@@ -346,6 +312,59 @@ service cloud.firestore {
     function isValidUrl(url) {
       return url is string &&
         (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    // Allows trusted HTTPS URLs and static site-root paths (rejects http://, //, javascript:, data:, vbscript:)
+    function isValidAssetUrl(url) {
+      return url is string && url.size() >= 1 && url.size() <= 1500 &&
+        (url.matches("^https://[^\\s/]+.*$") || url.matches("^/[^/].*$"));
+    }
+
+    function isOptionalString(data, field, maxLen) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is string && data[field].size() <= maxLen);
+    }
+
+    function isOptionalSafeUrl(data, field, maxLen) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is string && data[field].size() <= maxLen &&
+          (data[field] == "" ||
+           data[field].matches("^https://[^\\s/]+.*$") ||
+           data[field].matches("^http://[^\\s/]+.*$") ||
+           data[field].matches("^/[^/].*$")));
+    }
+
+    function isOptionalTimestampOrString(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is timestamp ||
+        (data[field] is string && data[field].size() <= 50);
+    }
+
+    function isOptionalList(data, field, maxSize) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is list && data[field].size() <= maxSize);
+    }
+
+    function isOptionalMap(data, field, maxSize) {
+      return !(field in data) ||
+        data[field] == null ||
+        (data[field] is map && data[field].size() <= maxSize);
+    }
+
+    function isOptionalBool(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is bool;
+    }
+
+    function isOptionalNumber(data, field) {
+      return !(field in data) ||
+        data[field] == null ||
+        data[field] is number;
     }
 
     // ===============================================================
@@ -361,49 +380,51 @@ service cloud.firestore {
         'screenshots', 'url', 'waitlistUrl', 'sortOrder', 'published',
         'createdAt', 'updatedAt',
         'approvedCertificateFingerprint', 'packageName', 'latestReleaseId',
-        'latestVersionName', 'latestVersionCode', 'latestDownloadUrl',
-        'latestSha256', 'latestApkSize', 'supportEmail', 'privacyPolicyUrl'
+        'latestVersionName', 'latestVersionCode', 'latestReleaseDate',
+        'latestDownloadUrl', 'latestSha256', 'latestApkSize',
+        'supportEmail', 'privacyPolicyUrl'
       ];
       return data.keys().hasOnly(allowedFields) &&
-        data.keys().hasAll(['name', 'slug', 'tagline', 'description', 'published']) &&
+        data.keys().hasAll(['name', 'slug', 'published']) &&
         data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
         data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 &&
-        data.tagline is string && data.tagline.size() >= 1 && data.tagline.size() <= 250 &&
-        data.description is string && data.description.size() >= 1 && data.description.size() <= 2000 &&
         data.published is bool &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
-        (!('fullDescription' in data) || (data.fullDescription is string && data.fullDescription.size() <= 10000)) &&
-        (!('shortDescription' in data) || (data.shortDescription is string && data.shortDescription.size() <= 2000)) &&
-        (!('platform' in data) || (data.platform is list && data.platform.size() <= 10)) &&
-        (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
-        (!('statusLabel' in data) || (data.statusLabel is string && data.statusLabel.size() <= 50)) &&
-        (!('isNew' in data) || data.isNew is bool) &&
-        (!('featured' in data) || data.featured is bool) &&
-        (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
-        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
-        (!('version' in data) || (data.version is string && data.version.size() <= 50)) &&
-        (!('releaseDate' in data) || (data.releaseDate is string && data.releaseDate.size() <= 50)) &&
-        (!('features' in data) || (data.features is list && data.features.size() <= 50)) &&
-        (!('techStack' in data) || (data.techStack is list && data.techStack.size() <= 50)) &&
-        (!('technologies' in data) || (data.technologies is list && data.technologies.size() <= 50)) &&
-        (!('links' in data) || data.links is map) &&
-        (!('logo' in data) || (data.logo is string && data.logo.size() <= 1000)) &&
-        (!('screenshots' in data) || (data.screenshots is list && data.screenshots.size() <= 30)) &&
-        (!('url' in data) || (data.url is string && data.url.size() <= 1000)) &&
-        (!('waitlistUrl' in data) || (data.waitlistUrl is string && data.waitlistUrl.size() <= 1000)) &&
-        (!('sortOrder' in data) || data.sortOrder is number) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50)) &&
-        (!('approvedCertificateFingerprint' in data) || (data.approvedCertificateFingerprint is string && data.approvedCertificateFingerprint.size() <= 128)) &&
-        (!('packageName' in data) || (data.packageName is string && data.packageName.size() <= 150)) &&
-        (!('latestReleaseId' in data) || (data.latestReleaseId is string && data.latestReleaseId.size() <= 100)) &&
-        (!('latestVersionName' in data) || (data.latestVersionName is string && data.latestVersionName.size() <= 50)) &&
-        (!('latestVersionCode' in data) || (data.latestVersionCode is int && data.latestVersionCode >= 1)) &&
-        (!('latestDownloadUrl' in data) || (data.latestDownloadUrl is string && data.latestDownloadUrl.size() <= 1000 && isValidUrl(data.latestDownloadUrl))) &&
-        (!('latestSha256' in data) || (data.latestSha256 is string && data.latestSha256.size() == 64)) &&
-        (!('latestApkSize' in data) || (data.latestApkSize is string && data.latestApkSize.size() <= 50)) &&
-        (!('supportEmail' in data) || (data.supportEmail is string && data.supportEmail.size() <= 100 && isValidEmail(data.supportEmail))) &&
-        (!('privacyPolicyUrl' in data) || (data.privacyPolicyUrl is string && data.privacyPolicyUrl.size() <= 1000));
+        isOptionalString(data, 'id', 64) &&
+        isOptionalString(data, 'tagline', 250) &&
+        isOptionalString(data, 'description', 10000) &&
+        isOptionalString(data, 'fullDescription', 10000) &&
+        isOptionalString(data, 'shortDescription', 2000) &&
+        isOptionalList(data, 'platform', 10) &&
+        isOptionalString(data, 'status', 50) &&
+        isOptionalString(data, 'statusLabel', 50) &&
+        isOptionalBool(data, 'isNew') &&
+        isOptionalBool(data, 'featured') &&
+        isOptionalString(data, 'category', 100) &&
+        isOptionalString(data, 'accentColor', 30) &&
+        isOptionalString(data, 'version', 50) &&
+        isOptionalString(data, 'releaseDate', 50) &&
+        isOptionalList(data, 'features', 50) &&
+        isOptionalList(data, 'techStack', 50) &&
+        isOptionalList(data, 'technologies', 50) &&
+        isOptionalMap(data, 'links', 20) &&
+        isOptionalSafeUrl(data, 'logo', 1000) &&
+        isOptionalList(data, 'screenshots', 30) &&
+        isOptionalSafeUrl(data, 'url', 1000) &&
+        isOptionalSafeUrl(data, 'waitlistUrl', 1000) &&
+        isOptionalNumber(data, 'sortOrder') &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt') &&
+        isOptionalString(data, 'approvedCertificateFingerprint', 128) &&
+        isOptionalString(data, 'packageName', 150) &&
+        isOptionalString(data, 'latestReleaseId', 100) &&
+        isOptionalString(data, 'latestVersionName', 50) &&
+        (!('latestVersionCode' in data) || data.latestVersionCode == null || (data.latestVersionCode is int && data.latestVersionCode >= 1)) &&
+        isOptionalTimestampOrString(data, 'latestReleaseDate') &&
+        isOptionalSafeUrl(data, 'latestDownloadUrl', 1000) &&
+        (!('latestSha256' in data) || data.latestSha256 == null || data.latestSha256 == "" || (data.latestSha256 is string && data.latestSha256.size() == 64)) &&
+        isOptionalString(data, 'latestApkSize', 50) &&
+        (!('supportEmail' in data) || data.supportEmail == null || data.supportEmail == "" || (data.supportEmail is string && data.supportEmail.size() <= 150 && isValidEmail(data.supportEmail))) &&
+        isOptionalSafeUrl(data, 'privacyPolicyUrl', 1000);
     }
 
     function isValidProject(data) {
@@ -417,40 +438,40 @@ service cloud.firestore {
         'videoUrl', 'videos', 'publishingStatus'
       ];
       return data.keys().hasOnly(allowedFields) &&
-        data.keys().hasAll(['name', 'slug', 'category', 'description', 'published']) &&
+        data.keys().hasAll(['name', 'slug', 'category', 'published']) &&
         data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
         data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 &&
-        data.category is string && data.category.size() >= 1 && data.category.size() <= 50 &&
-        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 250)) &&
-        data.description is string && data.description.size() >= 1 && data.description.size() <= 5000 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 100 &&
         data.published is bool &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
-        (!('shortDescription' in data) || (data.shortDescription is string && data.shortDescription.size() <= 2000)) &&
-        (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
-        (!('publishingStatus' in data) || (data.publishingStatus is string && data.publishingStatus in ['draft', 'published', 'archived'])) &&
-        (!('featured' in data) || data.featured is bool) &&
-        (!('highlight' in data) || (data.highlight is string && data.highlight.size() <= 100)) &&
-        (!('url' in data) || (data.url is string && data.url.size() <= 500)) &&
-        (!('githubUrl' in data) || (data.githubUrl is string && data.githubUrl.size() <= 1000)) &&
-        (!('completionDate' in data) || (data.completionDate is string && data.completionDate.size() <= 100)) &&
-        (!('seoTitle' in data) || (data.seoTitle is string && data.seoTitle.size() <= 200)) &&
-        (!('seoDescription' in data) || (data.seoDescription is string && data.seoDescription.size() <= 1000)) &&
-        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
-        (!('logo' in data) || (data.logo is string && data.logo.size() <= 1000)) &&
-        (!('coverImage' in data) || (data.coverImage is string && data.coverImage.size() <= 1000)) &&
-        (!('gallery' in data) || (data.gallery is list && data.gallery.size() <= 50)) &&
-        (!('galleryItems' in data) || (data.galleryItems is list && data.galleryItems.size() <= 100)) &&
-        (!('screenshots' in data) || (data.screenshots is list && data.screenshots.size() <= 50)) &&
-        (!('videoUrl' in data) || (data.videoUrl is string && data.videoUrl.size() <= 1000)) &&
-        (!('videos' in data) || (data.videos is list && data.videos.size() <= 20)) &&
-        (!('scope' in data) || (data.scope is list && data.scope.size() <= 20)) &&
-        (!('tools' in data) || (data.tools is list && data.tools.size() <= 30)) &&
-        (!('technologies' in data) || (data.technologies is list && data.technologies.size() <= 50)) &&
-        (!('metrics' in data) || (data.metrics is list && data.metrics.size() <= 20)) &&
-        (!('deliverables' in data) || (data.deliverables is list && data.deliverables.size() <= 30)) &&
-        (!('sortOrder' in data) || data.sortOrder is number) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+        isOptionalString(data, 'id', 64) &&
+        isOptionalString(data, 'tagline', 250) &&
+        isOptionalString(data, 'description', 10000) &&
+        isOptionalString(data, 'shortDescription', 2000) &&
+        isOptionalString(data, 'status', 50) &&
+        (!('publishingStatus' in data) || data.publishingStatus == null || (data.publishingStatus is string && data.publishingStatus in ['draft', 'published', 'archived'])) &&
+        isOptionalBool(data, 'featured') &&
+        isOptionalString(data, 'highlight', 250) &&
+        isOptionalSafeUrl(data, 'url', 1000) &&
+        isOptionalSafeUrl(data, 'githubUrl', 1000) &&
+        isOptionalString(data, 'completionDate', 100) &&
+        isOptionalString(data, 'seoTitle', 200) &&
+        isOptionalString(data, 'seoDescription', 1000) &&
+        isOptionalString(data, 'accentColor', 30) &&
+        isOptionalSafeUrl(data, 'logo', 1000) &&
+        isOptionalSafeUrl(data, 'coverImage', 1000) &&
+        isOptionalList(data, 'gallery', 100) &&
+        isOptionalList(data, 'galleryItems', 100) &&
+        isOptionalList(data, 'screenshots', 50) &&
+        isOptionalSafeUrl(data, 'videoUrl', 1000) &&
+        isOptionalList(data, 'videos', 20) &&
+        isOptionalList(data, 'scope', 30) &&
+        isOptionalList(data, 'tools', 50) &&
+        isOptionalList(data, 'technologies', 50) &&
+        isOptionalList(data, 'metrics', 20) &&
+        isOptionalList(data, 'deliverables', 30) &&
+        isOptionalNumber(data, 'sortOrder') &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
     }
 
     function isValidService(data) {
@@ -459,159 +480,182 @@ service cloud.firestore {
         'description', 'fullDescription', 'iconName', 'accentColor', 'capabilities',
         'deliverables', 'suitableFor', 'targetAudience', 'process', 'subTypes',
         'packages', 'pricing', 'category', 'hasRealPricing', 'pricingNote', 'faqs',
-        'faq', 'featured', 'sortOrder', 'published', 'createdAt', 'updatedAt'
+        'faq', 'demos', 'teamMembers', 'featured', 'sortOrder', 'published',
+        'createdAt', 'updatedAt'
       ];
       return data.keys().hasOnly(allowedFields) &&
-        data.keys().hasAll(['slug', 'shortDescription', 'published']) &&
+        data.keys().hasAll(['slug', 'published']) &&
         ('title' in data || 'name' in data) &&
         (!('title' in data) || (data.title is string && data.title.size() >= 1 && data.title.size() <= 100)) &&
         (!('name' in data) || (data.name is string && data.name.size() >= 1 && data.name.size() <= 100)) &&
         data.slug is string && data.slug.size() >= 1 && data.slug.size() <= 100 &&
-        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 250)) &&
-        (!('category' in data) || (data.category is string && data.category.size() <= 100)) &&
-        (!('description' in data) || (data.description is string && data.description.size() <= 10000)) &&
-        (!('fullDescription' in data) || (data.fullDescription is string && data.fullDescription.size() <= 10000)) &&
-        data.shortDescription is string && data.shortDescription.size() >= 1 && data.shortDescription.size() <= 1000 &&
         data.published is bool &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
-        (!('number' in data) || (data.number is string && data.number.size() <= 10)) &&
-        (!('iconName' in data) || (data.iconName is string && data.iconName.size() <= 50)) &&
-        (!('accentColor' in data) || (data.accentColor is string && data.accentColor.size() <= 30)) &&
-        (!('capabilities' in data) || (data.capabilities is list && data.capabilities.size() <= 30)) &&
-        (!('deliverables' in data) || (data.deliverables is list && data.deliverables.size() <= 30)) &&
-        (!('suitableFor' in data) || (data.suitableFor is list && data.suitableFor.size() <= 30)) &&
-        (!('targetAudience' in data) || (data.targetAudience is string && data.targetAudience.size() <= 1000)) &&
-        (!('process' in data) || (data.process is list && data.process.size() <= 20)) &&
-        (!('subTypes' in data) || (data.subTypes is list && data.subTypes.size() <= 20)) &&
-        (!('packages' in data) || (data.packages is list && data.packages.size() <= 20)) &&
-        (!('pricing' in data) || (data.pricing is list && data.pricing.size() <= 30)) &&
-        (!('hasRealPricing' in data) || data.hasRealPricing is bool) &&
-        (!('pricingNote' in data) || (data.pricingNote is string && data.pricingNote.size() <= 500)) &&
-        (!('faqs' in data) || (data.faqs is list && data.faqs.size() <= 30)) &&
-        (!('faq' in data) || (data.faq is list && data.faq.size() <= 30)) &&
-        (!('featured' in data) || data.featured is bool) &&
-        (!('sortOrder' in data) || data.sortOrder is number) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+        isOptionalString(data, 'id', 64) &&
+        isOptionalString(data, 'number', 10) &&
+        isOptionalString(data, 'tagline', 250) &&
+        isOptionalString(data, 'category', 100) &&
+        isOptionalString(data, 'shortDescription', 1000) &&
+        isOptionalString(data, 'description', 10000) &&
+        isOptionalString(data, 'fullDescription', 10000) &&
+        isOptionalString(data, 'iconName', 50) &&
+        isOptionalString(data, 'accentColor', 30) &&
+        isOptionalList(data, 'capabilities', 30) &&
+        isOptionalList(data, 'deliverables', 30) &&
+        isOptionalList(data, 'suitableFor', 30) &&
+        isOptionalString(data, 'targetAudience', 1000) &&
+        isOptionalList(data, 'process', 20) &&
+        isOptionalList(data, 'subTypes', 20) &&
+        isOptionalList(data, 'packages', 20) &&
+        isOptionalList(data, 'pricing', 30) &&
+        isOptionalBool(data, 'hasRealPricing') &&
+        isOptionalString(data, 'pricingNote', 500) &&
+        isOptionalList(data, 'faqs', 30) &&
+        isOptionalList(data, 'faq', 30) &&
+        isOptionalList(data, 'demos', 30) &&
+        isOptionalList(data, 'teamMembers', 20) &&
+        isOptionalBool(data, 'featured') &&
+        isOptionalNumber(data, 'sortOrder') &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
     }
 
     function isValidWebsitePackage(data) {
       let allowedFields = [
         'id', 'name', 'price', 'priceMax', 'priceType', 'unit', 'description',
-        'features', 'recommended', 'active', 'websiteType', 'badge',
+        'features', 'recommended', 'popular', 'active', 'websiteType', 'badge',
         'cta', 'ctaText', 'sortOrder', 'published', 'createdAt', 'updatedAt'
       ];
       return data.keys().hasOnly(allowedFields) &&
-        data.keys().hasAll(['name', 'price', 'description', 'published']) &&
+        data.keys().hasAll(['name', 'price', 'published']) &&
         data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
         data.price is number && data.price >= 0 &&
-        data.description is string && data.description.size() >= 1 && data.description.size() <= 1000 &&
         data.published is bool &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
-        (!('priceMax' in data) || data.priceMax is number) &&
-        (!('priceType' in data) || (data.priceType is string && data.priceType.size() <= 30)) &&
-        (!('unit' in data) || (data.unit is string && data.unit.size() <= 50)) &&
-        (!('features' in data) || (data.features is list && data.features.size() <= 30)) &&
-        (!('recommended' in data) || data.recommended is bool) &&
-        (!('active' in data) || data.active is bool) &&
-        (!('websiteType' in data) || (data.websiteType is string && data.websiteType.size() <= 100)) &&
-        (!('badge' in data) || (data.badge is string && data.badge.size() <= 100)) &&
-        (!('cta' in data) || (data.cta is string && data.cta.size() <= 200)) &&
-        (!('ctaText' in data) || (data.ctaText is string && data.ctaText.size() <= 100)) &&
-        (!('sortOrder' in data) || data.sortOrder is number) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+        isOptionalString(data, 'id', 64) &&
+        (!('priceMax' in data) || data.priceMax == null || (data.priceMax is number && data.priceMax >= 0)) &&
+        (!('priceType' in data) || data.priceType == null || (data.priceType is string && data.priceType in ['starting', 'fixed', 'range'])) &&
+        isOptionalString(data, 'unit', 50) &&
+        isOptionalString(data, 'description', 1000) &&
+        isOptionalList(data, 'features', 30) &&
+        isOptionalBool(data, 'recommended') &&
+        isOptionalBool(data, 'popular') &&
+        isOptionalBool(data, 'active') &&
+        isOptionalString(data, 'websiteType', 100) &&
+        isOptionalString(data, 'badge', 100) &&
+        isOptionalString(data, 'cta', 200) &&
+        isOptionalString(data, 'ctaText', 100) &&
+        isOptionalNumber(data, 'sortOrder') &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
     }
 
-    function isValidSiteContent(data) {
+    function isValidSiteContent(data, contentId) {
       let allowedFields = [
         'id', 'section', 'title', 'content', 'metadata', 'hero', 'about',
         'finalCta', 'contact', 'socialLinks', 'footer', 'navigation',
         'appsSection', 'servicesSection', 'projectsSection', 'reviewsSection',
         'packagesSection', 'aboutSection', 'aiAssistantSection',
+        'overviewSection', 'whyUsSection', 'teamSection', 'processSection',
+        'customSections', 'themeSettings',
         'draftModifiedAt', 'publishedAt', 'publishedBy', 'published',
         'createdAt', 'updatedAt'
       ];
+      let validPublishedState = (contentId == 'draft')
+        ? (!('published' in data) || data.published is bool)
+        : ('published' in data && data.published is bool);
       return data.keys().hasOnly(allowedFields) &&
-        data.keys().hasAll(['published']) &&
-        data.published is bool &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
-        (!('section' in data) || (data.section is string && data.section.size() <= 100)) &&
-        (!('title' in data) || (data.title is string && data.title.size() <= 200)) &&
-        (!('content' in data) || data.content is string || data.content is map) &&
-        (!('metadata' in data) || data.metadata is map) &&
-        (!('hero' in data) || data.hero is map) &&
-        (!('about' in data) || data.about is map) &&
-        (!('finalCta' in data) || data.finalCta is map) &&
-        (!('contact' in data) || data.contact is map) &&
-        (!('socialLinks' in data) || data.socialLinks is map || data.socialLinks is list) &&
-        (!('footer' in data) || data.footer is map) &&
-        (!('navigation' in data) || data.navigation is map || data.navigation is list) &&
-        (!('appsSection' in data) || data.appsSection is map) &&
-        (!('servicesSection' in data) || data.servicesSection is map) &&
-        (!('projectsSection' in data) || data.projectsSection is map) &&
-        (!('reviewsSection' in data) || data.reviewsSection is map) &&
-        (!('packagesSection' in data) || data.packagesSection is map) &&
-        (!('aboutSection' in data) || data.aboutSection is map) &&
-        (!('aiAssistantSection' in data) || data.aiAssistantSection is map) &&
-        (!('draftModifiedAt' in data) || data.draftModifiedAt is timestamp || (data.draftModifiedAt is string && data.draftModifiedAt.size() <= 50)) &&
-        (!('publishedAt' in data) || data.publishedAt is timestamp || (data.publishedAt is string && data.publishedAt.size() <= 50)) &&
-        (!('publishedBy' in data) || (data.publishedBy is string && data.publishedBy.size() <= 150)) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+        validPublishedState &&
+        isOptionalString(data, 'id', 64) &&
+        isOptionalString(data, 'section', 100) &&
+        isOptionalString(data, 'title', 200) &&
+        (!('content' in data) || data.content == null || (data.content is string && data.content.size() <= 50000) || (data.content is map && data.content.size() <= 50)) &&
+        isOptionalMap(data, 'metadata', 50) &&
+        isOptionalMap(data, 'hero', 50) &&
+        isOptionalMap(data, 'about', 30) &&
+        isOptionalMap(data, 'finalCta', 30) &&
+        isOptionalMap(data, 'contact', 30) &&
+        (!('socialLinks' in data) || data.socialLinks == null || (data.socialLinks is map && data.socialLinks.size() <= 30) || (data.socialLinks is list && data.socialLinks.size() <= 30)) &&
+        isOptionalMap(data, 'footer', 30) &&
+        (!('navigation' in data) || data.navigation == null || (data.navigation is map && data.navigation.size() <= 30) || (data.navigation is list && data.navigation.size() <= 30)) &&
+        isOptionalMap(data, 'appsSection', 30) &&
+        isOptionalMap(data, 'servicesSection', 30) &&
+        isOptionalMap(data, 'projectsSection', 30) &&
+        isOptionalMap(data, 'reviewsSection', 30) &&
+        isOptionalMap(data, 'packagesSection', 30) &&
+        isOptionalMap(data, 'aboutSection', 30) &&
+        isOptionalMap(data, 'aiAssistantSection', 30) &&
+        isOptionalMap(data, 'overviewSection', 30) &&
+        isOptionalMap(data, 'whyUsSection', 30) &&
+        isOptionalMap(data, 'teamSection', 30) &&
+        isOptionalMap(data, 'processSection', 30) &&
+        isOptionalList(data, 'customSections', 30) &&
+        isOptionalMap(data, 'themeSettings', 50) &&
+        isOptionalTimestampOrString(data, 'draftModifiedAt') &&
+        isOptionalTimestampOrString(data, 'publishedAt') &&
+        isOptionalString(data, 'publishedBy', 150) &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
     }
 
     function isValidSettings(data) {
       let allowedFields = [
-        'id', 'name', 'studioName', 'tagline', 'contact', 'contactEmail',
-        'whatsappNumber', 'instagramHandle', 'liveUrl', 'socials', 'config',
-        'maintenanceMode', 'allowPublicReviews', 'published', 'createdAt', 'updatedAt',
-        'resumeBuilder'
+        'id', 'name', 'studioName', 'tagline', 'primaryLogo', 'secondaryLogo',
+        'favicon', 'contact', 'contactEmail', 'whatsappNumber', 'instagramHandle',
+        'instagramUrl', 'liveUrl', 'socials', 'config', 'brandColors', 'typography',
+        'activePreset', 'initializedCollections', 'maintenanceMode',
+        'allowPublicReviews', 'resumeBuilder', 'published', 'createdAt', 'updatedAt'
       ];
       return data.keys().hasOnly(allowedFields) &&
-        data.keys().hasAll(['published']) &&
-        data.published is bool &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 64)) &&
-        (!('name' in data) || (data.name is string && data.name.size() <= 100)) &&
-        (!('studioName' in data) || (data.studioName is string && data.studioName.size() <= 100)) &&
-        (!('tagline' in data) || (data.tagline is string && data.tagline.size() <= 250)) &&
-        (!('contact' in data) || data.contact is map) &&
-        (!('contactEmail' in data) || (data.contactEmail is string && data.contactEmail.size() <= 150)) &&
-        (!('whatsappNumber' in data) || (data.whatsappNumber is string && data.whatsappNumber.size() <= 50)) &&
-        (!('instagramHandle' in data) || (data.instagramHandle is string && data.instagramHandle.size() <= 100)) &&
-        (!('liveUrl' in data) || (data.liveUrl is string && data.liveUrl.size() <= 500)) &&
-        (!('socials' in data) || data.socials is map) &&
-        (!('config' in data) || data.config is map) &&
-        (!('maintenanceMode' in data) || data.maintenanceMode is bool) &&
-        (!('allowPublicReviews' in data) || data.allowPublicReviews is bool) &&
-        (!('resumeBuilder' in data) || data.resumeBuilder is map) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+        (!('published' in data) || data.published is bool) &&
+        isOptionalString(data, 'id', 64) &&
+        isOptionalString(data, 'name', 100) &&
+        isOptionalString(data, 'studioName', 100) &&
+        isOptionalString(data, 'tagline', 250) &&
+        isOptionalSafeUrl(data, 'primaryLogo', 1000) &&
+        isOptionalSafeUrl(data, 'secondaryLogo', 1000) &&
+        isOptionalSafeUrl(data, 'favicon', 1000) &&
+        isOptionalMap(data, 'contact', 30) &&
+        (!('contactEmail' in data) || data.contactEmail == null || data.contactEmail == "" || (data.contactEmail is string && data.contactEmail.size() <= 150 && isValidEmail(data.contactEmail))) &&
+        isOptionalString(data, 'whatsappNumber', 50) &&
+        isOptionalString(data, 'instagramHandle', 100) &&
+        isOptionalSafeUrl(data, 'instagramUrl', 500) &&
+        (!('liveUrl' in data) || data.liveUrl == null || (data.liveUrl is string && data.liveUrl.size() <= 500 && !data.liveUrl.lower().matches("^(javascript|data|vbscript):.*"))) &&
+        isOptionalMap(data, 'socials', 30) &&
+        isOptionalMap(data, 'config', 50) &&
+        isOptionalMap(data, 'brandColors', 30) &&
+        isOptionalMap(data, 'typography', 30) &&
+        isOptionalString(data, 'activePreset', 100) &&
+        (!('initializedCollections' in data) || data.initializedCollections == null || (data.initializedCollections is list && data.initializedCollections.size() <= 50) || (data.initializedCollections is map && data.initializedCollections.size() <= 50)) &&
+        isOptionalBool(data, 'maintenanceMode') &&
+        isOptionalBool(data, 'allowPublicReviews') &&
+        isOptionalMap(data, 'resumeBuilder', 30) &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
     }
 
     function isValidMediaAsset(data) {
       let allowedFields = [
         'id', 'url', 'name', 'alt', 'category', 'fileSize', 'width', 'height',
-        'format', 'publicId', 'createdAt', 'updatedAt', 'usedIn'
+        'format', 'publicId', 'tags', 'createdAt', 'updatedAt', 'usedIn'
       ];
       return data.keys().hasOnly(allowedFields) &&
         data.keys().hasAll(['id', 'url', 'name', 'alt', 'category', 'fileSize', 'createdAt']) &&
         data.id is string && data.id.size() >= 1 && data.id.size() <= 128 &&
-        data.url is string && data.url.matches('https://res\\.cloudinary\\.com/[^/]+/.+') && data.url.size() <= 1500 &&
+        isValidAssetUrl(data.url) &&
         data.name is string && data.name.size() >= 1 && data.name.size() <= 255 &&
         data.alt is string && data.alt.size() <= 500 &&
         data.category is string && data.category in ['logos', 'hero', 'apps', 'projects', 'services', 'general'] &&
         data.fileSize is number && data.fileSize >= 0 && data.fileSize <= 52428800 &&
-        (!('width' in data) || (data.width is int && data.width >= 0 && data.width <= 20000)) &&
-        (!('height' in data) || (data.height is int && data.height >= 0 && data.height <= 20000)) &&
-        (!('format' in data) || (data.format is string && data.format in ['jpeg', 'jpg', 'png', 'webp', 'svg', 'mp4', 'webm'])) &&
-        (!('publicId' in data) || (data.publicId is string && data.publicId.size() >= 1 && data.publicId.size() <= 500)) &&
+        (!('width' in data) || data.width == null || (data.width is number && data.width >= 0 && data.width <= 50000)) &&
+        (!('height' in data) || data.height == null || (data.height is number && data.height >= 0 && data.height <= 50000)) &&
+        (!('format' in data) || data.format == null || (data.format is string && data.format.lower() in ['jpeg', 'jpg', 'png', 'webp', 'svg', 'svg+xml', 'mp4', 'webm', 'gif', 'avif'])) &&
+        isOptionalString(data, 'publicId', 500) &&
+        isOptionalList(data, 'tags', 30) &&
         (data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50)) &&
-        (!('usedIn' in data) || (data.usedIn is list && data.usedIn.size() <= 100));
+        isOptionalTimestampOrString(data, 'updatedAt') &&
+        isOptionalList(data, 'usedIn', 100);
     }
 
-    function isValidReviewData(data) {
+    function isValidReview(data) {
       let allowedFields = [
         'id', 'name', 'email', 'service', 'rating', 'review',
         'image', 'status', 'verified', 'createdAt', 'updatedAt'
@@ -622,20 +666,93 @@ service cloud.firestore {
         data['service'] is string && data['service'].size() >= 2 && data['service'].size() <= 150 &&
         data.rating is number && data.rating >= 1 && data.rating <= 5 &&
         data.review is string && data.review.size() >= 10 && data.review.size() <= 2000 &&
-        data.status in ['pending', 'approved', 'rejected'] &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 100)) &&
-        (!('email' in data) || (data.email is string && isValidEmail(data.email) && data.email.size() <= 150)) &&
-        (!('image' in data) || (data.image is string && isValidUrl(data.image) && data.image.size() <= 500)) &&
-        (!('verified' in data) || data.verified is bool) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+        data.status is string && data.status in ['pending', 'approved', 'rejected'] &&
+        isOptionalString(data, 'id', 100) &&
+        (!('email' in data) || data.email == null || data.email == "" || (data.email is string && data.email.size() <= 150 && isValidEmail(data.email))) &&
+        isOptionalSafeUrl(data, 'image', 500) &&
+        isOptionalBool(data, 'verified') &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
     }
 
     function isValidPublicReviewCreate() {
       let data = request.resource.data;
-      return isValidReviewData(data) &&
+      return isValidReview(data) &&
+        'email' in data && data.email is string && data.email.size() >= 3 && isValidEmail(data.email) &&
         data.status == 'pending' &&
         (!('verified' in data) || data.verified == false);
+    }
+
+    function isValidAmazonListing(data) {
+      let allowedFields = [
+        'id', 'title', 'brand', 'category', 'badge', 'summary',
+        'coverImage', 'images', 'highlights', 'sortOrder', 'featured',
+        'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['title', 'brand', 'category', 'sortOrder']) &&
+        isOptionalString(data, 'id', 100) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 250 &&
+        data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 150 &&
+        data.category is string && data.category.size() >= 1 && data.category.size() <= 100 &&
+        isOptionalString(data, 'badge', 100) &&
+        isOptionalString(data, 'summary', 5000) &&
+        isOptionalSafeUrl(data, 'coverImage', 1000) &&
+        isOptionalList(data, 'images', 30) &&
+        isOptionalList(data, 'highlights', 30) &&
+        data.sortOrder is number &&
+        isOptionalBool(data, 'featured') &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
+    }
+
+    function isValidAmazonAPlusModule(data) {
+      let allowedFields = [
+        'id', 'brandName', 'productTitle', 'category', 'moduleType',
+        'bannerUrl', 'title', 'subtitle', 'description', 'features',
+        'sortOrder', 'comparisonItems', 'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['title', 'moduleType', 'sortOrder']) &&
+        isOptionalString(data, 'id', 100) &&
+        isOptionalString(data, 'brandName', 150) &&
+        isOptionalString(data, 'productTitle', 250) &&
+        isOptionalString(data, 'category', 100) &&
+        data.moduleType is string && data.moduleType in ['brand_story', 'header_banner', 'four_image_quad', 'split_feature', 'comparison_table', 'tech_specs'] &&
+        isOptionalSafeUrl(data, 'bannerUrl', 1000) &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 250 &&
+        isOptionalString(data, 'subtitle', 250) &&
+        isOptionalString(data, 'description', 5000) &&
+        isOptionalList(data, 'features', 30) &&
+        isOptionalList(data, 'comparisonItems', 30) &&
+        data.sortOrder is number &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
+    }
+
+    function isValidAmazonPackage(data) {
+      let allowedFields = [
+        'id', 'name', 'price', 'priceDisplay', 'unit', 'tagline',
+        'turnaround', 'deliverables', 'recommended', 'popular', 'badge',
+        'whatsappMessage', 'sortOrder', 'createdAt', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['name', 'price']) &&
+        isOptionalString(data, 'id', 100) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 150 &&
+        data.price is number && data.price >= 0 &&
+        isOptionalString(data, 'priceDisplay', 50) &&
+        isOptionalString(data, 'unit', 50) &&
+        isOptionalString(data, 'tagline', 300) &&
+        isOptionalString(data, 'turnaround', 100) &&
+        isOptionalList(data, 'deliverables', 30) &&
+        isOptionalBool(data, 'recommended') &&
+        isOptionalBool(data, 'popular') &&
+        isOptionalString(data, 'badge', 100) &&
+        isOptionalString(data, 'whatsappMessage', 1000) &&
+        isOptionalNumber(data, 'sortOrder') &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt');
     }
 
     function isValidAppRelease(data) {
@@ -646,7 +763,8 @@ service cloud.firestore {
         'minAndroidVersion', 'targetSdkVersion', 'targetAndroidVersion',
         'permissions', 'certificateFingerprintSha256', 'certificateSubject',
         'isProductionSigned', 'hostingProvider', 'downloadUrl', 'githubReleaseId',
-        'githubTag', 'githubAssetId', 'uploadedBy', 'createdAt', 'publishedAt', 'updatedAt'
+        'githubTag', 'githubAssetId', 'uploadedBy', 'createdAt', 'publishedAt',
+        'updatedAt', 'verificationTrust', 'verifiedAt'
       ];
       return data.keys().hasOnly(allowedFields) &&
         data.keys().hasAll(['appId', 'packageName', 'versionName', 'versionCode', 'status', 'channel', 'sha256', 'downloadUrl']) &&
@@ -658,30 +776,32 @@ service cloud.firestore {
         data.status in ['draft', 'published', 'archived', 'rolled_back'] &&
         data.sha256 is string && data.sha256.size() == 64 &&
         data.downloadUrl is string && data.downloadUrl.size() >= 1 && data.downloadUrl.size() <= 1000 && isValidUrl(data.downloadUrl) &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 100)) &&
-        (!('appName' in data) || (data.appName is string && data.appName.size() <= 100)) &&
-        (!('releaseTitle' in data) || (data.releaseTitle is string && data.releaseTitle.size() <= 200)) &&
-        (!('releaseNotes' in data) || (data.releaseNotes is string && data.releaseNotes.size() <= 10000)) &&
-        (!('isLatestStable' in data) || data.isLatestStable is bool) &&
-        (!('fileName' in data) || (data.fileName is string && data.fileName.size() <= 200)) &&
-        (!('fileSize' in data) || (data.fileSize is number && data.fileSize >= 0)) &&
-        (!('fileSizeFormatted' in data) || (data.fileSizeFormatted is string && data.fileSizeFormatted.size() <= 50)) &&
-        (!('minSdkVersion' in data) || (data.minSdkVersion is int && data.minSdkVersion >= 1)) &&
-        (!('minAndroidVersion' in data) || (data.minAndroidVersion is string && data.minAndroidVersion.size() <= 50)) &&
-        (!('targetSdkVersion' in data) || (data.targetSdkVersion is int && data.targetSdkVersion >= 1)) &&
-        (!('targetAndroidVersion' in data) || (data.targetAndroidVersion is string && data.targetAndroidVersion.size() <= 50)) &&
-        (!('permissions' in data) || (data.permissions is list && data.permissions.size() <= 100)) &&
-        (!('certificateFingerprintSha256' in data) || (data.certificateFingerprintSha256 is string && data.certificateFingerprintSha256.size() <= 128)) &&
-        (!('certificateSubject' in data) || (data.certificateSubject is string && data.certificateSubject.size() <= 500)) &&
-        (!('isProductionSigned' in data) || data.isProductionSigned is bool) &&
-        (!('hostingProvider' in data) || data.hostingProvider in ['github', 'storage', 'custom']) &&
-        (!('githubReleaseId' in data) || data.githubReleaseId is number) &&
-        (!('githubTag' in data) || (data.githubTag is string && data.githubTag.size() <= 100)) &&
-        (!('githubAssetId' in data) || data.githubAssetId is number) &&
-        (!('uploadedBy' in data) || (data.uploadedBy is string && data.uploadedBy.size() <= 100)) &&
-        (!('createdAt' in data) || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50)) &&
-        (!('publishedAt' in data) || data.publishedAt is timestamp || (data.publishedAt is string && data.publishedAt.size() <= 50)) &&
-        (!('updatedAt' in data) || data.updatedAt is timestamp || (data.updatedAt is string && data.updatedAt.size() <= 50));
+        isOptionalString(data, 'id', 100) &&
+        isOptionalString(data, 'appName', 100) &&
+        isOptionalString(data, 'releaseTitle', 200) &&
+        isOptionalString(data, 'releaseNotes', 10000) &&
+        isOptionalBool(data, 'isLatestStable') &&
+        isOptionalString(data, 'fileName', 200) &&
+        (!('fileSize' in data) || data.fileSize == null || (data.fileSize is number && data.fileSize >= 0)) &&
+        isOptionalString(data, 'fileSizeFormatted', 50) &&
+        (!('minSdkVersion' in data) || data.minSdkVersion == null || (data.minSdkVersion is int && data.minSdkVersion >= 1)) &&
+        isOptionalString(data, 'minAndroidVersion', 50) &&
+        (!('targetSdkVersion' in data) || data.targetSdkVersion == null || (data.targetSdkVersion is int && data.targetSdkVersion >= 1)) &&
+        isOptionalString(data, 'targetAndroidVersion', 50) &&
+        isOptionalList(data, 'permissions', 100) &&
+        isOptionalString(data, 'certificateFingerprintSha256', 128) &&
+        isOptionalString(data, 'certificateSubject', 500) &&
+        isOptionalBool(data, 'isProductionSigned') &&
+        (!('hostingProvider' in data) || data.hostingProvider == null || data.hostingProvider in ['github', 'storage', 'custom']) &&
+        isOptionalNumber(data, 'githubReleaseId') &&
+        isOptionalString(data, 'githubTag', 100) &&
+        isOptionalNumber(data, 'githubAssetId') &&
+        isOptionalString(data, 'uploadedBy', 100) &&
+        isOptionalTimestampOrString(data, 'createdAt') &&
+        isOptionalTimestampOrString(data, 'publishedAt') &&
+        isOptionalTimestampOrString(data, 'updatedAt') &&
+        isOptionalString(data, 'verificationTrust', 100) &&
+        isOptionalTimestampOrString(data, 'verifiedAt');
     }
 
     function isValidReleaseAuditLog(data) {
@@ -692,9 +812,56 @@ service cloud.firestore {
         data.action in ['upload', 'validate', 'publish', 'rollback', 'archive', 'download'] &&
         data.performedBy is string && data.performedBy.size() >= 1 && data.performedBy.size() <= 100 &&
         (data.timestamp is timestamp || (data.timestamp is string && data.timestamp.size() <= 50)) &&
-        (!('id' in data) || (data.id is string && data.id.size() <= 100)) &&
-        (!('releaseId' in data) || (data.releaseId is string && data.releaseId.size() <= 100)) &&
-        (!('details' in data) || data.details is map || (data.details is string && data.details.size() <= 5000));
+        isOptionalString(data, 'id', 100) &&
+        isOptionalString(data, 'releaseId', 100) &&
+        (!('details' in data) || data.details == null || (data.details is map && data.details.size() <= 30) || (data.details is string && data.details.size() <= 5000));
+    }
+
+    function isValidAppVisualContent(data) {
+      let allowedFields = ['id', 'draft', 'published', 'previous', 'updatedAt', 'publishedAt'];
+      return data.keys().hasOnly(allowedFields) &&
+        isOptionalString(data, 'id', 64) &&
+        isOptionalMap(data, 'draft', 50) &&
+        isOptionalMap(data, 'published', 50) &&
+        isOptionalMap(data, 'previous', 50) &&
+        isOptionalTimestampOrString(data, 'updatedAt') &&
+        isOptionalTimestampOrString(data, 'publishedAt');
+    }
+
+    function isValidOrderConfiguration(data) {
+      let allowedFields = [
+        'serviceOptions', 'videoFormats', 'aspectRatios', 'deliveryOptions',
+        'uploadSettings', 'orderFormFields', 'updatedAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        isOptionalList(data, 'serviceOptions', 50) &&
+        isOptionalList(data, 'videoFormats', 30) &&
+        isOptionalList(data, 'aspectRatios', 30) &&
+        isOptionalList(data, 'deliveryOptions', 30) &&
+        isOptionalMap(data, 'uploadSettings', 30) &&
+        isOptionalList(data, 'orderFormFields', 50) &&
+        isOptionalTimestampOrString(data, 'updatedAt');
+    }
+
+    function isValidOrderPrivateAsset(data) {
+      let allowedFields = [
+        'id', 'name', 'size', 'type', 'category', 'storagePath',
+        'fileKey', 'orderId', 'status', 'isPrivate', 'uploadedAt', 'createdAt'
+      ];
+      return data.keys().hasOnly(allowedFields) &&
+        data.keys().hasAll(['id', 'name', 'size', 'type', 'storagePath', 'fileKey', 'orderId', 'isPrivate']) &&
+        data.id is string && data.id.size() >= 1 && data.id.size() <= 100 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 255 &&
+        data.size is number && data.size >= 0 && data.size <= 524288000 &&
+        data.type is string && data.type.size() >= 1 && data.type.size() <= 150 &&
+        (!('category' in data) || (data.category is string && data.category in ['raw_footage', 'audio', 'voiceover', 'image', 'asset', 'other'])) &&
+        data.storagePath is string && data.storagePath.size() >= 1 && data.storagePath.size() <= 500 &&
+        data.fileKey is string && data.fileKey.size() >= 1 && data.fileKey.size() <= 150 &&
+        data.orderId is string && data.orderId.size() >= 1 && data.orderId.size() <= 100 &&
+        (!('status' in data) || (data.status is string && data.status in ['staged', 'attached', 'deleted'])) &&
+        data.isPrivate == true &&
+        isOptionalTimestampOrString(data, 'uploadedAt') &&
+        isOptionalTimestampOrString(data, 'createdAt');
     }
 
     // ===============================================================
@@ -705,7 +872,7 @@ service cloud.firestore {
     match /apps/{appId} {
       allow read: if (resource.data.published == true) || isAdmin();
       allow create: if isAdmin() && isValidApp(request.resource.data);
-      allow update: if isAdmin() && isValidApp(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow update: if isAdmin() && isValidApp(request.resource.data) && isIdImmutable(appId);
       allow delete: if isAdmin();
     }
 
@@ -713,7 +880,7 @@ service cloud.firestore {
     match /projects/{projectId} {
       allow read: if (resource.data.published == true) || isAdmin();
       allow create: if isAdmin() && isValidProject(request.resource.data);
-      allow update: if isAdmin() && isValidProject(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow update: if isAdmin() && isValidProject(request.resource.data) && isIdImmutable(projectId);
       allow delete: if isAdmin();
     }
 
@@ -721,7 +888,7 @@ service cloud.firestore {
     match /services/{serviceId} {
       allow read: if (resource.data.published == true) || isAdmin();
       allow create: if isAdmin() && isValidService(request.resource.data);
-      allow update: if isAdmin() && isValidService(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow update: if isAdmin() && isValidService(request.resource.data) && isIdImmutable(serviceId);
       allow delete: if isAdmin();
     }
 
@@ -729,15 +896,15 @@ service cloud.firestore {
     match /websitePackages/{packageId} {
       allow read: if (resource.data.published == true) || isAdmin();
       allow create: if isAdmin() && isValidWebsitePackage(request.resource.data);
-      allow update: if isAdmin() && isValidWebsitePackage(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow update: if isAdmin() && isValidWebsitePackage(request.resource.data) && isIdImmutable(packageId);
       allow delete: if isAdmin();
     }
 
-    // Site Content Collection: Public reads published only; Admins have full access
+    // Site Content Collection: Public reads published non-draft docs only; Admins have full access
     match /siteContent/{contentId} {
-      allow read: if (resource.data.published == true) || isAdmin();
-      allow create: if isAdmin() && isValidSiteContent(request.resource.data);
-      allow update: if isAdmin() && isValidSiteContent(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow read: if (contentId != 'draft' && resource.data.published == true) || isAdmin();
+      allow create: if isAdmin() && isValidSiteContent(request.resource.data, contentId);
+      allow update: if isAdmin() && isValidSiteContent(request.resource.data, contentId) && isIdImmutable(contentId);
       allow delete: if isAdmin();
     }
 
@@ -745,15 +912,40 @@ service cloud.firestore {
     match /settings/{settingId} {
       allow read: if (resource.data.published == true) || isAdmin();
       allow create: if isAdmin() && isValidSettings(request.resource.data);
-      allow update: if isAdmin() && isValidSettings(request.resource.data) && areImmutableFieldsUnchanged(['id']);
+      allow update: if isAdmin() && isValidSettings(request.resource.data) && isIdImmutable(settingId);
       allow delete: if isAdmin();
     }
 
-    // Reviews Collection: Public reads approved only; Public creates pending only; Admins moderate
+    // Reviews Collection: Public reads approved only; Public creates pending only; Admins moderate & delete
     match /reviews/{reviewId} {
       allow read: if (resource.data.status == 'approved') || isAdmin();
-      allow create: if isValidPublicReviewCreate() || (isAdmin() && isValidReviewData(request.resource.data));
-      allow update: if isAdmin() && isValidReviewData(request.resource.data) && areImmutableFieldsUnchanged(['id', 'createdAt']);
+      allow create: if isValidPublicReviewCreate() || (isAdmin() && isValidReview(request.resource.data));
+      allow update: if isAdmin() && isValidReview(request.resource.data) && isIdImmutable(reviewId) &&
+        (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
+      allow delete: if isAdmin();
+    }
+
+    // Amazon Listings Collection: Public showcase read; Admin CRUD
+    match /amazonListings/{listingId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidAmazonListing(request.resource.data);
+      allow update: if isAdmin() && isValidAmazonListing(request.resource.data) && isIdImmutable(listingId);
+      allow delete: if isAdmin();
+    }
+
+    // Amazon A+ Modules Collection: Public showcase read; Admin CRUD
+    match /amazonAPlusModules/{moduleId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidAmazonAPlusModule(request.resource.data);
+      allow update: if isAdmin() && isValidAmazonAPlusModule(request.resource.data) && isIdImmutable(moduleId);
+      allow delete: if isAdmin();
+    }
+
+    // Amazon Packages Collection: Public pricing catalog read; Admin CRUD
+    match /amazonPackages/{packageId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidAmazonPackage(request.resource.data);
+      allow update: if isAdmin() && isValidAmazonPackage(request.resource.data) && isIdImmutable(packageId);
       allow delete: if isAdmin();
     }
 
@@ -761,11 +953,13 @@ service cloud.firestore {
     match /appReleases/{releaseId} {
       allow read: if (resource.data.status == 'published') || isAdmin();
       allow create: if isAdmin() && isValidAppRelease(request.resource.data);
-      allow update: if isAdmin() && isValidAppRelease(request.resource.data) && areImmutableFieldsUnchanged(['id', 'appId', 'packageName', 'versionCode', 'sha256']);
+      allow update: if isAdmin() && isValidAppRelease(request.resource.data) &&
+        isIdImmutable(releaseId) &&
+        areImmutableFieldsUnchanged(['appId', 'packageName', 'versionCode', 'sha256']);
       allow delete: if isAdmin();
     }
 
-    // Release Audit Logs Collection: Admin read only; Admin create only; Immutable
+    // Release Audit Logs Collection: Admin read & create only; Immutable
     match /releaseAuditLogs/{logId} {
       allow read: if isAdmin();
       allow create: if isAdmin() && isValidReleaseAuditLog(request.resource.data);
@@ -778,7 +972,7 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // Staging Release Sessions & Chunks: Admin only; for chunked large binary uploads
+    // Staging Release Sessions & Chunks: Admin write/delete; read for chunked APK assembly
     match /stagingReleaseSessions/{sessionId} {
       allow read: if isAdmin() || true;
       allow write: if isAdmin();
@@ -788,13 +982,15 @@ service cloud.firestore {
       }
     }
 
-    // App Visual Content Collection: Public read access for visitors; Admin-only write access
+    // App Visual Content Collection: Public read access for visitors; Admin validated write & delete
     match /appVisualContent/{contentId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create: if isAdmin() && isValidAppVisualContent(request.resource.data);
+      allow update: if isAdmin() && isValidAppVisualContent(request.resource.data) && isIdImmutable(contentId);
+      allow delete: if isAdmin();
     }
 
-    // Video Orders Collection: Admin-only read, update, delete; Constrained client create
+    // Video Orders Collection: Admin-only read, update, delete; Constrained client create (Razorpay/payment protections)
     match /videoOrders/{orderId} {
       allow read: if isAdmin();
       allow create: if (
@@ -811,23 +1007,25 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Media Assets Collection: Admin read and write only
+    // Media Assets Collection: Admin read, validated create/update, and delete only
     match /mediaAssets/{assetId} {
       allow read: if isAdmin();
-      allow create, update: if isAdmin() && isValidMediaAsset(request.resource.data);
+      allow create: if isAdmin() && isValidMediaAsset(request.resource.data);
+      allow update: if isAdmin() && isValidMediaAsset(request.resource.data) && isIdImmutable(assetId);
       allow delete: if isAdmin();
     }
 
-    // Order Private Assets Collection: Strictly private read/update/delete for Admin; Allows creation of private assets
+    // Order Private Assets Collection: Strictly private read/update/delete for Admin; Constrained create
     match /orderPrivateAssets/{assetId} {
       allow read, update, delete: if isAdmin();
-      allow create: if (request.resource.data.isPrivate == true) || isAdmin();
+      allow create: if (isValidOrderPrivateAsset(request.resource.data)) || isAdmin();
     }
 
-    // Order Configurations Collection: Public read for customer ordering form options; Admin write
+    // Order Configurations Collection: Public read for ordering form options; Admin validated write & delete
     match /orderConfigurations/{configId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow create, update: if isAdmin() && isValidOrderConfiguration(request.resource.data);
+      allow delete: if isAdmin();
     }
 
     // Default Deny for all other collections and unmatched paths
