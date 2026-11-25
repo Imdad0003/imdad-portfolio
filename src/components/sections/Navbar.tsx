@@ -21,6 +21,7 @@ export function Navbar({ initialContent, initialSettings }: NavbarProps) {
   const [settings, setSettings] = useState<SettingsDocument | null | undefined>(initialSettings);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
+  const [mobileServicesOpen, setMobileServicesOpen] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -217,63 +218,111 @@ export function Navbar({ initialContent, initialSettings }: NavbarProps) {
           </Button>
         </div>
 
-        {/* Mobile Menu Trigger */}
-        <button
-          type="button"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden p-2 rounded-xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] text-[var(--ink-primary,#332924)] cursor-pointer"
-          aria-label="Toggle menu"
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        {/* Mobile Right Quick Actions */}
+        <div className="lg:hidden flex items-center gap-2 shrink-0">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3 min-h-[40px] rounded-xl bg-[var(--surface-peach,#FAECE4)] border border-[#F0CFC0] text-xs font-bold text-[var(--accent-coral-hover,#B4583F)] active:scale-95 transition-transform"
+            aria-label="Chat on WhatsApp"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>WhatsApp</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] text-[var(--ink-primary,#332924)] cursor-pointer active:scale-95 transition-transform"
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Drawer */}
       {mobileOpen && (
-        <div className="lg:hidden bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)] px-4 py-4 space-y-2 shadow-lg">
-          {topLinks.map((item) => {
-            const isActive =
-              item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
-            return (
-              <Link
-                key={item.label + item.href}
-                href={item.href}
-                className={`block px-3.5 py-2.5 rounded-xl text-sm font-semibold ${
-                  isActive
-                    ? "bg-[var(--surface-peach,#FAECE4)] text-[var(--accent-coral-hover,#B4583F)]"
-                    : "text-[var(--ink-primary,#332924)] hover:bg-[var(--background,#FAF7F2)]"
-                }`}
-              >
-                {item.label}
-              </Link>
-            );
-          })}
-
-          {servicesSubItems.length > 0 && (
-            <div className="pt-2 border-t border-[var(--border-warm,#E8DFD5)] space-y-1">
-              <div className="px-3 text-[10px] font-mono uppercase tracking-wider text-[var(--ink-muted,#8A7C75)]">
-                Services
-              </div>
-              {servicesSubItems.map((sub) => (
+        <>
+          <div
+            className="lg:hidden fixed inset-x-0 top-16 bottom-0 bg-[#332924]/20 z-30"
+            onClick={() => setMobileOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="lg:hidden relative z-40 max-h-[calc(100dvh-4.5rem)] overflow-y-auto overscroll-contain bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)] px-4 pt-3 pb-6 space-y-1.5 shadow-xl">
+            {topLinks.map((item) => {
+              const isActive =
+                item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href);
+              return (
                 <Link
-                  key={sub.href + sub.label}
-                  href={sub.href}
-                  className="block px-3.5 py-2 rounded-xl text-xs font-medium text-[var(--ink-body,#5F534D)] hover:bg-[var(--background,#FAF7F2)]"
+                  key={item.label + item.href}
+                  href={item.href}
+                  className={`flex items-center justify-between px-4 min-h-[46px] rounded-2xl text-sm font-semibold active:scale-[0.99] transition-transform ${
+                    isActive
+                      ? "bg-[var(--surface-peach,#FAECE4)] text-[var(--accent-coral-hover,#B4583F)]"
+                      : "text-[var(--ink-primary,#332924)] hover:bg-[var(--background,#FAF7F2)]"
+                  }`}
                 >
-                  {sub.label}
+                  <span>{item.label}</span>
+                  <ArrowRight className="w-3.5 h-3.5 opacity-45" />
                 </Link>
-              ))}
-            </div>
-          )}
+              );
+            })}
 
-          <div className="pt-3 flex flex-col gap-2">
-            <Button href={ctaLink} variant="primary" size="md" className="w-full justify-center">
-              <span>{ctaText}</span>
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+            {servicesSubItems.length > 0 && (
+              <div className="pt-2 mt-1 border-t border-[var(--border-warm,#E8DFD5)] space-y-1.5">
+                <button
+                  type="button"
+                  onClick={() => setMobileServicesOpen((prev) => !prev)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-[11px] font-mono font-bold uppercase tracking-wider text-[var(--ink-muted,#8A7C75)] cursor-pointer"
+                >
+                  <span>Studio Services Menu</span>
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${mobileServicesOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {mobileServicesOpen && (
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {servicesSubItems.map((sub) => (
+                      <Link
+                        key={sub.href + sub.label}
+                        href={sub.href}
+                        className="flex items-center justify-between gap-2 px-3.5 min-h-[44px] py-2 rounded-xl bg-[var(--background,#FAF7F2)] active:bg-[var(--surface-peach,#FAECE4)] transition-colors"
+                      >
+                        <span className="text-xs font-semibold text-[var(--ink-primary,#332924)] truncate">
+                          {sub.label}
+                        </span>
+                        {sub.badge && (
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-peach,#FAECE4)] text-[var(--accent-coral-hover,#B4583F)] shrink-0">
+                            {sub.badge}
+                          </span>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="pt-3 grid grid-cols-2 gap-2.5">
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 min-h-[46px] px-3 rounded-full border border-[var(--border-warm,#E8DFD5)] bg-[var(--background,#FAF7F2)] text-xs font-bold text-[var(--ink-primary,#332924)]"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-[var(--accent-coral,#C96A50)]" />
+                <span>WhatsApp</span>
+              </a>
+              <Button href={ctaLink} variant="primary" size="md" className="w-full justify-center">
+                <span>{ctaText}</span>
+                <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </header>
   );

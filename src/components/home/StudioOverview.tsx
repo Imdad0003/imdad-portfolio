@@ -36,7 +36,7 @@ export function StudioOverview({
   return (
     <section
       id="overview"
-      className="py-16 sm:py-20 bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)]/70"
+      className="py-10 sm:py-20 bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)]/70"
     >
       <Container>
         <SectionHeading
@@ -45,24 +45,24 @@ export function StudioOverview({
           description={description || ov.subheadline}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-6">
           {pillars.map((pillar, idx) => {
             const Icon = resolveStudioIcon(pillar.iconName, Compass);
             return (
-              <Card key={pillar.id || idx} variant="glass" className="flex flex-col justify-between gap-4">
-                <div className="space-y-3">
+              <Card key={pillar.id || idx} variant="glass" className="flex flex-col justify-between gap-3 sm:gap-4 p-4 sm:p-6">
+                <div className="space-y-2.5 sm:space-y-3">
                   <div className="flex items-center justify-between">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--surface-peach,#FAECE4)] text-[var(--accent-coral,#C96A50)] flex items-center justify-center">
-                      <Icon className="w-5 h-5" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[var(--surface-peach,#FAECE4)] text-[var(--accent-coral,#C96A50)] flex items-center justify-center">
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <span className="font-mono text-xs font-bold text-[var(--ink-muted,#8A7C75)]">
                       {pillar.number || String(idx + 1).padStart(2, "0")}
                     </span>
                   </div>
-                  <h3 className="font-display text-lg font-bold text-[var(--ink-primary,#332924)]">
+                  <h3 className="font-display text-base sm:text-lg font-bold text-[var(--ink-primary,#332924)]">
                     {pillar.title}
                   </h3>
-                  <p className="text-sm text-[var(--ink-body,#5F534D)] leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[var(--ink-body,#5F534D)] leading-relaxed">
                     {pillar.description}
                   </p>
                 </div>

@@ -293,7 +293,7 @@ export function VideoOrderSummaryCard({
                 type="text"
                 value={editFormData.fullName}
                 onChange={(e) => setEditFormData({ ...editFormData, fullName: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
+                className="w-full px-2.5 py-2 text-base sm:text-xs rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
                 required
               />
             </div>
@@ -303,7 +303,7 @@ export function VideoOrderSummaryCard({
                 type="tel"
                 value={editFormData.mobileNumber}
                 onChange={(e) => setEditFormData({ ...editFormData, mobileNumber: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
+                className="w-full px-2.5 py-2 text-base sm:text-xs rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
                 required
               />
             </div>
@@ -316,7 +316,7 @@ export function VideoOrderSummaryCard({
                 type="email"
                 value={editFormData.email}
                 onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
+                className="w-full px-2.5 py-2 text-base sm:text-xs rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
                 required
               />
             </div>
@@ -325,7 +325,7 @@ export function VideoOrderSummaryCard({
               <select
                 value={editFormData.aspectRatio}
                 onChange={(e) => setEditFormData({ ...editFormData, aspectRatio: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
+                className="w-full px-2.5 py-2 text-base sm:text-xs rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
               >
                 <option value="9:16">9:16 (Vertical Reels/Shorts)</option>
                 <option value="16:9">16:9 (Horizontal YouTube)</option>
@@ -343,7 +343,7 @@ export function VideoOrderSummaryCard({
                 type="text"
                 value={editFormData.approxDuration}
                 onChange={(e) => setEditFormData({ ...editFormData, approxDuration: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
+                className="w-full px-2.5 py-2 text-base sm:text-xs rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
                 required
               />
             </div>
@@ -353,7 +353,7 @@ export function VideoOrderSummaryCard({
                 type="text"
                 value={editFormData.deliveryDate}
                 onChange={(e) => setEditFormData({ ...editFormData, deliveryDate: e.target.value })}
-                className="w-full px-2.5 py-1.5 rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
+                className="w-full px-2.5 py-2 text-base sm:text-xs rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9]"
                 required
               />
             </div>
@@ -364,7 +364,7 @@ export function VideoOrderSummaryCard({
             <textarea
               value={editFormData.requirements}
               onChange={(e) => setEditFormData({ ...editFormData, requirements: e.target.value })}
-              className="w-full px-2.5 py-1.5 rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9] resize-none h-16"
+              className="w-full px-2.5 py-2 text-base sm:text-xs rounded-lg bg-[#180D1D]/90 border border-[#F6DBC0]/30 text-[#F8F4E9] resize-none h-16"
               required
             />
           </div>

@@ -65,9 +65,9 @@ export function Footer({ initialContent, initialSettings }: FooterProps) {
   const whatsappUrl = siteContent?.socialLinks?.whatsapp || getWhatsAppUrl();
 
   return (
-    <footer className="bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)] text-[var(--ink-body,#5F534D)]">
-      <Container className="py-12 sm:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-10 border-b border-[var(--border-warm,#E8DFD5)]">
+    <footer className="bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)] text-[var(--ink-body,#5F534D)] pb-24 md:pb-0">
+      <Container className="py-10 sm:py-16">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 pb-8 sm:pb-10 border-b border-[var(--border-warm,#E8DFD5)]">
           {/* Brand Column */}
           <div className="md:col-span-4 space-y-4">
             <Link href="/" className="inline-flex items-center gap-3">
@@ -119,21 +119,21 @@ export function Footer({ initialContent, initialSettings }: FooterProps) {
           </div>
 
           {/* Dynamic Footer Columns */}
-          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-8">
+          <div className="md:col-span-8 grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-8">
             {columns.map((col) => (
-              <div key={col.id} className="space-y-3">
+              <div key={col.id} className="space-y-2.5 sm:space-y-3">
                 <h3 className="font-display font-bold text-xs uppercase tracking-wider text-[var(--ink-primary,#332924)]">
                   {col.title}
                 </h3>
-                <ul className="space-y-2">
+                <ul className="space-y-1 sm:space-y-2">
                   {col.links.map((lnk, idx) => (
                     <li key={idx}>
                       <Link
                         href={lnk.href}
-                        className="text-sm text-[var(--ink-body,#5F534D)] hover:text-[var(--accent-coral,#C96A50)] transition-colors inline-flex items-center gap-1 group"
+                        className="text-sm text-[var(--ink-body,#5F534D)] hover:text-[var(--accent-coral,#C96A50)] transition-colors inline-flex items-center gap-1 py-1 sm:py-0 group"
                       >
                         <span>{lnk.label}</span>
-                        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                        <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all hidden sm:inline" />
                       </Link>
                     </li>
                   ))}

@@ -28,7 +28,7 @@ export function TeamSection({ initialContent }: TeamSectionProps) {
   return (
     <section
       id="team"
-      className="py-16 sm:py-20 bg-[var(--background,#FAF7F2)] border-t border-[var(--border-warm,#E8DFD5)]/70"
+      className="py-10 sm:py-20 bg-[var(--background,#FAF7F2)] border-t border-[var(--border-warm,#E8DFD5)]/70"
     >
       <Container>
         <SectionHeading
@@ -37,7 +37,14 @@ export function TeamSection({ initialContent }: TeamSectionProps) {
           description={sec.subheadline}
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {members.length > 1 && (
+          <div className="md:hidden flex items-center justify-between text-[11px] font-medium text-[var(--ink-muted,#8A7C75)] mb-2.5">
+            <span>{members.length} team leads</span>
+            <span>Swipe cards →</span>
+          </div>
+        )}
+
+        <div className="flex md:grid md:grid-cols-3 overflow-x-auto md:overflow-visible snap-x snap-mandatory gap-3.5 sm:gap-6 -mx-4 px-4 pb-3 md:mx-0 md:px-0 md:pb-0 scrollbar-none">
           {members.map((member) => {
             const initials =
               member.initials ||
@@ -51,9 +58,9 @@ export function TeamSection({ initialContent }: TeamSectionProps) {
             return (
               <div
                 key={member.id}
-                className="rounded-3xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] p-6 shadow-[0_6px_22px_-6px_rgba(51,41,36,0.05)] flex flex-col justify-between gap-4"
+                className="w-[82vw] max-w-[310px] md:w-auto md:max-w-none shrink-0 snap-start rounded-3xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] p-5 sm:p-6 shadow-[0_6px_22px_-6px_rgba(51,41,36,0.05)] flex flex-col justify-between gap-4"
               >
-                <div className="space-y-4">
+                <div className="space-y-3.5 sm:space-y-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3.5 min-w-0">
                       {member.avatarUrl ? (
@@ -62,6 +69,7 @@ export function TeamSection({ initialContent }: TeamSectionProps) {
                           <img
                             src={member.avatarUrl}
                             alt={member.name}
+                            loading="lazy"
                             className="w-full h-full object-contain rounded-xl"
                           />
                         </div>
@@ -71,7 +79,7 @@ export function TeamSection({ initialContent }: TeamSectionProps) {
                         </div>
                       )}
                       <div className="min-w-0">
-                        <h3 className="font-display font-bold text-lg text-[var(--ink-primary,#332924)] truncate">
+                        <h3 className="font-display font-bold text-base sm:text-lg text-[var(--ink-primary,#332924)] truncate">
                           {member.name}
                         </h3>
                         <p className="text-xs font-medium text-[var(--ink-muted,#8A7C75)] truncate">
@@ -87,7 +95,7 @@ export function TeamSection({ initialContent }: TeamSectionProps) {
                     </Badge>
                   )}
 
-                  <p className="text-sm text-[var(--ink-body,#5F534D)] leading-relaxed">
+                  <p className="text-xs sm:text-sm text-[var(--ink-body,#5F534D)] leading-relaxed">
                     {member.bio}
                   </p>
                 </div>

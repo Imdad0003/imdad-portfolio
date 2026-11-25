@@ -25,18 +25,18 @@ export function SectionHeading({
 
   return (
     <div
-      className={`flex flex-col max-w-3xl mb-8 sm:mb-12 ${alignClass} ${className}`}
+      className={`flex flex-col max-w-3xl mb-6 sm:mb-10 ${alignClass} ${className}`}
     >
       {badgeText && (
-        <Badge variant="peach" size="md" className="mb-3 sm:mb-4">
+        <Badge variant="peach" size="sm" className="mb-2.5 sm:mb-4">
           {badgeText}
         </Badge>
       )}
-      <HeadingTag className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[var(--ink-primary,#332924)] leading-[1.15]">
+      <HeadingTag className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[var(--ink-primary,#332924)] leading-[1.15]">
         {title}
       </HeadingTag>
       {description && (
-        <p className="mt-3 sm:mt-4 text-base sm:text-lg text-[var(--ink-body,#5F534D)] leading-relaxed">
+        <p className="mt-2 sm:mt-3.5 text-sm sm:text-lg text-[var(--ink-body,#5F534D)] leading-relaxed">
           {description}
         </p>
       )}

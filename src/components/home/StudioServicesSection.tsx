@@ -56,10 +56,10 @@ export function StudioServicesSection({
   return (
     <section
       id="services"
-      className="py-16 sm:py-20 bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)]/70"
+      className="py-10 sm:py-20 bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)]/70"
     >
       <Container>
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-10">
           <SectionHeading
             badgeText={sec.eyebrow || "OUR SERVICES"}
             title={sec.title || "What We Can Build For You"}
@@ -80,16 +80,29 @@ export function StudioServicesSection({
           </Button>
         </div>
 
-        <div className={`grid gap-6 ${gridClass}`}>
+        {visibleServices.length > 1 && (
+          <div className="md:hidden flex items-center justify-between text-[11px] font-medium text-[var(--ink-muted,#8A7C75)] mb-2.5">
+            <span>{visibleServices.length} studio services</span>
+            <span>Swipe cards →</span>
+          </div>
+        )}
+
+        <div
+          className={`flex md:grid overflow-x-auto md:overflow-visible snap-x snap-mandatory gap-3.5 sm:gap-6 -mx-4 px-4 pb-3 md:mx-0 md:px-0 md:pb-0 scrollbar-none ${gridClass}`}
+        >
           {visibleServices.map((svc) => {
             const Icon = resolveStudioIcon(svc.iconName, Sparkles);
             const firstPrice = svc.pricing?.[0]?.price;
 
             return (
-              <Card key={svc.id} variant="glass" className="flex flex-col justify-between gap-5">
-                <div className="space-y-4">
+              <Card
+                key={svc.id}
+                variant="glass"
+                className="w-[82vw] max-w-[310px] md:w-auto md:max-w-none shrink-0 snap-start flex flex-col justify-between gap-4 sm:gap-5 p-5 sm:p-6"
+              >
+                <div className="space-y-3.5 sm:space-y-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="w-11 h-11 rounded-2xl bg-[var(--surface-peach,#FAECE4)] text-[var(--accent-coral,#C96A50)] flex items-center justify-center shrink-0">
+                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[var(--surface-peach,#FAECE4)] text-[var(--accent-coral,#C96A50)] flex items-center justify-center shrink-0">
                       <Icon className="w-5 h-5" />
                     </div>
                     {firstPrice && (
@@ -100,16 +113,16 @@ export function StudioServicesSection({
                   </div>
 
                   <div>
-                    <h3 className="font-display text-xl font-bold text-[var(--ink-primary,#332924)]">
+                    <h3 className="font-display text-lg sm:text-xl font-bold text-[var(--ink-primary,#332924)]">
                       {svc.name}
                     </h3>
-                    <p className="text-sm text-[var(--ink-body,#5F534D)] mt-2 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-[var(--ink-body,#5F534D)] mt-1.5 sm:mt-2 leading-relaxed line-clamp-3">
                       {svc.shortDescription || svc.description}
                     </p>
                   </div>
 
                   {svc.deliverables && svc.deliverables.length > 0 && (
-                    <ul className="space-y-2 pt-2 border-t border-[var(--border-warm,#E8DFD5)]/70">
+                    <ul className="space-y-1.5 sm:space-y-2 pt-2 border-t border-[var(--border-warm,#E8DFD5)]/70">
                       {svc.deliverables.slice(0, 3).map((deliv, idx) => (
                         <li
                           key={idx}
@@ -125,7 +138,7 @@ export function StudioServicesSection({
 
                 <Link
                   href={`/services/${svc.slug}`}
-                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--accent-coral,#C96A50)] hover:text-[var(--accent-coral-hover,#B4583F)] pt-2"
+                  className="inline-flex items-center gap-1.5 text-sm font-bold text-[var(--accent-coral,#C96A50)] hover:text-[var(--accent-coral-hover,#B4583F)] pt-2 py-1"
                 >
                   <span>Explore {svc.name}</span>
                   <ArrowRight className="w-4 h-4" />

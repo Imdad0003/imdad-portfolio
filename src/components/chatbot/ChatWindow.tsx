@@ -50,21 +50,26 @@ export function ChatWindow({
   const hasUserMessages = messages.some((m) => m.role === "user");
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-[rgba(43,20,53,0.96)] via-[rgba(30,12,38,0.98)] to-[rgba(19,9,23,0.99)] border border-[#F6DBC0]/25 rounded-3xl shadow-[0_25px_60px_-10px_rgba(10,3,14,0.95)] backdrop-blur-3xl overflow-hidden">
+    <div className="flex flex-col h-full bg-[var(--background,#FAF7F2)] border border-[var(--border-warm,#E8DFD5)] rounded-t-[28px] sm:rounded-3xl shadow-[0_-12px_40px_-8px_rgba(51,41,36,0.22)] sm:shadow-[0_25px_60px_-10px_rgba(51,41,36,0.22)] overflow-hidden">
+      {/* Mobile Drag Handle */}
+      <div className="sm:hidden flex justify-center pt-2 pb-1 bg-[var(--surface-pure,#FFFFFF)]">
+        <span className="w-10 h-1 rounded-full bg-[#D8CFC6]" />
+      </div>
+
       {/* Chat Window Header */}
-      <div className="p-4 px-5 border-b border-[#F6DBC0]/15 bg-[rgba(56,24,66,0.6)] backdrop-blur-md flex items-center justify-between">
+      <div className="px-4 py-3 sm:p-4 sm:px-5 border-b border-[var(--border-warm,#E8DFD5)] bg-[var(--surface-pure,#FFFFFF)] flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#935073] via-[#502D55] to-[#27132c] border border-[#F6DBC0]/35 flex items-center justify-center text-[#F6DBC0] shadow-[0_0_15px_rgba(246,219,192,0.3)]">
+          <div className="w-9 h-9 rounded-xl bg-[var(--surface-peach,#FAECE4)] border border-[#F0CFC0] flex items-center justify-center text-[var(--accent-coral,#C96A50)]">
             <Sparkles className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-[#F8F4E9] tracking-tight">
+              <h3 className="text-sm font-bold text-[var(--ink-primary,#332924)] tracking-tight font-display">
                 Imdad&apos;s Assistant
               </h3>
-              <span className="w-2 h-2 rounded-full bg-[#F6DBC0] animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-[var(--accent-coral,#C96A50)] animate-pulse" />
             </div>
-            <p className="text-[10px] font-mono text-[#F6DBC0]/80">
+            <p className="text-[10px] font-mono text-[var(--ink-muted,#8A7C75)]">
               AI Sales &amp; Project Scoping
             </p>
           </div>
@@ -75,7 +80,7 @@ export function ChatWindow({
             <button
               type="button"
               onClick={onClearChat}
-              className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-[#bba89d] hover:text-[#F8F4E9] hover:bg-[rgba(80,45,85,0.4)] transition-colors focus-ring cursor-pointer"
+              className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[var(--ink-muted,#8A7C75)] hover:text-[var(--ink-primary,#332924)] hover:bg-[var(--background,#FAF7F2)] transition-colors focus-ring cursor-pointer"
               title="Reset conversation"
               aria-label="Reset conversation"
             >
@@ -86,7 +91,7 @@ export function ChatWindow({
           <button
             type="button"
             onClick={onClose}
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[#bba89d] hover:text-[#F8F4E9] hover:bg-[rgba(80,45,85,0.4)] transition-colors focus-ring cursor-pointer"
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-[var(--ink-muted,#8A7C75)] hover:text-[var(--ink-primary,#332924)] hover:bg-[var(--background,#FAF7F2)] transition-colors focus-ring cursor-pointer"
             aria-label="Close chat window"
           >
             <X className="w-5 h-5" />
@@ -95,7 +100,7 @@ export function ChatWindow({
       </div>
 
       {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 scrollbar-thin overscroll-contain">
+      <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-2 scrollbar-thin overscroll-contain">
         {messages.map((message) => (
           <React.Fragment key={message.id}>
             <ChatMessage message={message} />
@@ -115,17 +120,17 @@ export function ChatWindow({
 
         {/* Loading Indicator */}
         {loading && (
-          <div className="flex items-center gap-2 text-xs text-[#bba89d] py-2 px-3 rounded-xl bg-[rgba(43,20,53,0.5)] border border-[#F6DBC0]/10 w-fit">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#F6DBC0] animate-bounce" />
+          <div className="flex items-center gap-2 text-xs text-[var(--ink-body,#5F534D)] py-2 px-3 rounded-xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] w-fit">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent-coral,#C96A50)] animate-bounce" />
             <span
-              className="w-1.5 h-1.5 rounded-full bg-[#F6DBC0] animate-bounce"
+              className="w-1.5 h-1.5 rounded-full bg-[var(--accent-coral,#C96A50)] animate-bounce"
               style={{ animationDelay: "0.15s" }}
             />
             <span
-              className="w-1.5 h-1.5 rounded-full bg-[#F6DBC0] animate-bounce"
+              className="w-1.5 h-1.5 rounded-full bg-[var(--accent-coral,#C96A50)] animate-bounce"
               style={{ animationDelay: "0.3s" }}
             />
-            <span className="ml-1 text-[11px] font-mono text-[#F6DBC0]">
+            <span className="ml-1 text-[11px] font-mono text-[var(--ink-primary,#332924)]">
               Analyzing project scope...
             </span>
           </div>
@@ -138,43 +143,43 @@ export function ChatWindow({
       <QuickActions onSelect={onSendMessage} disabled={loading} />
 
       {/* Direct Quick Contact Toolbar */}
-      <div className="py-1.5 px-3 bg-[rgba(19,9,23,0.85)] border-t border-[#F6DBC0]/10 flex items-center justify-between text-[11px] text-[#bba89d]">
+      <div className="py-2 px-3 bg-[var(--surface-pure,#FFFFFF)] border-t border-[var(--border-warm,#E8DFD5)] flex items-center justify-between text-[11px] text-[var(--ink-body,#5F534D)]">
         <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto scrollbar-none py-0.5">
           <a
             href={getWhatsAppUrl()}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded shrink-0"
+            className="hover:text-[var(--accent-coral,#C96A50)] transition-colors flex items-center gap-1 focus-ring rounded shrink-0 font-semibold"
           >
-            <MessageSquare className="w-3 h-3 text-[#F6DBC0]" />
+            <MessageSquare className="w-3 h-3 text-[var(--accent-coral,#C96A50)]" />
             <span>WhatsApp</span>
           </a>
-          <span>•</span>
+          <span className="text-[var(--border-warm,#E8DFD5)]">•</span>
           <a
             href={siteConfig.contact.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded shrink-0"
+            className="hover:text-[var(--accent-coral,#C96A50)] transition-colors flex items-center gap-1 focus-ring rounded shrink-0 font-semibold"
           >
-            <Instagram className="w-3 h-3 text-[#d68fad]" />
+            <Instagram className="w-3 h-3 text-[var(--accent-coral,#C96A50)]" />
             <span>Instagram</span>
           </a>
-          <span>•</span>
+          <span className="text-[var(--border-warm,#E8DFD5)]">•</span>
           <a
             href={siteConfig.easyxo?.website || "https://easyxo.in"}
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-[#F6DBC0] transition-colors flex items-center gap-1 focus-ring rounded shrink-0"
+            className="hover:text-[var(--accent-coral,#C96A50)] transition-colors flex items-center gap-1 focus-ring rounded shrink-0 font-semibold"
           >
-            <ShoppingBag className="w-3 h-3 text-[#F6DBC0]" />
+            <ShoppingBag className="w-3 h-3 text-[var(--accent-coral,#C96A50)]" />
             <span>EasyXo ↗</span>
           </a>
         </div>
 
         <a
-          href="#contact"
+          href="/contact"
           onClick={onClose}
-          className="hover:text-[#F8F4E9] text-[10px] uppercase font-mono tracking-wider flex items-center gap-0.5 focus-ring rounded shrink-0 ml-2"
+          className="hover:text-[var(--accent-coral,#C96A50)] text-[10px] uppercase font-mono tracking-wider flex items-center gap-0.5 focus-ring rounded shrink-0 ml-2 font-bold text-[var(--ink-primary,#332924)]"
         >
           Form <Send className="w-2.5 h-2.5 ml-0.5" />
         </a>

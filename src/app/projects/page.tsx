@@ -93,17 +93,17 @@ export default function ProjectsPage() {
         </div>
 
         {/* Category Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-5 mb-12 border-b border-slate-200">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-8 sm:mb-12 border-b border-slate-200">
+          <div className="flex items-center gap-2 overflow-x-auto flex-nowrap sm:flex-wrap pb-1 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none">
             {projectCategoryTaxonomy.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
                 onClick={() => handleCategoryChange(cat.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer ${
+                className={`px-4 min-h-[40px] py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                   activeCategory === cat.id
-                    ? "bg-[#0A192F] text-white shadow-xs"
-                    : "bg-white text-slate-600 hover:text-[#0A192F] border border-slate-200 hover:border-slate-300"
+                    ? "bg-[#332924] text-white shadow-xs"
+                    : "bg-white text-slate-600 hover:text-[#332924] border border-slate-200 hover:border-slate-300"
                 }`}
               >
                 {cat.label}

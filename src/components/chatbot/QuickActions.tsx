@@ -19,18 +19,18 @@ const quickOptions = [
 
 export function QuickActions({ onSelect, disabled }: QuickActionsProps) {
   return (
-    <div className="py-2.5 px-3 border-t border-[#F6DBC0]/10 bg-[rgba(24,10,30,0.6)]">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-[#bba89d] mb-2 px-1">
-        Quick Topics:
+    <div className="py-2 px-3 border-t border-[var(--border-warm,#E8DFD5)] bg-[var(--background,#FAF7F2)]">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-[var(--ink-muted,#8A7C75)] mb-1.5 px-1">
+        Quick Topics (swipe →):
       </div>
-      <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto scrollbar-none pb-1">
+      <div className="flex sm:flex-wrap items-center gap-1.5 overflow-x-auto sm:overflow-y-auto sm:max-h-28 scrollbar-none pb-1">
         {quickOptions.map((opt) => (
           <button
             key={opt.label}
             type="button"
             disabled={disabled}
             onClick={() => onSelect(opt.prompt)}
-            className="px-2.5 py-1 rounded-lg text-xs font-medium bg-[rgba(56,24,66,0.6)] hover:bg-[rgba(80,45,85,0.8)] border border-[#F6DBC0]/15 hover:border-[#F6DBC0]/35 text-[#d8cfc4] hover:text-[#F8F4E9] transition-all cursor-pointer focus-ring disabled:opacity-50 disabled:pointer-events-none"
+            className="px-3 min-h-[36px] py-1.5 rounded-full text-xs font-medium bg-[var(--surface-pure,#FFFFFF)] hover:bg-[var(--surface-peach,#FAECE4)] border border-[var(--border-warm,#E8DFD5)] hover:border-[#D8A999] text-[var(--ink-primary,#332924)] transition-colors cursor-pointer focus-ring shrink-0 whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none"
           >
             {opt.label}
           </button>

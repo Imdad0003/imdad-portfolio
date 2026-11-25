@@ -175,7 +175,7 @@ export function Chatbot() {
   }
 
   return (
-    <div className="fixed bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.75rem))] right-4 sm:right-6 z-[100]">
+    <div className="fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] right-3.5 md:bottom-6 md:right-6 z-[100]">
       {/* Floating Trigger Button with Tooltip */}
       <AnimatePresence>
         {!isOpen && (
@@ -195,15 +195,15 @@ export function Chatbot() {
               <span>Ask about a project</span>
             </div>
 
-            {/* Android 17 Expressive Floating Action Button (Squircle -> Pill Morph) */}
+            {/* Expressive Floating Action Button */}
             <button
               type="button"
               onClick={handleOpen}
-              className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] hover:rounded-full active:rounded-[18px] bg-gradient-to-b from-[#D5775C] to-[#BE5D43] hover:from-[#C96A50] hover:to-[#AF5138] border border-white/75 text-white flex items-center justify-center shadow-[inset_0_1.5px_0_rgba(255,255,255,0.45),0_12px_30px_-4px_rgba(201,106,80,0.48),0_4px_10px_-2px_rgba(51,41,36,0.16)] hover:shadow-[inset_0_1.5px_0_rgba(255,255,255,0.5),0_18px_38px_-4px_rgba(201,106,80,0.58)] hover:scale-105 active:scale-92 transition-all duration-350 ease-[cubic-bezier(0.34,1.56,0.64,1)] cursor-pointer focus-ring"
+              className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-2xl sm:rounded-[22px] sm:hover:rounded-full active:scale-95 bg-gradient-to-b from-[#D5775C] to-[#BE5D43] hover:from-[#C96A50] hover:to-[#AF5138] border border-white/75 text-white flex items-center justify-center shadow-[0_10px_24px_-4px_rgba(201,106,80,0.48),0_4px_10px_-2px_rgba(51,41,36,0.16)] transition-all duration-300 cursor-pointer focus-ring"
               aria-label="Open AI Project Assistant"
             >
               <div className="relative">
-                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
 
               {/* Unread Pill indicator */}
@@ -215,15 +215,15 @@ export function Chatbot() {
         )}
       </AnimatePresence>
 
-      {/* Floating Chat Panel (Desktop & Mobile) */}
+      {/* Mobile Bottom Sheet / Desktop Floating Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", stiffness: 300, damping: 28 }}
-            className="fixed inset-x-2 sm:inset-auto sm:right-6 sm:bottom-6 sm:w-[410px] sm:h-[620px] top-14 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-[100] flex flex-col"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ type: "spring", stiffness: 320, damping: 30 }}
+            className="fixed inset-x-0 bottom-0 top-12 sm:inset-auto sm:right-6 sm:bottom-6 sm:w-[410px] sm:h-[620px] z-[100] flex flex-col"
           >
             <ChatWindow
               messages={messages}

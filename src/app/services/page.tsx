@@ -130,7 +130,7 @@ export default function ServicesPage() {
   };
 
   return (
-    <div className="py-16 sm:py-24">
+    <div className="py-8 sm:py-20">
       <Container>
         {/* Page Header */}
         <SectionHeading
@@ -142,13 +142,13 @@ export default function ServicesPage() {
         />
 
         {/* Category Jump Anchor Bar */}
-        <div className="mt-8 flex justify-start sm:justify-center overflow-x-auto pb-4 gap-2 no-scrollbar px-2 sm:px-0">
-          <div className="inline-flex items-center p-1.5 rounded-full bg-white/85 border border-slate-200 backdrop-blur-xl shadow-xs min-w-max">
+        <div className="mt-6 sm:mt-8 flex justify-start sm:justify-center overflow-x-auto pb-3 gap-2 -mx-4 px-4 sm:mx-0 sm:px-0 no-scrollbar">
+          <div className="inline-flex items-center p-1.5 rounded-full bg-white/90 border border-[#E8DFD5] shadow-xs min-w-max">
             {categories.map((cat) => (
               <a
                 key={cat.id}
                 href={`#${cat.id}`}
-                className="px-4 py-2 min-h-[44px] inline-flex items-center rounded-full text-xs font-semibold text-slate-600 hover:text-[#0284C7] hover:bg-slate-50 transition-all whitespace-nowrap focus-ring"
+                className="px-4 py-2 min-h-[44px] inline-flex items-center rounded-full text-xs font-semibold text-[#5F534D] hover:text-[#C96A50] hover:bg-[#FAF7F2] transition-all whitespace-nowrap focus-ring"
               >
                 {cat.label}
               </a>

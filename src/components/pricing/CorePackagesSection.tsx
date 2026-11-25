@@ -73,13 +73,18 @@ export function CorePackagesSection({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="md:hidden flex items-center justify-between text-[11px] font-medium text-[#8A7C75] mb-1">
+        <span>{packages.length} packages</span>
+        <span>Swipe packages →</span>
+      </div>
+
+      <div className="flex md:grid overflow-x-auto md:overflow-visible snap-x snap-mandatory gap-4 sm:gap-6 -mx-4 px-4 pt-4 pb-3 md:mx-0 md:px-0 md:pt-0 md:pb-0 scrollbar-none grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {packages.map((pkg) => {
           const isFeatured = pkg.badge === "Best Value" || pkg.popular;
           return (
             <div
               key={pkg.id}
-              className={`relative rounded-3xl p-6 flex flex-col justify-between transition-all duration-300 ${
+              className={`relative w-[82vw] max-w-[310px] md:w-auto md:max-w-none shrink-0 snap-start rounded-3xl p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 ${
                 isFeatured
                   ? "bg-white border-2 border-[#C96A50]/50 shadow-[0_15px_40px_-10px_rgba(201,106,80,0.14)] hover:border-[#C96A50] hover:-translate-y-1"
                   : "bg-white/95 border border-[#E8DFD5] shadow-[0_8px_30px_-5px_rgba(51,41,36,0.04)] hover:border-[#D8A999] hover:bg-white hover:-translate-y-1"

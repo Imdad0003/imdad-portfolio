@@ -66,11 +66,11 @@ export function CustomSectionBlock({ section }: CustomSectionBlockProps) {
   return (
     <section
       id={section.id}
-      className={`py-14 sm:py-20 border-t border-[var(--border-warm,#E8DFD5)]/70 ${toneClass}`}
+      className={`py-10 sm:py-20 border-t border-[var(--border-warm,#E8DFD5)]/70 ${toneClass}`}
     >
       <Container>
         {section.layout === "banner" ? (
-          <div className="rounded-3xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] p-6 sm:p-10 lg:p-12 shadow-[0_12px_32px_-8px_rgba(51,41,36,0.06)]">
+          <div className="rounded-3xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] p-5 sm:p-10 lg:p-12 shadow-[0_12px_32px_-8px_rgba(51,41,36,0.06)]">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
               <div className={section.mediaUrl ? "lg:col-span-7 space-y-4" : "lg:col-span-12 max-w-3xl space-y-4"}>
                 {section.eyebrow && <Badge variant="peach">{section.eyebrow}</Badge>}
@@ -229,14 +229,14 @@ export function CustomSectionBlock({ section }: CustomSectionBlockProps) {
           </div>
         ) : (
           <div>
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
-              <div className="max-w-2xl space-y-3">
-                {section.eyebrow && <Badge variant="peach">{section.eyebrow}</Badge>}
-                <h2 className="font-display text-3xl sm:text-4xl font-bold tracking-tight text-[var(--ink-primary,#332924)]">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-10">
+              <div className="max-w-2xl space-y-2.5 sm:space-y-3">
+                {section.eyebrow && <Badge variant="peach" size="sm">{section.eyebrow}</Badge>}
+                <h2 className="font-display text-2xl sm:text-4xl font-bold tracking-tight text-[var(--ink-primary,#332924)]">
                   {section.headline}
                 </h2>
                 {section.subheadline && (
-                  <p className="text-base sm:text-lg text-[var(--ink-body,#5F534D)] leading-relaxed">
+                  <p className="text-sm sm:text-lg text-[var(--ink-body,#5F534D)] leading-relaxed">
                     {section.subheadline}
                   </p>
                 )}
@@ -250,14 +250,18 @@ export function CustomSectionBlock({ section }: CustomSectionBlockProps) {
               <div
                 className={
                   section.layout === "checklist"
-                    ? "grid grid-cols-1 sm:grid-cols-2 gap-4"
-                    : `grid gap-5 ${gridColsClass}`
+                    ? "grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4"
+                    : `flex md:grid overflow-x-auto md:overflow-visible snap-x snap-mandatory gap-3.5 sm:gap-5 -mx-4 px-4 pb-3 md:mx-0 md:px-0 md:pb-0 scrollbar-none ${gridColsClass}`
                 }
               >
                 {items.map((item) => (
                   <div
                     key={item.id}
-                    className="rounded-2xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] p-6 shadow-[0_6px_22px_-6px_rgba(51,41,36,0.05)] flex flex-col justify-between gap-4"
+                    className={`${
+                      section.layout === "checklist"
+                        ? ""
+                        : "w-[82vw] max-w-[310px] md:w-auto md:max-w-none shrink-0 snap-start"
+                    } rounded-2xl bg-[var(--surface-pure,#FFFFFF)] border border-[var(--border-warm,#E8DFD5)] p-5 sm:p-6 shadow-[0_6px_22px_-6px_rgba(51,41,36,0.05)] flex flex-col justify-between gap-4`}
                   >
                     <div className="space-y-3">
                       {item.imageUrl && (

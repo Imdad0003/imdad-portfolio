@@ -36,6 +36,8 @@ html {
   scroll-behavior: smooth;
   background-color: var(--background);
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -77,6 +79,49 @@ h4,
 
 .pt-safe {
   padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+/* Hide scrollbars cleanly for horizontal mobile swipe carousels */
+.scrollbar-none,
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Mobile performance & touch ergonomics */
+@media (max-width: 767px) {
+  .m3-surface-1,
+  .m3-surface-2 {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: rgba(255, 255, 255, 0.96);
+  }
+  .m3-surface-tonal {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: linear-gradient(150deg, #ffffff 0%, #faece4 100%);
+  }
+  .animate-m3-aurora {
+    animation: none !important;
+  }
+}
+
+@media (hover: none) {
+  .glass-panel-interactive:hover,
+  .m3-card-interactive:hover,
+  .m3-pill-chip:hover,
+  .m3-quick-tile:hover {
+    transform: none;
+  }
+  .group:hover .m3-icon-squircle,
+  .m3-icon-squircle:hover {
+    border-radius: 18px;
+    transform: none;
+  }
 }
 
 /* Soft Warm Paper Surfaces */

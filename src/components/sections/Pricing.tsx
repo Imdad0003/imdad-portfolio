@@ -32,7 +32,7 @@ export function Pricing() {
   };
 
   return (
-    <section id="pricing" className="py-14 sm:py-24 relative overflow-hidden">
+    <section id="pricing" className="py-8 sm:py-20 relative overflow-hidden">
       {/* Ambient background glow accents */}
       <div className="absolute top-1/4 left-0 w-96 h-96 bg-sky-200/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-0 w-96 h-96 bg-blue-200/15 rounded-full blur-3xl pointer-events-none" />
@@ -63,7 +63,7 @@ export function Pricing() {
         </div>
 
         {/* Horizontally Scrollable Category Filter Tabs */}
-        <div className="mt-8 sm:mt-10 flex justify-start sm:justify-center overflow-x-auto pb-4 pt-1 scrollbar-none gap-2 no-scrollbar">
+        <div className="mt-6 sm:mt-10 flex justify-start sm:justify-center overflow-x-auto pb-3 pt-1 -mx-4 px-4 sm:mx-0 sm:px-0 scrollbar-none gap-2 no-scrollbar">
           <div className="inline-flex items-center p-1.5 rounded-full bg-white/85 border border-slate-200/80 backdrop-blur-xl shadow-xs min-w-max">
             {pricingCategories.map((category) => {
               const isActive = activeCategory === category.id;

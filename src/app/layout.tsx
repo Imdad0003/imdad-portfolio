@@ -4,6 +4,7 @@ import "./globals.css";
 import { siteConfig } from "@/data/config";
 import { Navbar } from "@/components/sections/Navbar";
 import { Footer } from "@/components/sections/Footer";
+import { MobileBottomNav } from "@/components/sections/MobileBottomNav";
 import { Chatbot } from "@/components/chatbot/Chatbot";
 import { LiquidBackground } from "@/components/ui/LiquidBackground";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
@@ -197,10 +198,11 @@ export default function RootLayout({
         <ScrollProgress />
         <LiquidBackground />
         <Navbar />
-        <div className="flex-1 flex flex-col relative z-10 pt-16 sm:pt-20">
+        <div className="flex-1 flex flex-col relative z-10">
           {children}
         </div>
         <Footer />
+        <MobileBottomNav />
         <Chatbot />
       </body>
     </html>
